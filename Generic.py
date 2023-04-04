@@ -119,3 +119,20 @@ def empty_column_misinitialization(libraries, filename, node):
             return to_return
         return []
     return []
+def nan_equivalence_comparison_misused(libraries, filename, node):
+    if "pandas" and "numpy" in libraries:
+        function_name = node.name
+        number_of_nan_equivalences = 0
+        function_body = ast.unparse(node.body).strip()
+        call_function = function_body.split('\n')
+        for line in call_function:
+            line_without_space=line.replace(" ", "")
+            if "==np.nan" in line_without_space:
+                number_of_nan_equivalences +=1
+        if number_of_nan_equivalences >0:
+            message = "NaN equivalence comparison misused"
+            to_return = [filename, function_name, number_of_nan_equivalences, message]
+            return to_return
+        return []
+    return []
+
