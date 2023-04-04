@@ -37,12 +37,27 @@ def merge_api_parameter_not_explicitly_set(libraries, filename, node):
     return None
 
 
-def columns_and_dataType_not_explicitly_set(libraries, filename, node):
+def columns_and_datatype_not_explicitly_set(libraries, filename, node):
     if "pandas" in libraries:
-        columns_and_datatype_not_defined = 0
-        function_name, lines = get_lines_of_code(node)
-        for line in lines:
-            if "read_csv" in line:
-                if "usecols" or "" not in line:
-                    columns_and_datatype_not_defined +=1
+        function_name = node.name
+        function_body = ast.unparse(node.body).strip()
+        call_function = function_body.split('\n')
+        #get functions call of read_csv
+        read_csv = []
+        for line in call_function:
+            if ('read_csv(' in line) or ('DataFrame(')in line:
+                read_csv.append(line)
+        number_of_apply = 0
+        for line in read_csv:
+            if 'dtype=' not in line:
+                number_of_apply += 1
+        message = "If the datatype is not set explicitly, it may silently continue the next step even though the input is unexpected, which may cause errors later." \
+        "It is recommended to set the columns and DataType explicitly in data processing."
+        if number_of_apply > 0:
+            to_return = [filename, function_name, number_of_apply, message]
+            return to_return
+        return []
+    return []
+
+
 
