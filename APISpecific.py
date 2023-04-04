@@ -8,7 +8,7 @@ def Chain_Indexing(libraries, filename, node):
         function_body = ast.unparse(node.body).strip()
         pattern = r'([a-zA-Z]+[a-zA-Z_0-9]*)(\[[a-zA-Z0-9\']*\]){2,}'
         matches = re.findall(pattern, function_body)
-        message = " Using chain indexing may cause performance issues."
+        message = "Using chain indexing may cause performance issues."
         num_matches = len(matches)
         if num_matches > 0:
             return [f"{filename}", f"{function_name}", num_matches, message]
@@ -36,7 +36,7 @@ def matrix_multiplication_api_misused(libraries, filename, node):
         function_body = ast.unparse(node.body).strip()
         number_of_dot = function_body.count(".dot(")
         message = "Please consider to use np.matmul to multiply matrix. The function dot() not return a scalar value, " \
-              "but a matrix. "
+                  "but a matrix. "
         if number_of_dot > 0:
             to_return = [filename, function_name, number_of_dot, message]
             return to_return
@@ -53,7 +53,7 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, node)
         gradients_not_cleared = 0
         backward_called = False
         for line in lines:
-            if "optimizer.zero_grad" in line:
+            if "zero_grad(" in line:
                 zero_grad_called = True
                 if backward_called:
                     gradients_not_cleared = 1
@@ -67,10 +67,36 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, node)
             zero_grad_called = False
             backward_called = False
         message = "If optimizer.zero_grad() is not used before loss_- fn.backward(), the gradients will be accumulated" \
-              " from all loss_- fn.backward() calls and it will lead to the gradient explosion," \
-              " which fails the training."
+                  "from all loss_- fn.backward() calls and it will lead to the gradient explosion," \
+                  "which fails the training."
         if gradients_not_cleared > 0:
             to_return = [filename, function_name, gradients_not_cleared, message]
             return to_return
         return None
     return None
+
+
+def tensor_array_not_used(libraries, filename, node):
+    if "tensorflow" in libraries:
+        function_name = node.name
+        function_body = ast.unparse(node.body).strip()
+        lines = function_body.split('\n')
+        tensor_array = False
+        number_of_apply = 0
+        for line in lines:
+            if "tf.constant" in line:
+                parameter = line.split("(")[1].split(")")[0]
+                if "[" in parameter:
+                    number_of_apply += 1
+        if number_of_apply > 0:
+            message = "If the developer initializes an array using tf.constant() and tries to assign a new value to " \
+                      "it in the loop to keep it growing, the code will run into an error." \
+                      "Using tf.TensorArray() for growing array in the loop is a better solution for this kind of " \
+                      "problem in TensorFlow 2. "
+
+            to_return = [filename, function_name, number_of_apply, message]
+            return to_return
+        return None
+    return None
+
+
