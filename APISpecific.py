@@ -6,7 +6,7 @@ def Chain_Indexing(libraries, filename, node):
     if "pandas" in libraries:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
-        pattern = r'\b\w[a-zA-Z0-9]*\[[a-zA-Z0-9]*\]\b'
+        pattern = r'([a-zA-Z]+[a-zA-Z_0-9]*)(\[[a-zA-Z0-9\']*\]){2,}'
         matches = re.findall(pattern, function_body)
         message = " Using chain indexing may cause performance issues."
         num_matches = len(matches)
