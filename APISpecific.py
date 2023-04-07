@@ -26,8 +26,8 @@ def dataframe_conversion_api_misused(libraries, filename, node):
         if number_of_apply > 0:
             to_return = [filename, function_name, number_of_apply, message]
             return to_return
-        return None
-    return None
+        return []
+    return []
 
 
 def matrix_multiplication_api_misused(libraries, filename, node):
@@ -40,8 +40,8 @@ def matrix_multiplication_api_misused(libraries, filename, node):
         if number_of_dot > 0:
             to_return = [filename, function_name, number_of_dot, message]
             return to_return
-        return None
-    return None
+        return []
+    return []
 
 
 def gradients_not_cleared_before_backward_propagation(libraries, filename, node):
@@ -72,8 +72,8 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, node)
         if gradients_not_cleared > 0:
             to_return = [filename, function_name, gradients_not_cleared, message]
             return to_return
-        return None
-    return None
+        return []
+    return []
 
 
 def tensor_array_not_used(libraries, filename, node):
@@ -96,8 +96,8 @@ def tensor_array_not_used(libraries, filename, node):
 
             to_return = [filename, function_name, number_of_apply, message]
             return to_return
-        return None
-    return None
+        return []
+    return []
 
 
 def pytorch_call_method_misused(libraries, filename, node):

@@ -20,8 +20,8 @@ def deterministic_algorithm_option_not_used(libraries, filename, node):
         if deterministic_algorithms > 0:
             to_return = [filename, function_name, deterministic_algorithms, message]
             return to_return
-        return None
-    return None
+        return []
+    return []
 
 
 def merge_api_parameter_not_explicitly_set(libraries, filename, node):
@@ -36,18 +36,18 @@ def merge_api_parameter_not_explicitly_set(libraries, filename, node):
             message = "merge not explicit"
             to_return = [filename, function_name, number_of_merge_not_explicit, message]
             return to_return
-        return None
-    return None
+        return []
+    return []
 
 
 def columns_and_datatype_not_explicitly_set(libraries, filename, node):
+    function_name, lines= get_lines_of_code(node)
     if "pandas" in libraries:
         function_name = node.name
-        function_body = ast.unparse(node.body).strip()
-        call_function = function_body.split('\n')
+
         # get functions call of read_csv
         read_csv = []
-        for line in call_function:
+        for line in lines:
             if ('read_csv(' in line) or ('DataFrame(') in line:
                 read_csv.append(line)
         number_of_apply = 0
@@ -80,23 +80,22 @@ Examples:
 def empty_column_misinitialization(libraries, filename, node):
     # this is the list of values that are considered as smelly empty values
     empty_values = ['0', "''", '""']
+    function_name, lines = get_lines_of_code(node)
     if "pandas" in libraries:
-        function_name = node.name
-        function_body = ast.unparse(node.body).strip()
-        call_function = function_body.split('\n')
+
         # get functions call of read_csv
         read_csv = []
         variables = []
         number_of_apply = 0
         # get all defined variables that are dataframes
-        for line in call_function:
+        for line in lines:
             if ('read_csv(' in line) or ('DataFrame(') in line:
                 read_csv.append(line)
                 variables.append(line.split('=')[0].strip())
         variables = set(variables)
 
         # for each assignment of a variable
-        for line in function_body.split('\n'):
+        for line in function_name.split('\n'):
             assign_pattern = r'(\w)+(\[.*\])+\s*=\s*(\w*)'
             if re.match(assign_pattern, line):
                 # get the variable name
@@ -143,7 +142,6 @@ def in_place_apis_misused(libraries, filename, node):
     in_place_apis = 0
     function_name, lines = get_lines_of_code(node)
     if "pandas" in libraries:
-        function_name, lines = get_lines_of_code(node)
         for line in lines:
             if "dropna" in line and "=" not in line:
                 in_place_apis += 1
