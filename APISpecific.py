@@ -100,3 +100,18 @@ def tensor_array_not_used(libraries, filename, node):
     return None
 
 
+def pytorch_call_method_misused(libraries, filename, node):
+    if "pytorch" in libraries:
+        function_name = node.name
+        function_body = ast.unparse(node.body).strip()
+        lines = function_body.split('\n')
+        number_of_forward = 0
+        for line in lines:
+            if "net.forward(" in line:
+                number_of_forward += 1
+        if number_of_forward > 0:
+            message = "is recommended to use self.net()"
+            to_return = [filename, function_name, number_of_forward, message]
+            return to_return
+        return []
+    return []

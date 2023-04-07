@@ -119,6 +119,8 @@ def empty_column_misinitialization(libraries, filename, node):
             return to_return
         return []
     return []
+
+
 def nan_equivalence_comparison_misused(libraries, filename, node):
     if "pandas" and "numpy" in libraries:
         function_name = node.name
@@ -126,13 +128,55 @@ def nan_equivalence_comparison_misused(libraries, filename, node):
         function_body = ast.unparse(node.body).strip()
         call_function = function_body.split('\n')
         for line in call_function:
-            line_without_space=line.replace(" ", "")
+            line_without_space = line.replace(" ", "")
             if "==np.nan" in line_without_space:
-                number_of_nan_equivalences +=1
-        if number_of_nan_equivalences >0:
+                number_of_nan_equivalences += 1
+        if number_of_nan_equivalences > 0:
             message = "NaN equivalence comparison misused"
             to_return = [filename, function_name, number_of_nan_equivalences, message]
             return to_return
         return []
+    return []
+
+
+def in_place_apis_misused(libraries, filename, node):
+    in_place_apis = 0
+    function_name, lines = get_lines_of_code(node)
+    if "pandas" in libraries:
+        function_name, lines = get_lines_of_code(node)
+        for line in lines:
+            if "dropna" in line and "=" not in line:
+                in_place_apis += 1
+    if "tensorflow" in libraries:
+        for l in lines:
+            if "clip" in l and "=" not in l:
+                in_place_apis += 1
+    if in_place_apis > 0:
+        message = "We suggest developers check whether the result of the operation is assigned to a variable or the" \
+                  " in-place parameter is set in the API. Some developers hold the view that the in-place operation" \
+                  " will save memory"
+        to_return = [filename, function_name, in_place_apis, message]
+        return to_return
+    return []
+
+#questa secondo me da un botto di falsi positivi
+def memory_not_freed(libraries, filename, node):
+    memory_freed = False
+    function_name, lines = get_lines_of_code(node)
+    if "tensorflow" in libraries:
+        for line in lines:
+            if ".keras.backend.clear_session" in line:
+                memory_freed = True
+                break
+    if "pytorch" in libraries:
+        for l in lines:
+            if "pytorch" in l:
+                memory_freed = True
+                break
+
+    if ["tensorflow", "pythorch"] in libraries and memory_freed == False:
+        message = "Some APIs are provided to alleviate the run-out-of- memory issue in deep learning librarieS"
+        to_return = [filename, function_name, memory_freed, message]
+        return to_return
     return []
 
