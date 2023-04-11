@@ -11,7 +11,8 @@ def Chain_Indexing(libraries, filename, node):
         message = "Using chain indexing may cause performance issues."
         num_matches = len(matches)
         if num_matches > 0:
-            return [f"{filename}", f"{function_name}", num_matches, message]
+            name_smell = "Chain_Indexing"
+            return [f"{filename}", f"{function_name}", num_matches, name_smell, message]
         return []
     return []
 
@@ -24,7 +25,8 @@ def dataframe_conversion_api_misused(libraries, filename, node):
         message = "Please consider to use numpy instead values to convert dataframe. The function 'values' is deprecated." \
                   "The value return of this function is unclear."
         if number_of_apply > 0:
-            to_return = [filename, function_name, number_of_apply, message]
+            name_smell = "dataframe_conversion_api_misused"
+            to_return = [filename, function_name, number_of_apply, name_smell, message]
             return to_return
         return []
     return []
@@ -38,7 +40,8 @@ def matrix_multiplication_api_misused(libraries, filename, node):
         message = "Please consider to use np.matmul to multiply matrix. The function dot() not return a scalar value, " \
                   "but a matrix. "
         if number_of_dot > 0:
-            to_return = [filename, function_name, number_of_dot, message]
+            name_smell = "matrix_multiplication_api_misused"
+            to_return = [filename, function_name, number_of_dot, name_smell, message]
             return to_return
         return []
     return []
@@ -70,7 +73,8 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, node)
                   "from all loss_- fn.backward() calls and it will lead to the gradient explosion," \
                   "which fails the training."
         if gradients_not_cleared > 0:
-            to_return = [filename, function_name, gradients_not_cleared, message]
+            name_smell = "gradients_not_cleared_before_backward_propagation"
+            to_return = [filename, function_name, gradients_not_cleared, name_smell, message]
             return to_return
         return []
     return []
@@ -93,8 +97,8 @@ def tensor_array_not_used(libraries, filename, node):
                       "it in the loop to keep it growing, the code will run into an error." \
                       "Using tf.TensorArray() for growing array in the loop is a better solution for this kind of " \
                       "problem in TensorFlow 2. "
-
-            to_return = [filename, function_name, number_of_apply, message]
+            name_smell = "tensor_array_not_used"
+            to_return = [filename, function_name, number_of_apply, name_smell, message]
             return to_return
         return []
     return []
@@ -111,7 +115,8 @@ def pytorch_call_method_misused(libraries, filename, node):
                 number_of_forward += 1
         if number_of_forward > 0:
             message = "is recommended to use self.net()"
-            to_return = [filename, function_name, number_of_forward, message]
+            name_smell ="pytorch_call_method_misused"
+            to_return = [filename, function_name, number_of_forward, name_smell, message]
             return to_return
         return []
     return []

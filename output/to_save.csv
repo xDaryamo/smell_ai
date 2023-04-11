@@ -1,0 +1,6 @@
+filename,function_name,smell,name_smell,message
+/Users/broke31/Desktop/smell_ai/main.py,analyze_project,3,merge_api_parameter_not_explicitly_set,merge not explicit
+/Users/broke31/Desktop/smell_ai/main.py,analyze_project,1,columns_and_datatype_not_explicitly_set,"If the datatype is not set explicitly, it may silently continue the next step even though the input is unexpected, which may cause errors later.It is recommended to set the columns and DataType explicitly in data processing."
+filename,function_name,smell,name_smell,message
+/Users/broke31/Desktop/smell_ai/main.py,analyze_project,3,merge_api_parameter_not_explicitly_set,merge not explicit
+/Users/broke31/Desktop/smell_ai/main.py,analyze_project,1,columns_and_datatype_not_explicitly_set,"If the datatype is not set explicitly, it may silently continue the next step even though the input is unexpected, which may cause errors later.It is recommended to set the columns and DataType explicitly in data processing."

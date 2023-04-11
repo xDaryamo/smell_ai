@@ -18,7 +18,8 @@ def deterministic_algorithm_option_not_used(libraries, filename, node):
         message = "Please consider to remove the option 'torch.use_deterministic_algorithms(True)'. It can cause " \
                   "performance issues"
         if deterministic_algorithms > 0:
-            to_return = [filename, function_name, deterministic_algorithms, message]
+            name_smell = "deterministic_algorithm_option_not_used"
+            to_return = [filename, function_name, deterministic_algorithms, name_smell, message]
             return to_return
         return []
     return []
@@ -34,7 +35,8 @@ def merge_api_parameter_not_explicitly_set(libraries, filename, node):
                     number_of_merge_not_explicit += 1
         if number_of_merge_not_explicit > 0:
             message = "merge not explicit"
-            to_return = [filename, function_name, number_of_merge_not_explicit, message]
+            name_smell = "merge_api_parameter_not_explicitly_set"
+            to_return = [filename, function_name, number_of_merge_not_explicit, name_smell, message]
             return to_return
         return []
     return []
@@ -57,7 +59,8 @@ def columns_and_datatype_not_explicitly_set(libraries, filename, node):
         message = "If the datatype is not set explicitly, it may silently continue the next step even though the input is unexpected, which may cause errors later." \
                   "It is recommended to set the columns and DataType explicitly in data processing."
         if number_of_apply > 0:
-            to_return = [filename, function_name, number_of_apply, message]
+            name_smell = "columns_and_datatype_not_explicitly_set"
+            to_return = [filename, function_name, number_of_apply, name_smell, message]
             return to_return
         return []
     return []
@@ -114,6 +117,7 @@ def empty_column_misinitialization(libraries, filename, node):
             message = "If they use zeros or empty strings to initialize a new empty column in Pandas" \
                       "the ability to use methods such as .isnull() or .notnull() is retained." \
                       "Use NaN value (e.g. np.nan) if a new empty column in a DataFrame is needed. Do not use “filler values” such as zeros or empty strings."
+            name_smell = "empty_column_misinitialization"
             to_return = [filename, function_name, number_of_apply, message]
             return to_return
         return []
@@ -132,7 +136,8 @@ def nan_equivalence_comparison_misused(libraries, filename, node):
                 number_of_nan_equivalences += 1
         if number_of_nan_equivalences > 0:
             message = "NaN equivalence comparison misused"
-            to_return = [filename, function_name, number_of_nan_equivalences, message]
+            name_smell = "nan_equivalence_comparison_misused"
+            to_return = [filename, function_name, number_of_nan_equivalences,name_smell, message]
             return to_return
         return []
     return []
@@ -153,7 +158,8 @@ def in_place_apis_misused(libraries, filename, node):
         message = "We suggest developers check whether the result of the operation is assigned to a variable or the" \
                   " in-place parameter is set in the API. Some developers hold the view that the in-place operation" \
                   " will save memory"
-        to_return = [filename, function_name, in_place_apis, message]
+        name_smell = "in_place_apis_misused"
+        to_return = [filename, function_name, in_place_apis, name_smell, message]
         return to_return
     return []
 
@@ -173,8 +179,9 @@ def memory_not_freed(libraries, filename, node):
                 break
 
     if ["tensorflow", "pythorch"] in libraries and memory_freed == False:
-        message = "Some APIs are provided to alleviate the run-out-of- memory issue in deep learning librarieS"
-        to_return = [filename, function_name, memory_freed, message]
+        message = "Some APIs are provided to alleviate the run-out-of- memory issue in deep learning libraries"
+        name_smell = "memory_not_freed"
+        to_return = [filename, function_name, memory_freed,name_smell,message]
         return to_return
     return []
 
