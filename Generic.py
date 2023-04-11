@@ -54,9 +54,10 @@ def columns_and_datatype_not_explicitly_set(libraries, filename, node):
                 read_csv.append(line)
         number_of_apply = 0
         for line in read_csv:
-            if 'dtype=' not in line:
+            line = line.replace(' ', '')
+            if 'dtype=' not in line or 'columns=' not in line:
                 number_of_apply += 1
-        message = "If the datatype is not set explicitly, it may silently continue the next step even though the input is unexpected, which may cause errors later." \
+        message = "If the datatype or the columns are not set explicitly, it may silently continue the next step even though the input is unexpected, which may cause errors later." \
                   "It is recommended to set the columns and DataType explicitly in data processing."
         if number_of_apply > 0:
             name_smell = "columns_and_datatype_not_explicitly_set"
