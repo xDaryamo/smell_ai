@@ -80,26 +80,37 @@ Examples:
     - df['new_col_str'] = ''
     '''
 
+def get_df_variable_def(line):
+    pattern = r'(\w)+(\[.*\])+\s*=\s*(\w*)'
+    if re.match(pattern, line):
+        # get the variable name
+        variable = line.split('=')[0].strip().split('[')[0].strip()
+        return variable
+    return None
+
+def get_set_df_variables(lines):
+    variables = []
+    for line in lines:
+        variable = get_df_variable_def(line)
+        if variable:
+            variables.append(variable)
+    return set(variables)
+
+
 
 def empty_column_misinitialization(libraries, filename, node):
     # this is the list of values that are considered as smelly empty values
     empty_values = ['0', "''", '""']
     function_name, lines = get_lines_of_code(node)
     if "pandas" in libraries:
-
         # get functions call of read_csv
         read_csv = []
         variables = []
         number_of_apply = 0
         # get all defined variables that are dataframes
-        for line in lines:
-            if ('read_csv(' in line) or ('DataFrame(') in line:
-                read_csv.append(line)
-                variables.append(line.split('=')[0].strip())
-        variables = set(variables)
-
+        variables = get_set_df_variables(lines)
         # for each assignment of a variable
-        for line in function_name.split('\n'):
+        for line in lines:
             assign_pattern = r'(\w)+(\[.*\])+\s*=\s*(\w*)'
             if re.match(assign_pattern, line):
                 # get the variable name
@@ -107,7 +118,7 @@ def empty_column_misinitialization(libraries, filename, node):
                 # check if the variable is a dataframe
                 if variable in variables:
                     # check if the line is an assignment of a column of the dataframe
-                    if (variable in line) and ('[' in line):
+                    if '[' in line:
                         # select a line where uses to define a column df.[*] = *
                         pattern = variable + '\[.*\]'
                         # check if the line is an assignment of the value is 0 or ''
@@ -119,7 +130,7 @@ def empty_column_misinitialization(libraries, filename, node):
                       "the ability to use methods such as .isnull() or .notnull() is retained." \
                       "Use NaN value (e.g. np.nan) if a new empty column in a DataFrame is needed. Do not use “filler values” such as zeros or empty strings."
             name_smell = "empty_column_misinitialization"
-            to_return = [filename, function_name, number_of_apply, message]
+            to_return = [filename, function_name, number_of_apply,name_smell, message]
             return to_return
         return []
     return []
