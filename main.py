@@ -93,4 +93,5 @@ def projects_analysis(BASE_PATH, output_path):
         print(f"Analyzed {dirname}")
 
 if __name__ == "__main__":
-    projects_analysis("./dataset/projects", "./projects_analysis/output")
+   # projects_analysis("./dataset/projects", "./projects_analysis/output")
+   analyze_project("./examples", "./output/")

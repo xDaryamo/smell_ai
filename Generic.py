@@ -190,7 +190,7 @@ def memory_not_freed(libraries, filename, node):
                 memory_freed = True
                 break
 
-    if ["tensorflow", "pythorch"] in libraries and memory_freed == False:
+    if memory_freed == False:
         message = "Some APIs are provided to alleviate the run-out-of- memory issue in deep learning libraries"
         name_smell = "memory_not_freed"
         to_return = [filename, function_name, memory_freed,name_smell,message]
