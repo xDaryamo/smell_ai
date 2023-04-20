@@ -21,7 +21,7 @@ def dataframe_conversion_api_misused(libraries, filename, node):
     if "pandas" in libraries:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
-        number_of_apply = function_body.count(".values(")
+        number_of_apply = function_body.count(".values")
         message = "Please consider to use numpy instead values to convert dataframe. The function 'values' is deprecated." \
                   "The value return of this function is unclear."
         if number_of_apply > 0:
@@ -105,13 +105,13 @@ def tensor_array_not_used(libraries, filename, node):
 
 
 def pytorch_call_method_misused(libraries, filename, node):
-    if "pytorch" in libraries:
+    if "pytorch" or "torch" in libraries:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
         lines = function_body.split('\n')
         number_of_forward = 0
         for line in lines:
-            if "net.forward(" in line:
+            if ".forward(" in line:
                 number_of_forward += 1
         if number_of_forward > 0:
             message = "is recommended to use self.net()"

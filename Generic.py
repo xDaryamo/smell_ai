@@ -11,7 +11,7 @@ def get_lines_of_code(node):
 
 
 def deterministic_algorithm_option_not_used(libraries, filename, node):
-    if "pytorch" in libraries:
+    if "pytorch" or "torch" in libraries:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
         deterministic_algorithms = function_body.count("torch.use_deterministic_algorithms(True)")
@@ -193,7 +193,7 @@ def memory_not_freed(libraries, filename, node):
     if memory_freed == False:
         message = "Some APIs are provided to alleviate the run-out-of- memory issue in deep learning libraries"
         name_smell = "memory_not_freed"
-        to_return = [filename, function_name, memory_freed,name_smell,message]
+        to_return = [filename, function_name, not memory_freed,name_smell,message]
         return to_return
     return []
 
