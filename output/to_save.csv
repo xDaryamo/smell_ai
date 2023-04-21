@@ -62,3 +62,4 @@ filename,function_name,smell,name_smell,message
 /Users/broke31/Desktop/smell_ai/examples/Code_Smell_Examples.py,chain_index_example,1,columns_and_datatype_not_explicitly_set,"If the datatype or the columns are not set explicitly, it may silently continue the next step even though the input is unexpected, which may cause errors later.It is recommended to set the columns and DataType explicitly in data processing."
 /Users/broke31/Desktop/smell_ai/examples/Code_Smell_Examples.py,chain_index_example,1,memory_not_freed,Some APIs are provided to alleviate the run-out-of- memory issue in deep learning libraries
 /Users/broke31/Desktop/smell_ai/examples/Code_Smell_Examples.py,chain_index_example,1,Chain_Indexing,Using chain indexing may cause performance issues.
+filename,function_name,smell,name_smell,message

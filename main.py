@@ -1,16 +1,13 @@
 import os
-import ast
 
 from libraries import extract_libraries
-from APISpecific import *
-from Generic import *
+from code_smells_rules.APISpecific import *
+from code_smells_rules.Generic import *
 import pandas as pd
-from get_list_file_py import find_python_files, get_python_files
-import subprocess
-import hityper
+from get_information.get_list_file_py import get_python_files
+
+
 def analyze_project(project_path, output_path="."):
-
-
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     to_save = pd.DataFrame(columns=col)
     filenames = get_python_files(project_path)
@@ -22,6 +19,8 @@ def analyze_project(project_path, output_path="."):
             try:
                 tree = ast.parse(source)
                 libraries = extract_libraries(tree)
+                print(libraries)
+                exit(0)
                 # Visita i nodi dell'albero dell'AST alla ricerca di funzioni
                 for node in ast.walk(tree):
                     if isinstance(node, ast.FunctionDef):
@@ -94,6 +93,7 @@ def projects_analysis(BASE_PATH, output_path):
         analyze_project(new_path, f"{output_path}/{dirname}")
         print(f"Analyzed {dirname}")
 
+
 if __name__ == "__main__":
-   # projects_analysis("./dataset/projects", "./projects_analysis/output")
-   analyze_project("./examples", "./output/")
+    # projects_analysis("./dataset/projects", "./projects_analysis/output")
+    analyze_project("./examples", "./output/")

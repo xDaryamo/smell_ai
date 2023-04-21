@@ -28,6 +28,13 @@ def json_to_dataframe_variables(json_file):
     return df
 
 
-json_file = "/Users/broke31/Desktop/giamma/_Users_broke31_Desktop_Pysmell_INFERREDTYPES.json"
-x = json_to_dataframe_variables(json_file)
-print(x)
+#json_file = "/Users/broke31/Desktop/giamma/_Users_broke31_Desktop_Pysmell_INFERREDTYPES.json"
+#x = json_to_dataframe_variables(json_file)
+#print(x)
+
+
+def is_numpy_declaration(function_body):
+    for line in function_body:
+        if ".array" in line:
+            pass
+

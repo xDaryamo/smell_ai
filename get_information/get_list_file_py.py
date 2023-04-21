@@ -1,8 +1,6 @@
 import os
 def find_python_files(url):
-    """
-    Data un URL che rappresenta un progetto, ritorna i path assoluti di ogni file .py presente all'interno del progetto.
-    """
+
     try:
         # Estraiamo il path della directory radice del progetto e lo salaviamo in 'root'
         root = os.path.dirname(os.path.abspath(url))
