@@ -4,9 +4,7 @@
 
 import os
 import pandas as pd
-
-BASE_PATH = "projects"
-
+BASE_PATH = "F:/"
 
 def get_repo(repo_url):
     folder_url = repo_url.replace("/", "")
@@ -17,13 +15,10 @@ def get_repo(repo_url):
         os.mkdir(build_path)
     os.system("git clone " + "https://github.com/"+repo_url + " " + build_path)
 
-
-def filter_repos(df):
-    STARS_THRESHOLD = 200
-    COMMIT_THRESHOLD = 100
+def filter_repos(df,stars=200, commits=100):
     df = df[df["Engineered ML Project"] == 'Y']
-    df = df[df["Stars"] > STARS_THRESHOLD]
-    df = df[df["Commits"] > COMMIT_THRESHOLD]
+    df = df[df["Stars"] > stars]
+    df = df[df["Commits"] > commits]
     return df
 
 
@@ -46,10 +41,27 @@ def get_projects():
     df = filter_repos(df)
     for repo_url in df["GitHub_Repo"]:
         get_repo(repo_url)
+def clean():
+    if os.name == "nt":
+        if os.path.exists(".\\projects"):
+            os.system("rmdir /s /q .\\projects")
+    else:
+        if os.path.exists("./projects"):
+            os.system("rm -r ./projects")
+
+def setup():
+    if os.name == "nt":
+        if not os.path.exists(f"{BASE_PATH}/projects"):
+            os.makedirs(f"{BASE_PATH}/projects")
+    else:
+        if not os.path.exists(f"{BASE_PATH}/projects"):
+            os.makedirs(f"{BASE_PATH}/projects")
 
 
 if __name__ == "__main__":
-    get_debug_projects()
+    clean()
+    setup()
+    get_projects()
 
 
 
