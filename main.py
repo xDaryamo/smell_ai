@@ -6,6 +6,8 @@ from code_smells_rules.Generic import *
 import pandas as pd
 from get_information.get_list_file_py import get_python_files
 
+from concurrent.futures import ThreadPoolExecutor
+import time
 
 def analyze_project(project_path, output_path="."):
     col = ["filename", "function_name", "smell", "name_smell", "message"]
@@ -19,12 +21,9 @@ def analyze_project(project_path, output_path="."):
             try:
                 tree = ast.parse(source)
                 libraries = extract_libraries(tree)
-                print(libraries)
-                exit(0)
                 # Visita i nodi dell'albero dell'AST alla ricerca di funzioni
                 for node in ast.walk(tree):
                     if isinstance(node, ast.FunctionDef):
-                        print(filename)
                         deterministic = deterministic_algorithm_option_not_used(libraries, filename, node)
                         merge = merge_api_parameter_not_explicitly_set(libraries, filename, node)
                         columns_and_data = columns_and_datatype_not_explicitly_set(libraries, filename, node)
@@ -83,6 +82,7 @@ def analyze_project(project_path, output_path="."):
 # analyze_project("/Users/broke31/Desktop/smell_ai")
 
 def projects_analysis(BASE_PATH, output_path):
+    start = time.time()
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     dirpath = os.listdir(BASE_PATH)
@@ -91,9 +91,37 @@ def projects_analysis(BASE_PATH, output_path):
         if not os.path.exists(f"{output_path}/{dirname}"):
             os.makedirs(f"{output_path}/{dirname}")
         analyze_project(new_path, f"{output_path}/{dirname}")
-        print(f"Analyzed {dirname}")
+    end = time.time()
+    print(f"Sequential Exec Time completed in: {end - start}")
 
+def parallel_projects_analysis(BASE_PATH, output_path,max_workers=5):
+    start = time.time()
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        dirpath = os.listdir(BASE_PATH)
+        for dirname in dirpath:
+            new_path = os.path.join(BASE_PATH, dirname)
+            if not os.path.exists(f"{output_path}/{dirname}"):
+                os.makedirs(f"{output_path}/{dirname}")
+            executor.submit(analyze_project, new_path, f"{output_path}/{dirname}")
+    end = time.time()
+    print(f"Parallel Exec Time completed in: {end - start}")
+
+
+def clean():
+    # check os windows or linux
+    if os.name == "nt":
+        if os.path.exists(".\\projects_analysis"):
+            os.system("rmdir /s /q .\\projects_analysis")
+        if os.path.exists(".\\parallel_projects_analysis"):
+            os.system("rmdir /s /q .\\parallel_projects_analysis")
+    else:
+        if os.path.exists("./projects_analysis"):
+            os.system("rm -r ./projects_analysis")
+        if os.path.exists("./parallel_projects_analysis"):
+            os.system("rm -r ./parallel_projects_analysis")
 
 if __name__ == "__main__":
-    # projects_analysis("./dataset/projects", "./projects_analysis/output")
-    analyze_project("./examples", "./output/")
+    clean()
+    parallel_projects_analysis("F:\projects", "./parallel_projects_analysis/output",max_workers=8)
