@@ -1,6 +1,6 @@
 import ast
 import re
-
+from ..code_extractor.variables import get_all_set_variables
 
 def get_lines_of_code(node):
     function_name = node.name
@@ -80,22 +80,6 @@ Examples:
     - df['new_col_str'] = ''
     '''
 
-def get_df_variable_def(line):
-    pattern = r'(\w)+(\[.*\])+\s*=\s*(\w*)'
-    if re.match(pattern, line):
-        # get the variable name
-        variable = line.split('=')[0].strip().split('[')[0].strip()
-        return variable
-    return None
-
-def get_set_df_variables(lines):
-    variables = []
-    for line in lines:
-        variable = get_df_variable_def(line)
-        if variable:
-            variables.append(variable)
-    return set(variables)
-
 
 
 def empty_column_misinitialization(libraries, filename, node):
@@ -108,7 +92,7 @@ def empty_column_misinitialization(libraries, filename, node):
         variables = []
         number_of_apply = 0
         # get all defined variables that are dataframes
-        variables = get_set_df_variables(lines)
+        variables = get_all_set_variables(lines)
         # for each assignment of a variable
         for line in lines:
             assign_pattern = r'(\w)+(\[.*\])+\s*=\s*(\w*)'
