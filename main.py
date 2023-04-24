@@ -10,6 +10,8 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 
 def analyze_project(project_path, output_path="."):
+    pandas_dataframe = pd.read_csv("code_smells_rules/cs_methods_dict/dataframes.csv")
+    models_dataframe = pd.read_csv("code_smells_rules/cs_methods_dict/models.csv")
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     to_save = pd.DataFrame(columns=col)
     filenames = get_python_files(project_path)
