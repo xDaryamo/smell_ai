@@ -4,7 +4,7 @@
 
 import os
 import pandas as pd
-BASE_PATH = "F:/"
+BASE_PATH = "../input/projects/"
 
 def get_repo(repo_url):
     folder_url = repo_url.replace("/", "")
@@ -30,14 +30,14 @@ def debug_filter_repo(df):
     return df
 
 def get_debug_projects():
-    df = pd.read_csv("NICHE.csv")
+    df = pd.read_csv("../input/dataset/NICHE.csv")
     df = filter_repos(df)
     df = debug_filter_repo(df)
     for repo_url in df["GitHub_Repo"]:
         get_repo(repo_url)
 
 def get_projects():
-    df = pd.read_csv("NICHE.csv")
+    df = pd.read_csv("../input/dataset/NICHE.csv")
     df = filter_repos(df)
     for repo_url in df["GitHub_Repo"]:
         get_repo(repo_url)

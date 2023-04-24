@@ -11,7 +11,7 @@ def get_lines_of_code(node):
 
 
 def deterministic_algorithm_option_not_used(libraries, filename, node):
-    if "pytorch" or "torch" in libraries:
+    if [x for x in libraries if 'torch' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
         deterministic_algorithms = function_body.count("torch.use_deterministic_algorithms(True)")
@@ -26,7 +26,7 @@ def deterministic_algorithm_option_not_used(libraries, filename, node):
 
 
 def merge_api_parameter_not_explicitly_set(libraries, filename, node):
-    if "pandas" in libraries:
+    if [x for x in libraries if 'pandas' in x]:
         function_name, lines = get_lines_of_code(node)
         number_of_merge_not_explicit = 0
         for line in lines:
@@ -44,7 +44,7 @@ def merge_api_parameter_not_explicitly_set(libraries, filename, node):
 
 def columns_and_datatype_not_explicitly_set(libraries, filename, node):
     function_name, lines= get_lines_of_code(node)
-    if "pandas" in libraries:
+    if [x for x in libraries if 'pandas' in x]:
         function_name = node.name
 
         # get functions call of read_csv
@@ -102,7 +102,7 @@ def empty_column_misinitialization(libraries, filename, node):
     # this is the list of values that are considered as smelly empty values
     empty_values = ['0', "''", '""']
     function_name, lines = get_lines_of_code(node)
-    if "pandas" in libraries:
+    if [x for x in libraries if 'pandas' in x]:
         # get functions call of read_csv
         read_csv = []
         variables = []
@@ -137,7 +137,7 @@ def empty_column_misinitialization(libraries, filename, node):
 
 
 def nan_equivalence_comparison_misused(libraries, filename, node):
-    if "pandas" and "numpy" in libraries:
+    if [x for x in libraries if 'pandas' in x or 'numpy' in x]:
         function_name = node.name
         number_of_nan_equivalences = 0
         function_body = ast.unparse(node.body).strip()
@@ -158,11 +158,11 @@ def nan_equivalence_comparison_misused(libraries, filename, node):
 def in_place_apis_misused(libraries, filename, node):
     in_place_apis = 0
     function_name, lines = get_lines_of_code(node)
-    if "pandas" in libraries:
+    if [x for x in libraries if 'pandas' in x]:
         for line in lines:
             if "dropna" in line and "=" not in line:
                 in_place_apis += 1
-    if "tensorflow" in libraries:
+    if [x for x in libraries if 'tensorflow' in x]:
         for l in lines:
             if "clip" in l and "=" not in l:
                 in_place_apis += 1
@@ -179,21 +179,23 @@ def in_place_apis_misused(libraries, filename, node):
 def memory_not_freed(libraries, filename, node):
     memory_freed = False
     function_name, lines = get_lines_of_code(node)
-    if "tensorflow" in libraries:
+    if [x for x in libraries if 'tensorflow' in x]:
         for line in lines:
             if ".keras.backend.clear_session" in line:
                 memory_freed = True
                 break
-    if "pytorch" in libraries:
+    if [x for x in libraries if 'torch' in x]:
         for l in lines:
-            if "pytorch" in l:
+            if "torch" in l:
                 memory_freed = True
                 break
 
-    if memory_freed == False:
+    if not memory_freed:
         message = "Some APIs are provided to alleviate the run-out-of- memory issue in deep learning libraries"
         name_smell = "memory_not_freed"
-        to_return = [filename, function_name, not memory_freed,name_smell,message]
+        to_return = [filename, function_name, not memory_freed, name_smell, message]
         return to_return
     return []
+
+
 

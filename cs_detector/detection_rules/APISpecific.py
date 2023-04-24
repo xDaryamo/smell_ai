@@ -3,7 +3,7 @@ import re
 
 
 def Chain_Indexing(libraries, filename, node):
-    if "pandas" in libraries:
+    if [x for x in libraries if 'pandas' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
         pattern = r'([a-zA-Z]+[a-zA-Z_0-9]*)(\[[a-zA-Z0-9\']*\]){2,}'
@@ -18,7 +18,7 @@ def Chain_Indexing(libraries, filename, node):
 
 
 def dataframe_conversion_api_misused(libraries, filename, node):
-    if "pandas" in libraries:
+    if [x for x in libraries if 'pandas' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
         number_of_apply = function_body.count(".values")
@@ -33,7 +33,7 @@ def dataframe_conversion_api_misused(libraries, filename, node):
 
 
 def matrix_multiplication_api_misused(libraries, filename, node):
-    if "numpy" in libraries:
+    if [x for x in libraries if 'numpy' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
         number_of_dot = function_body.count(".dot(")
@@ -48,7 +48,7 @@ def matrix_multiplication_api_misused(libraries, filename, node):
 
 
 def gradients_not_cleared_before_backward_propagation(libraries, filename, node):
-    if "pytorch" in libraries:
+    if [x for x in libraries if 'torch' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
         lines = function_body.split('\n')
@@ -81,7 +81,7 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, node)
 
 
 def tensor_array_not_used(libraries, filename, node):
-    if "tensorflow" in libraries:
+    if [x for x in libraries if 'tensorflow' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
         lines = function_body.split('\n')
@@ -105,7 +105,7 @@ def tensor_array_not_used(libraries, filename, node):
 
 
 def pytorch_call_method_misused(libraries, filename, node):
-    if "pytorch" or "torch" in libraries:
+    if [x for x in libraries if 'torch' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
         lines = function_body.split('\n')
