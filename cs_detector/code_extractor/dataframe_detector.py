@@ -1,4 +1,3 @@
-from cs_detector.code_extractor.variables import get_all_set_variables, get_variable_def
 import ast
 
 
@@ -42,7 +41,15 @@ def recursive_search_variables(fun_node,init_list,df_dict):
             if isinstance(node.value, ast.Call):
                 name_func = node.value.func
                 if isinstance(name_func, ast.Attribute):
-                    if name_func.value.id in list:
+                    id = name_func.value
+                    if isinstance(name_func.value, ast.Subscript):
+                        id = name_func.value.value.id
+                    else:
+                        if(isinstance(name_func.value,ast.Name)):
+                            id = name_func.value.id
+                        else:
+                            continue
+                    if id in list:
                         if name_func.attr in df_dict:
                             if(node.targets[0].id not in list):
                                 list.append(node.targets[0].id)
