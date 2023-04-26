@@ -1,9 +1,6 @@
 import os
 
-from cs_detector.code_extractor.libraries import extract_libraries
 import pandas as pd
-from cs_detector.detection_rules.Generic import *
-from cs_detector.detection_rules.APISpecific import *
 from concurrent.futures import ThreadPoolExecutor
 import time
 from components import detector
@@ -111,4 +108,4 @@ def clean():
 
 if __name__ == "__main__":
     clean()
-    parallel_projects_analysis("../input/projects", "../output/projects_analysis",max_workers=8)
+    projects_analysis("../input/projects", "../output/projects_analysis")

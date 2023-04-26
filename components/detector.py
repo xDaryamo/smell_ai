@@ -1,20 +1,19 @@
 import os
 import pandas as pd
-import ast
-from cs_detector.code_extractor.libraries import extract_libraries
 
+from cs_detector.code_extractor.libraries import extract_libraries
 from cs_detector.detection_rules.Generic import *
 from cs_detector.detection_rules.APISpecific import *
+from cs_detector.code_extractor.models import load_model_dict
 
-
-def rule_check(node, libraries, filename, df_output):
+def rule_check(node, libraries, filename, df_output,models):
     deterministic = deterministic_algorithm_option_not_used(libraries, filename, node)
     merge = merge_api_parameter_not_explicitly_set(libraries, filename, node)
     columns_and_data = columns_and_datatype_not_explicitly_set(libraries, filename, node)
     empty = empty_column_misinitialization(libraries, filename, node)
     nan_equivalence = nan_equivalence_comparison_misused(libraries, filename, node)
     inplace = in_place_apis_misused(libraries, filename, node)
-    memory_not = memory_not_freed(libraries, filename, node)
+    memory_not = memory_not_freed(libraries, filename, node, models)
     chain = Chain_Indexing(libraries, filename, node)
     dataframe_conversion = dataframe_conversion_api_misused(libraries, filename, node)
     matrix_mul = matrix_multiplication_api_misused(libraries, filename, node)
@@ -59,11 +58,12 @@ def inspect(filename):
         try:
             tree = ast.parse(source)
             libraries = extract_libraries(tree)
+            models = load_model_dict()
             # Visita i nodi dell'albero dell'AST alla ricerca di funzioni
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    rule_check(node, libraries, filename, to_save)
-        except Exception as e:
+                    rule_check(node, libraries, filename, to_save,models)
+        except SyntaxError as e:
             message = f"Error in file {filename}: {e}"
             raise SyntaxError(message)
     return to_save

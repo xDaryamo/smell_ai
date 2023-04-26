@@ -1,6 +1,7 @@
 import ast
 import re
 from ..code_extractor.variables import get_all_set_variables
+from ..code_extractor.models import check_model_method
 
 def get_lines_of_code(node):
     function_name = node.name
@@ -160,24 +161,39 @@ def in_place_apis_misused(libraries, filename, node):
     return []
 
 #questa secondo me da un botto di falsi positivi
-def memory_not_freed(libraries, filename, node):
-    memory_freed = False
-    function_name, lines = get_lines_of_code(node)
+def memory_not_freed(libraries, filename, fun_node,model_dict):
     if [x for x in libraries if 'tensorflow' in x]:
-        for line in lines:
-            if ".keras.backend.clear_session" in line:
-                memory_freed = True
-                break
-    if [x for x in libraries if 'torch' in x]:
-        for l in lines:
-            if "torch" in l:
-                memory_freed = True
-                break
-
-    if not memory_freed:
-        message = "Some APIs are provided to alleviate the run-out-of- memory issue in deep learning libraries"
-        name_smell = "memory_not_freed"
-        to_return = [filename, function_name, not memory_freed, name_smell, message]
+        model_libs = ['tensorflow']
+    else:
+        return []
+    memory_not_freed = 0
+    for node in ast.walk(fun_node):
+        if isinstance(node,ast.For) : #add while
+            model_defined = False
+            #check if for contains ml method
+            for n in ast.walk(node):
+                if isinstance(n,ast.Call):
+                    if isinstance(n.func,ast.Attribute):
+                        method_name = n.func.attr + str('()')
+                    else: method_name = n.func.id + str('()')
+                    if check_model_method(method_name, model_dict, model_libs):
+                        model_defined = True
+            if model_defined:
+                free_memory = False
+                #check if for contains free memory
+                for n in ast.walk(node):
+                    if isinstance(n,ast.Call):
+                        if isinstance(n.func,ast.Attribute):
+                            method_name = n.func.attr
+                        else:
+                            method_name = n.func.id
+                        print(method_name)
+                        if method_name == 'clear_session':
+                            free_memory = True
+                if not free_memory:
+                    memory_not_freed += 1
+    if memory_not_freed > 0:
+        to_return = [filename, fun_node.name, memory_not_freed, "memory_not_freed", "Memory not freed"]
         return to_return
     return []
 

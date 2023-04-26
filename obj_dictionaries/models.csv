@@ -1,6 +1,6 @@
 id,library,method
-1,tensorflow,tf.keras.Model
-2,tensorflow,tf.keras.Sequential
+1,tensorflow,Model()
+2,tensorflow,Sequential()
 3,sklearn,DecisionTreeClassifier()
 4,sklearn,KNeighborsClassifier()
 5,sklearn,LogisticRegression()
