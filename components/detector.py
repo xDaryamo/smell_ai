@@ -20,6 +20,7 @@ def rule_check(node, libraries, filename, df_output,models):
     gradients = gradients_not_cleared_before_backward_propagation(libraries, filename, node)
     tensor = tensor_array_not_used(libraries, filename, node)
     pytorch = pytorch_call_method_misused(libraries, filename, node)
+ #   hyper_parameters = hyperparameters_not_explicitly_set(libraries, filename, node,models)
 
     if deterministic:
         df_output.loc[len(df_output)] = deterministic
@@ -47,6 +48,8 @@ def rule_check(node, libraries, filename, df_output,models):
         df_output.loc[len(df_output)] = tensor
     if pytorch:
         df_output.loc[len(df_output)] = pytorch
+ #   if hyper_parameters:
+  #      df_output.loc[len(df_output)] = hyper_parameters
     return df_output
 
 def inspect(filename):

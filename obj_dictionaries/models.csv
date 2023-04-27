@@ -21,3 +21,7 @@ id,library,method
 20,sklearn,XGBClassifier()
 21,sklearn,LGBMClassifier()
 22,sklearn,CatBoostClassifier()
+23,torch,SGD()
+24,keras,Model()
+25,keras,Sequential()
+

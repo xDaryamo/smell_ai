@@ -2,7 +2,7 @@ import ast
 import re
 from ..code_extractor.variables import get_all_set_variables
 from ..code_extractor.models import check_model_method
-
+from ..code_extractor.libraries import get_library_of_node, extract_library_name
 def get_lines_of_code(node):
     function_name = node.name
 
@@ -32,7 +32,7 @@ def merge_api_parameter_not_explicitly_set(libraries, filename, node):
         number_of_merge_not_explicit = 0
         for line in lines:
             if "merge" in line:
-                if "how" or "on" not in line:
+                if "how" or "on" or "validate" not in line:
                     number_of_merge_not_explicit += 1
         if number_of_merge_not_explicit > 0:
             message = "merge not explicit"
@@ -44,7 +44,7 @@ def merge_api_parameter_not_explicitly_set(libraries, filename, node):
 
 
 def columns_and_datatype_not_explicitly_set(libraries, filename, node):
-    function_name, lines= get_lines_of_code(node)
+    function_name, lines = get_lines_of_code(node)
     if [x for x in libraries if 'pandas' in x]:
         function_name = node.name
 
@@ -82,7 +82,6 @@ Examples:
     '''
 
 
-
 def empty_column_misinitialization(libraries, filename, node):
     # this is the list of values that are considered as smelly empty values
     empty_values = ['0', "''", '""']
@@ -115,7 +114,7 @@ def empty_column_misinitialization(libraries, filename, node):
                       "the ability to use methods such as .isnull() or .notnull() is retained." \
                       "Use NaN value (e.g. np.nan) if a new empty column in a DataFrame is needed. Do not use “filler values” such as zeros or empty strings."
             name_smell = "empty_column_misinitialization"
-            to_return = [filename, function_name, number_of_apply,name_smell, message]
+            to_return = [filename, function_name, number_of_apply, name_smell, message]
             return to_return
         return []
     return []
@@ -134,7 +133,7 @@ def nan_equivalence_comparison_misused(libraries, filename, node):
         if number_of_nan_equivalences > 0:
             message = "NaN equivalence comparison misused"
             name_smell = "nan_equivalence_comparison_misused"
-            to_return = [filename, function_name, number_of_nan_equivalences,name_smell, message]
+            to_return = [filename, function_name, number_of_nan_equivalences, name_smell, message]
             return to_return
         return []
     return []
@@ -160,30 +159,32 @@ def in_place_apis_misused(libraries, filename, node):
         return to_return
     return []
 
-#questa secondo me da un botto di falsi positivi
-def memory_not_freed(libraries, filename, fun_node,model_dict):
+
+# questa secondo me da un botto di falsi positivi
+def memory_not_freed(libraries, filename, fun_node, model_dict):
     if [x for x in libraries if 'tensorflow' in x]:
         model_libs = ['tensorflow']
     else:
         return []
     memory_not_freed = 0
     for node in ast.walk(fun_node):
-        if isinstance(node,ast.For) : #add while
+        if isinstance(node, ast.For):  # add while
             model_defined = False
-            #check if for contains ml method
+            # check if for contains ml method
             for n in ast.walk(node):
-                if isinstance(n,ast.Call):
-                    if isinstance(n.func,ast.Attribute):
+                if isinstance(n, ast.Call):
+                    if isinstance(n.func, ast.Attribute):
                         method_name = n.func.attr + str('()')
-                    else: method_name = n.func.id + str('()')
+                    else:
+                        method_name = n.func.id + str('()')
                     if check_model_method(method_name, model_dict, model_libs):
                         model_defined = True
             if model_defined:
                 free_memory = False
-                #check if for contains free memory
+                # check if for contains free memory
                 for n in ast.walk(node):
-                    if isinstance(n,ast.Call):
-                        if isinstance(n.func,ast.Attribute):
+                    if isinstance(n, ast.Call):
+                        if isinstance(n.func, ast.Attribute):
                             method_name = n.func.attr
                         else:
                             method_name = n.func.id
@@ -198,4 +199,36 @@ def memory_not_freed(libraries, filename, fun_node,model_dict):
     return []
 
 
+def hyperparameters_not_explicitly_set(libraries, filename, fun_node, model_dict):
+    model_libs = []
+    dict_libs = set(model_dict['library'])
+    for lib in dict_libs:
+        if [x for x in libraries if lib in x]:
+            model_libs.append(lib)
+    hyperparameters_not_explicitly_set = 0
+    for node in ast.walk(fun_node):
+        if isinstance(node, ast.Call):
+            while isinstance(node.func, ast.Call):
+                node = node.func
+            model_defined = False
+            if isinstance(node.func, ast.Attribute):
+                method_name = node.func.attr + str('()')
+            else:
+                method_name = node.func.id + str('()')
+            if check_model_method(method_name, model_dict, model_libs):
+                if get_library_of_node(node, libraries) is None:
+                    model_defined = True
+                else:
+                    if extract_library_name(get_library_of_node(node,libraries)).split(".")[0] in model_libs:
+                        model_defined = True
+            if model_defined:
+                # check if hyperparameters are set
+                if node.args == []:
+                    hyperparameters_not_explicitly_set += 1
+                    print(node.lineno)
+    if hyperparameters_not_explicitly_set > 0:
+        to_return = [filename, fun_node.name, hyperparameters_not_explicitly_set, "hyperparameters_not_explicitly_set",
+                     "Hyperparameters not explicitly set"]
+        return to_return
 
+    return []
