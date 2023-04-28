@@ -80,28 +80,28 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, node)
     return []
 
 
-def tensor_array_not_used(libraries, filename, node):
+
+def tensor_array_not_used(libraries, filename, fun_node):
     if [x for x in libraries if 'tensorflow' in x]:
-        function_name = node.name
-        function_body = ast.unparse(node.body).strip()
-        lines = function_body.split('\n')
-        tensor_array = False
+        function_name = fun_node.name
+        function_body = ast.unparse(fun_node.body).strip()
         number_of_apply = 0
-        for line in lines:
-            if "tf.constant" in line:
-                parameter = line.split("(")[1].split(")")[0]
-                if "[" in parameter:
-                    number_of_apply += 1
+        for node in ast.walk(fun_node):
+            if isinstance(node, ast.Call):
+                if isinstance(node.func, ast.Attribute):
+                    if node.func.attr == "constant":
+                        if len(node.args) >= 1:
+                            parameter = ast.unparse(node.args[0])
+                            if "[" in parameter:
+                                number_of_apply += 1
         if number_of_apply > 0:
             message = "If the developer initializes an array using tf.constant() and tries to assign a new value to " \
                       "it in the loop to keep it growing, the code will run into an error." \
                       "Using tf.TensorArray() for growing array in the loop is a better solution for this kind of " \
-                      "problem in TensorFlow 2. "
+                      "problem in TensorFlow 2."
             name_smell = "tensor_array_not_used"
             to_return = [filename, function_name, number_of_apply, name_smell, message]
             return to_return
-        return []
-    return []
 
 
 def pytorch_call_method_misused(libraries, filename, node):
