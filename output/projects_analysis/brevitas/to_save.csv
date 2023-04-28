@@ -1,0 +1,14 @@
+filename,function_name,smell,name_smell,message
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/tests/brevitas_finn/brevitas_examples/test_bnn_pynq_finn_export.py,test_brevitas_fc_onnx_export_and_exec,1,pytorch_call_method_misused,is recommended to use self.net()
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/src/brevitas_examples/bnn_pynq/trainer.py,train_model,1,gradients_not_cleared_before_backward_propagation,"If optimizer.zero_grad() is not used before loss_- fn.backward(), the gradients will be accumulatedfrom all loss_- fn.backward() calls and it will lead to the gradient explosion,which fails the training."
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/src/brevitas_examples/imagenet_classification/ptq/ptq_benchmark.py,main,2,columns_and_datatype_not_explicitly_set,"If the datatype or the columns are not set explicitly, it may silently continue the next step even though the input is unexpected, which may cause errors later.It is recommended to set the columns and DataType explicitly in data processing."
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/src/brevitas_examples/imagenet_classification/ptq/ptq_benchmark.py,ptq_torchvision_models,6,merge_api_parameter_not_explicitly_set,merge not explicit
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/src/brevitas_examples/text_to_speech/melgan/generator_brevitas.py,inference,1,pytorch_call_method_misused,is recommended to use self.net()
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/src/brevitas/nn/quant_max_pool.py,forward,1,pytorch_call_method_misused,is recommended to use self.net()
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/src/brevitas/nn/quant_max_pool.py,forward,1,pytorch_call_method_misused,is recommended to use self.net()
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/src/brevitas/nn/quant_dropout.py,forward,1,pytorch_call_method_misused,is recommended to use self.net()
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/src/brevitas/nn/quant_avg_pool.py,forward,1,pytorch_call_method_misused,is recommended to use self.net()
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/src/brevitas/nn/quant_avg_pool.py,forward,1,pytorch_call_method_misused,is recommended to use self.net()
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/src/brevitas/nn/target/flexml.py,forward,1,pytorch_call_method_misused,is recommended to use self.net()
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/src/brevitas/graph/calibrate.py,forward_hook_wbiol,2,pytorch_call_method_misused,is recommended to use self.net()
+/Users/broke31/Desktop/smell_ai/input/projects/brevitas/src/brevitas/export/manager.py,_cache_inp_out,1,pytorch_call_method_misused,is recommended to use self.net()

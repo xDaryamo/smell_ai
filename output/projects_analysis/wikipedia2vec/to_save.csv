@@ -1,0 +1,3 @@
+filename,function_name,smell,name_smell,message
+/Users/broke31/Desktop/smell_ai/input/projects/wikipedia2vec/examples/text_classification/train.py,train,1,gradients_not_cleared_before_backward_propagation,"If optimizer.zero_grad() is not used before loss_- fn.backward(), the gradients will be accumulatedfrom all loss_- fn.backward() calls and it will lead to the gradient explosion,which fails the training."
+/Users/broke31/Desktop/smell_ai/input/projects/wikipedia2vec/scripts/intrinsic_eval.py,main,1,matrix_multiplication_api_misused,"Please consider to use np.matmul to multiply matrix. The function dot() not return a scalar value, but a matrix. "
