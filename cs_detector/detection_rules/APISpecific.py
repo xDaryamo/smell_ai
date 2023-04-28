@@ -92,8 +92,9 @@ def tensor_array_not_used(libraries, filename, fun_node):
                     if node.func.attr == "constant":
                         if len(node.args) >= 1:
                             parameter = ast.unparse(node.args[0])
-                            if "[" in parameter:
-                                number_of_apply += 1
+                            for arg_node in node.args:
+                                if isinstance(arg_node, ast.List):
+                                    number_of_apply += 1
         if number_of_apply > 0:
             message = "If the developer initializes an array using tf.constant() and tries to assign a new value to " \
                       "it in the loop to keep it growing, the code will run into an error." \
