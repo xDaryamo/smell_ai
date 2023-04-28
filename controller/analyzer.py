@@ -5,6 +5,20 @@ from concurrent.futures import ThreadPoolExecutor
 import time
 from components import detector
 
+
+def merge_results(input_dir="../output", output_dir="../general_output"):
+    dataframes = []
+    for subdir, dirs, files in os.walk(input_dir):
+        # Per ogni subdir, verifichiamo se esiste un file "to_save.csv"
+        if "to_save.csv" in files:
+            df = pd.read_csv(os.path.join(subdir, "to_save.csv"))
+            dataframes.append(df)
+    combined_df = pd.concat(dataframes)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    combined_df.to_csv(os.path.join(output_dir, "overview_output.csv"), index=False)
+
+
 def find_python_files(url):
     try:
         # Estraiamo il path della directory radice del progetto e lo salaviamo in 'root'
@@ -36,8 +50,8 @@ def get_python_files(path):
 
 
 def analyze_project(project_path, output_path="."):
-    #pandas_dataframe = pd.read_csv("code_smells_rules/cs_methods_dict/dataframes.csv")
-    #models_dataframe = pd.read_csv("code_smells_rules/cs_methods_dict/models.csv")
+    # pandas_dataframe = pd.read_csv("code_smells_rules/cs_methods_dict/dataframes.csv")
+    # models_dataframe = pd.read_csv("code_smells_rules/cs_methods_dict/models.csv")
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     to_save = pd.DataFrame(columns=col)
     filenames = get_python_files(project_path)
@@ -109,3 +123,4 @@ def clean():
 if __name__ == "__main__":
     clean()
     projects_analysis("../input/projects", "../output/projects_analysis")
+    merge_results()

@@ -3,6 +3,8 @@ import re
 from ..code_extractor.variables import get_all_set_variables
 from ..code_extractor.models import check_model_method
 from ..code_extractor.libraries import get_library_of_node, extract_library_name
+
+
 def get_lines_of_code(node):
     function_name = node.name
 
@@ -176,9 +178,10 @@ def memory_not_freed(libraries, filename, fun_node, model_dict):
                     if isinstance(n.func, ast.Attribute):
                         method_name = n.func.attr + str('()')
                     else:
-                        method_name = n.func.id + str('()')
-                    if check_model_method(method_name, model_dict, model_libs):
-                        model_defined = True
+                        if hasattr(n.func, "id"):
+                            method_name = n.func.id + str('()')
+                            if check_model_method(method_name, model_dict, model_libs):
+                                model_defined = True
             if model_defined:
                 free_memory = False
                 # check if for contains free memory
@@ -187,8 +190,9 @@ def memory_not_freed(libraries, filename, fun_node, model_dict):
                         if isinstance(n.func, ast.Attribute):
                             method_name = n.func.attr
                         else:
-                            method_name = n.func.id
-                        print(method_name)
+                            if hasattr(n.func, "id"):
+                                method_name = n.func.id
+                                print(method_name)
                         if method_name == 'clear_session':
                             free_memory = True
                 if not free_memory:
@@ -219,7 +223,7 @@ def hyperparameters_not_explicitly_set(libraries, filename, fun_node, model_dict
                 if get_library_of_node(node, libraries) is None:
                     model_defined = True
                 else:
-                    if extract_library_name(get_library_of_node(node,libraries)).split(".")[0] in model_libs:
+                    if extract_library_name(get_library_of_node(node, libraries)).split(".")[0] in model_libs:
                         model_defined = True
             if model_defined:
                 # check if hyperparameters are set
