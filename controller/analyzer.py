@@ -38,6 +38,10 @@ def find_python_files(url):
 
 def get_python_files(path):
     result = []
+    if os.path.isfile(path):
+        if path.endswith(".py"):
+            result.append(path)
+            return result
     for root, dirs, files in os.walk(path):
         if "venv" in dirs:
             dirs.remove("venv")  # ignora la directory "venv"
@@ -122,5 +126,5 @@ def clean():
 
 if __name__ == "__main__":
     clean()
-    projects_analysis("../input/projects", "../output/projects_analysis")
+    projects_analysis("../input/projects/example/empty_try", "../output/projects_analysis")
     merge_results()

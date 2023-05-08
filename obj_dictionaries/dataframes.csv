@@ -69,7 +69,7 @@ id,library,method
 68,pandas,cumprod
 69,pandas,cummin
 70,pandas,cummax
-71,pandas,select_dtypes,
+71,pandas,select_dtypes
 72,pandas,set_flags
 73,pandas,convert_dtypes
 74,pandas,infer_objects
@@ -83,7 +83,7 @@ id,library,method
 82,pandas,div
 83,pandas,truediv
 84,pandas,floordiv
-85,pandas,mod,
+85,pandas,mod
 86,pandas,pow
 87,pandas,dot
 88,pandas,radd
@@ -105,3 +105,4 @@ id,library,method
 104,pandas,add_prefix
 105,pandas,add_suffix
 106,pandas,between_time
+107,pandas,DataFrame

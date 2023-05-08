@@ -1,5 +1,7 @@
 import ast
 
+import pandas as pd
+
 
 def search_pandas_library(libraries):
     for lib in libraries:
@@ -10,8 +12,10 @@ def search_pandas_library(libraries):
             return short
     return None
 
+def load_dataframe_dict(path):
+    return pd.read_csv(path, dtype={'id': 'string', 'library': 'string', 'method': 'string'})
 
-def dataframe_check(fun_node, libraries, df_dict):
+def dataframe_check(fun_node, libraries,df_dict):
     short = search_pandas_library(libraries)
     list = [short]
     if short is None:
@@ -50,7 +54,7 @@ def recursive_search_variables(fun_node,init_list,df_dict):
                         else:
                             continue
                     if id in list:
-                        if name_func.attr in df_dict:
+                        if name_func.attr in df_dict['method'].tolist():
                             if(node.targets[0].id not in list):
                                 list.append(node.targets[0].id)
             else:

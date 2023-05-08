@@ -12,7 +12,7 @@ def analyze_example(filename):
     df_dict = {'loc': 'loc', 'iloc': 'iloc', 'at': 'at', 'iat': 'iat', 'xs': 'xs', 'ix': 'ix', 'irow': 'irow','concat':'concat','DataFrame':'DataFrame'}
     for node in ast.walk(tree):
         if isinstance(node, ast.FunctionDef):
-            print(dataframe_check(node, libraries, df_dict))
+            print(dataframe_check(node, libraries))
 
 
 def main():

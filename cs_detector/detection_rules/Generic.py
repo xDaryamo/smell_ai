@@ -4,7 +4,7 @@ from ..code_extractor.variables import get_all_set_variables
 from ..code_extractor.models import check_model_method
 from ..code_extractor.libraries import get_library_of_node, extract_library_name
 
-
+from ..code_extractor.dataframe_detector import dataframe_check
 def get_lines_of_code(node):
     function_name = node.name
 
@@ -84,7 +84,7 @@ Examples:
     '''
 
 
-def empty_column_misinitialization(libraries, filename, node):
+def empty_column_misinitialization(libraries, filename, node,df_dict):
     # this is the list of values that are considered as smelly empty values
     empty_values = ['0', "''", '""']
     function_name, lines = get_lines_of_code(node)
@@ -94,7 +94,7 @@ def empty_column_misinitialization(libraries, filename, node):
         variables = []
         number_of_apply = 0
         # get all defined variables that are dataframes
-        variables = get_all_set_variables(lines)
+        variables = dataframe_check(node,libraries,df_dict)
         # for each assignment of a variable
         for line in lines:
             assign_pattern = r'(\w)+(\[.*\])+\s*=\s*(\w*)'
