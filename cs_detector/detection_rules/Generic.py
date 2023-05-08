@@ -5,6 +5,8 @@ from ..code_extractor.models import check_model_method
 from ..code_extractor.libraries import get_library_of_node, extract_library_name
 
 from ..code_extractor.dataframe_detector import dataframe_check
+
+
 def get_lines_of_code(node):
     function_name = node.name
 
@@ -28,14 +30,24 @@ def deterministic_algorithm_option_not_used(libraries, filename, node):
     return []
 
 
-def merge_api_parameter_not_explicitly_set(libraries, filename, node):
+def merge_api_parameter_not_explicitly_set(libraries, filename, fun_node, df_dict):
     if [x for x in libraries if 'pandas' in x]:
-        function_name, lines = get_lines_of_code(node)
+        function_name, lines = get_lines_of_code(fun_node)
         number_of_merge_not_explicit = 0
-        for line in lines:
-            if "merge" in line:
-                if "how" or "on" or "validate" not in line:
-                    number_of_merge_not_explicit += 1
+        variables = dataframe_check(fun_node, libraries, df_dict)
+        for node in ast.walk(fun_node):
+            if isinstance(node, ast.Call):
+                if hasattr(node.func,'attr'):
+                    if node.func.attr == 'merge':
+                        if node.func.value.id in variables:
+                            if not(hasattr(node, 'keywords')) or node.keywords is None:
+                                number_of_merge_not_explicit += 1
+                            else:
+                                args = [x.arg for x in node.keywords]
+                                if 'how' in args and 'on' in args and 'validate' in args:
+                                    continue
+                                else:
+                                    number_of_merge_not_explicit += 1
         if number_of_merge_not_explicit > 0:
             message = "merge not explicit"
             name_smell = "merge_api_parameter_not_explicitly_set"
@@ -84,7 +96,7 @@ Examples:
     '''
 
 
-def empty_column_misinitialization(libraries, filename, node,df_dict):
+def empty_column_misinitialization(libraries, filename, node, df_dict):
     # this is the list of values that are considered as smelly empty values
     empty_values = ['0', "''", '""']
     function_name, lines = get_lines_of_code(node)
@@ -94,7 +106,7 @@ def empty_column_misinitialization(libraries, filename, node,df_dict):
         variables = []
         number_of_apply = 0
         # get all defined variables that are dataframes
-        variables = dataframe_check(node,libraries,df_dict)
+        variables = dataframe_check(node, libraries, df_dict)
         # for each assignment of a variable
         for line in lines:
             assign_pattern = r'(\w)+(\[.*\])+\s*=\s*(\w*)'

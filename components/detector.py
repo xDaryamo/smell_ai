@@ -11,7 +11,7 @@ def rule_check(node, libraries, filename, df_output,models):
     df_dict = load_dataframe_dict('../obj_dictionaries/dataframes.csv')
     #start detection
     deterministic = deterministic_algorithm_option_not_used(libraries, filename, node)
-    merge = merge_api_parameter_not_explicitly_set(libraries, filename, node)
+    merge = merge_api_parameter_not_explicitly_set(libraries, filename, node,df_dict)
     columns_and_data = columns_and_datatype_not_explicitly_set(libraries, filename, node)
     empty = empty_column_misinitialization(libraries, filename, node,df_dict)
     nan_equivalence = nan_equivalence_comparison_misused(libraries, filename, node)
