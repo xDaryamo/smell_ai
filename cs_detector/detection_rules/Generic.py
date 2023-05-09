@@ -165,19 +165,29 @@ def nan_equivalence_comparison_misused(libraries, filename, node):
     return []
 
 
-def in_place_apis_misused(libraries, filename, node):
-    if [x for x in libraries if x in test_libraries]:
+def in_place_apis_misused(libraries, filename, fun_node,df_dict):
+    function_name = ''
+    if [x for x in libraries if 'pandas' in x]:
+        function_name = fun_node.name
+    if function_name == '':
         return []
     in_place_apis = 0
-    function_name, lines = get_lines_of_code(node)
-    if [x for x in libraries if 'pandas' in x]:
-        for line in lines:
-            if "dropna" in line and "=" not in line:
-                in_place_apis += 1
-    if [x for x in libraries if 'tensorflow' in x]:
-        for l in lines:
-            if "clip" in l and "=" not in l:
-                in_place_apis += 1
+    for node in ast.iter_child_nodes(fun_node):
+        in_place_flag = False
+        if isinstance(node,ast.Expr):
+            if isinstance(node.value,ast.Call):
+                if isinstance(node.value.func,ast.Attribute):
+                    if hasattr(node.value,'keywords'):
+                        for keyword in node.value.keywords:
+                            if keyword.arg == 'inplace':
+                                if keyword.value.value == True:
+                                    in_place_flag = True
+                    if not in_place_flag:
+                        df = df_dict[df_dict['return_type'] == 'DataFrame']
+                        if node.value.func.attr in df['method'].values:
+                            in_place_apis += 1
+
+
     if in_place_apis > 0:
         message = "We suggest developers check whether the result of the operation is assigned to a variable or the" \
                   " in-place parameter is set in the API. Some developers hold the view that the in-place operation" \

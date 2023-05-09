@@ -1,8 +1,9 @@
 import ast
 import re
 
-test_libraries = ["pytest", "robot", "unittest", "doctest", "nose2", "testify", "pytest-cov", "pytest-xdist"]
+from cs_detector.code_extractor.dataframe_detector import dataframe_check
 
+test_libraries = ["pytest", "robot", "unittest", "doctest", "nose2", "testify", "pytest-cov", "pytest-xdist"]
 
 def Chain_Indexing(libraries, filename, node):
     if [x for x in libraries if x in test_libraries]:
@@ -21,20 +22,27 @@ def Chain_Indexing(libraries, filename, node):
     return []
 
 
-def dataframe_conversion_api_misused(libraries, filename, node):
-    if [x for x in libraries if x in test_libraries]:
-        return []
+def dataframe_conversion_api_misused(libraries, filename, fun_node,df_dict):
+
     if [x for x in libraries if 'pandas' in x]:
-        function_name = node.name
-        function_body = ast.unparse(node.body).strip()
-        number_of_apply = function_body.count(".values")
+        function_name = fun_node.name
+        variables = dataframe_check(fun_node,libraries,df_dict)
+    number_of_apply = 0
+    for node in ast.walk(fun_node):
+        if isinstance(node, ast.Attribute):
+            if hasattr(node, 'value'):
+                if hasattr(node, 'attr'):
+                    if node.attr == 'values':
+                        if hasattr(node, 'value'):
+                            if node.value.id in variables:
+                                number_of_apply += 1
+                                print("node.id", node.value.id)
+    if number_of_apply > 0:
         message = "Please consider to use numpy instead values to convert dataframe. The function 'values' is deprecated." \
                   "The value return of this function is unclear."
-        if number_of_apply > 0:
-            name_smell = "dataframe_conversion_api_misused"
-            to_return = [filename, function_name, number_of_apply, name_smell, message]
-            return to_return
-        return []
+        name_smell = "dataframe_conversion_api_misused"
+        to_return = [filename, function_name, number_of_apply, name_smell, message]
+        return to_return
     return []
 
 
