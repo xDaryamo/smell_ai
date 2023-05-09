@@ -1,9 +1,9 @@
 import os
-
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
 import time
 from components import detector
+import argparse
 
 
 def merge_results(input_dir="../output", output_dir="../general_output"):
@@ -54,14 +54,12 @@ def get_python_files(path):
 
 
 def analyze_project(project_path, output_path="."):
-    # pandas_dataframe = pd.read_csv("code_smells_rules/cs_methods_dict/dataframes.csv")
-    # models_dataframe = pd.read_csv("code_smells_rules/cs_methods_dict/models.csv")
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     to_save = pd.DataFrame(columns=col)
     filenames = get_python_files(project_path)
 
     for filename in filenames:
-        if "tests/" not in filename: # ignore test files
+        if "tests/" not in filename:  # ignore test files
             try:
                 result = detector.inspect(filename)
                 to_save = to_save.merge(result, how='outer')
@@ -74,13 +72,8 @@ def analyze_project(project_path, output_path="."):
                     error_file.write(message)
                 continue
 
-    # for dirname in dirnames:
-    #     new_path = os.path.join(dirpath, dirname)
-    #     analyze_project(new_path)
     to_save.to_csv(output_path + "/to_save.csv", index=False, mode='a')
 
-
-# analyze_project("/Users/broke31/Desktop/smell_ai")
 
 def projects_analysis(base_path, output_path):
     start = time.time()
@@ -125,7 +118,32 @@ def clean():
             os.system("rm -r ../output/parallel_projects_analysis")
 
 
-if __name__ == "__main__":
+def main(args):
+    print(args.input)
+    print(args.output)
+
+    if args.input is None or args.output is None:
+        print("Please specify input and output folders")
+        exit(0)
+
     clean()
-    projects_analysis("../input/projects/example/empty_try", "../output/projects_analysis")
+    if args.parallel:
+        parallel_projects_analysis(args.input, args.output, args.max_workers)
+    else:
+        projects_analysis(args.input, args.output)
     merge_results()
+
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Code Smile is a tool for detecting AI-specific code smells "
+                                                 "for Python projects")
+    parser.add_argument("--input", type=str, help="Path to the input folder")
+    parser.add_argument("--output", type=str, help="Path to the output folder")
+    parser.add_argument("--max_workers", type=int, default=5,help="Number of workers for parallel execution")
+    parser.add_argument("--parallel",default=False, type=bool, help="Enable parallel execution")
+    args = parser.parse_args()
+    main(args)
+
+
+
