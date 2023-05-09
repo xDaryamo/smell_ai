@@ -75,7 +75,7 @@ def analyze_project(project_path, output_path="."):
     to_save.to_csv(output_path + "/to_save.csv", index=False, mode='a')
 
 
-def projects_analysis(base_path, output_path):
+def projects_analysis(base_path='../input/projects', output_path='../output/projects_analysis'):
     start = time.time()
     if not os.path.exists(output_path):
         os.makedirs(output_path)
