@@ -1,7 +1,7 @@
 import ast
 import re
 from ..code_extractor.models import check_model_method
-from ..code_extractor.libraries import get_library_of_node, extract_library_name
+from ..code_extractor.libraries import get_library_of_node, extract_library_name, extract_library_as_name
 
 from ..code_extractor.dataframe_detector import dataframe_check
 
@@ -143,19 +143,26 @@ def empty_column_misinitialization(libraries, filename, node, df_dict):
         return []
     return []
 
-
 def nan_equivalence_comparison_misused(libraries, filename, node):
+    library_name = ""
     if [x for x in libraries if x in test_libraries]:
         return []
-    if [x for x in libraries if 'pandas' in x or 'numpy' in x]:
+    if [x for x in libraries if 'numpy' in x]:
+        for x in libraries:
+            if 'numpy' in x:
+                library_name = extract_library_as_name(x)
         function_name = node.name
         number_of_nan_equivalences = 0
-        function_body = ast.unparse(node.body).strip()
-        call_function = function_body.split('\n')
-        for line in call_function:
-            line_without_space = line.replace(" ", "")
-            if "==np.nan" in line_without_space:
-                number_of_nan_equivalences += 1
+        for node in ast.walk(node):
+            if isinstance(node, ast.Compare):
+                nan_equivalence = False
+                if isinstance(node.left, ast.Attribute) and node.left.attr == 'nan' and node.left.value.id == library_name:
+                    nan_equivalence = True
+                for expr in node.comparators:
+                    if isinstance(expr, ast.Attribute) and expr.attr == 'nan' and expr.value.id == library_name:
+                        nan_equivalence = True
+                if nan_equivalence:
+                    number_of_nan_equivalences += 1
         if number_of_nan_equivalences > 0:
             message = "NaN equivalence comparison misused"
             name_smell = "nan_equivalence_comparison_misused"

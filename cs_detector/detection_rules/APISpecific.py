@@ -145,16 +145,20 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, node)
 
 
 def tensor_array_not_used(libraries, filename, fun_node):
+    library_name = ""
     if [x for x in libraries if x in test_libraries]:
         return []
     if [x for x in libraries if 'tensorflow' in x]:
         function_name = fun_node.name
         function_body = ast.unparse(fun_node.body).strip()
+        for x in libraries:
+            if 'tensorflow' in x:
+                library_name = extract_library_as_name(x)
         number_of_apply = 0
         for node in ast.walk(fun_node):
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Attribute):
-                    if node.func.attr == "constant":
+                    if node.func.attr == "constant" and node.func.value.id == library_name:
                         if len(node.args) >= 1:
                             parameter = ast.unparse(node.args[0])
                             for arg_node in node.args:
