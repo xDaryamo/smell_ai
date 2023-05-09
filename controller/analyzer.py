@@ -61,17 +61,18 @@ def analyze_project(project_path, output_path="."):
     filenames = get_python_files(project_path)
 
     for filename in filenames:
-        try:
-            result = detector.inspect(filename)
-            to_save = to_save.merge(result, how='outer')
-        except SyntaxError as e:
-            message = e.msg
-            error_path = output_path
-            if not os.path.exists(error_path):
-                os.makedirs(error_path)
-            with open(f"{error_path}/error.txt", "a") as error_file:
-                error_file.write(message)
-            continue
+        if "tests/" not in filename: # ignore test files
+            try:
+                result = detector.inspect(filename)
+                to_save = to_save.merge(result, how='outer')
+            except SyntaxError as e:
+                message = e.msg
+                error_path = output_path
+                if not os.path.exists(error_path):
+                    os.makedirs(error_path)
+                with open(f"{error_path}/error.txt", "a") as error_file:
+                    error_file.write(message)
+                continue
 
     # for dirname in dirnames:
     #     new_path = os.path.join(dirpath, dirname)

@@ -1,10 +1,11 @@
 import ast
 import re
-from ..code_extractor.variables import get_all_set_variables
 from ..code_extractor.models import check_model_method
 from ..code_extractor.libraries import get_library_of_node, extract_library_name
 
 from ..code_extractor.dataframe_detector import dataframe_check
+
+test_libraries = ["pytest", "robot", "unittest", "doctest", "nose2", "testify", "pytest-cov", "pytest-xdist"]
 
 
 def get_lines_of_code(node):
@@ -16,6 +17,9 @@ def get_lines_of_code(node):
 
 
 def deterministic_algorithm_option_not_used(libraries, filename, node):
+    if [x for x in libraries if x in test_libraries]:
+        return []
+
     if [x for x in libraries if 'torch' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
@@ -31,6 +35,8 @@ def deterministic_algorithm_option_not_used(libraries, filename, node):
 
 
 def merge_api_parameter_not_explicitly_set(libraries, filename, fun_node, df_dict):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     if [x for x in libraries if 'pandas' in x]:
         function_name, lines = get_lines_of_code(fun_node)
         number_of_merge_not_explicit = 0
@@ -58,6 +64,8 @@ def merge_api_parameter_not_explicitly_set(libraries, filename, fun_node, df_dic
 
 
 def columns_and_datatype_not_explicitly_set(libraries, filename, node):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     function_name, lines = get_lines_of_code(node)
     if [x for x in libraries if 'pandas' in x]:
         function_name = node.name
@@ -97,6 +105,8 @@ Examples:
 
 
 def empty_column_misinitialization(libraries, filename, node, df_dict):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     # this is the list of values that are considered as smelly empty values
     empty_values = ['0', "''", '""']
     function_name, lines = get_lines_of_code(node)
@@ -135,6 +145,8 @@ def empty_column_misinitialization(libraries, filename, node, df_dict):
 
 
 def nan_equivalence_comparison_misused(libraries, filename, node):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     if [x for x in libraries if 'pandas' in x or 'numpy' in x]:
         function_name = node.name
         number_of_nan_equivalences = 0
@@ -154,6 +166,8 @@ def nan_equivalence_comparison_misused(libraries, filename, node):
 
 
 def in_place_apis_misused(libraries, filename, node):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     in_place_apis = 0
     function_name, lines = get_lines_of_code(node)
     if [x for x in libraries if 'pandas' in x]:
@@ -174,8 +188,9 @@ def in_place_apis_misused(libraries, filename, node):
     return []
 
 
-# questa secondo me da un botto di falsi positivi
 def memory_not_freed(libraries, filename, fun_node, model_dict):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     if [x for x in libraries if 'tensorflow' in x]:
         model_libs = ['tensorflow']
     else:
@@ -216,6 +231,8 @@ def memory_not_freed(libraries, filename, fun_node, model_dict):
 
 
 def hyperparameters_not_explicitly_set(libraries, filename, fun_node, model_dict):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     model_libs = []
     dict_libs = set(model_dict['library'])
     for lib in dict_libs:
@@ -246,5 +263,4 @@ def hyperparameters_not_explicitly_set(libraries, filename, fun_node, model_dict
         to_return = [filename, fun_node.name, hyperparameters_not_explicitly_set, "hyperparameters_not_explicitly_set",
                      "Hyperparameters not explicitly set"]
         return to_return
-
     return []

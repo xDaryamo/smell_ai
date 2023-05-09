@@ -1,8 +1,12 @@
 import ast
 import re
 
+test_libraries = ["pytest", "robot", "unittest", "doctest", "nose2", "testify", "pytest-cov", "pytest-xdist"]
+
 
 def Chain_Indexing(libraries, filename, node):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     if [x for x in libraries if 'pandas' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
@@ -18,6 +22,8 @@ def Chain_Indexing(libraries, filename, node):
 
 
 def dataframe_conversion_api_misused(libraries, filename, node):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     if [x for x in libraries if 'pandas' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
@@ -33,6 +39,8 @@ def dataframe_conversion_api_misused(libraries, filename, node):
 
 
 def matrix_multiplication_api_misused(libraries, filename, node):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     if [x for x in libraries if 'numpy' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
@@ -48,6 +56,8 @@ def matrix_multiplication_api_misused(libraries, filename, node):
 
 
 def gradients_not_cleared_before_backward_propagation(libraries, filename, node):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     if [x for x in libraries if 'torch' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()
@@ -82,6 +92,8 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, node)
 
 
 def tensor_array_not_used(libraries, filename, fun_node):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     if [x for x in libraries if 'tensorflow' in x]:
         function_name = fun_node.name
         function_body = ast.unparse(fun_node.body).strip()
@@ -106,6 +118,8 @@ def tensor_array_not_used(libraries, filename, fun_node):
 
 
 def pytorch_call_method_misused(libraries, filename, node):
+    if [x for x in libraries if x in test_libraries]:
+        return []
     if [x for x in libraries if 'torch' in x]:
         function_name = node.name
         function_body = ast.unparse(node.body).strip()

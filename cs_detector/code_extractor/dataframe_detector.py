@@ -37,6 +37,7 @@ def recursive_search_variables(fun_node,init_list,df_dict):
                        if(node.targets[0].id not in list):
                             list.append(node.target.id)
             if isinstance(node.value, ast.Name):
+
                 name = node.value
                 if name.id in list:
                     if(node.targets[0].id not in list):
