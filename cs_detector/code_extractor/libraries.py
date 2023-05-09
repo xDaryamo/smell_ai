@@ -35,6 +35,14 @@ def extract_library_name(library):
     else:
         return library.split(" as ")[0]
 
+
+def extract_library_as_name(library):
+    if "as" not in library:
+        return library
+    else:
+        return library.split(" as ")[1]
+
+
 def get_library_of_node(node, libraries):
     """
     Given a node and a list of libraries, return the library of the node.
