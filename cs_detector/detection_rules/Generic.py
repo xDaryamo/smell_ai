@@ -43,17 +43,19 @@ def merge_api_parameter_not_explicitly_set(libraries, filename, fun_node, df_dic
         variables = dataframe_check(fun_node, libraries, df_dict)
         for node in ast.walk(fun_node):
             if isinstance(node, ast.Call):
-                if hasattr(node.func,'attr'):
+                if hasattr(node.func, 'attr'):
                     if node.func.attr == 'merge':
-                        if node.func.value.id in variables:
-                            if not(hasattr(node, 'keywords')) or node.keywords is None:
-                                number_of_merge_not_explicit += 1
-                            else:
-                                args = [x.arg for x in node.keywords]
-                                if 'how' in args and 'on' in args and 'validate' in args:
-                                    continue
-                                else:
-                                    number_of_merge_not_explicit += 1
+                        if hasattr(node.func, 'value'):
+                            if hasattr(node.func.value, 'id'):
+                                if node.func.value.id in variables:
+                                    if not (hasattr(node, 'keywords')) or node.keywords is None:
+                                        number_of_merge_not_explicit += 1
+                                    else:
+                                        args = [x.arg for x in node.keywords]
+                                        if 'how' in args and 'on' in args and 'validate' in args:
+                                            continue
+                                        else:
+                                            number_of_merge_not_explicit += 1
         if number_of_merge_not_explicit > 0:
             message = "merge not explicit"
             name_smell = "merge_api_parameter_not_explicitly_set"
@@ -151,6 +153,7 @@ def empty_column_misinitialization(libraries, filename, node, df_dict):
         return []
     return []
 
+
 def nan_equivalence_comparison_misused(libraries, filename, node):
     library_name = ""
     if [x for x in libraries if x in test_libraries]:
@@ -164,13 +167,16 @@ def nan_equivalence_comparison_misused(libraries, filename, node):
         for node in ast.walk(node):
             if isinstance(node, ast.Compare):
                 nan_equivalence = False
-                if isinstance(node.left, ast.Attribute) and node.left.attr == 'nan' and node.left.value.id == library_name:
-                    nan_equivalence = True
-                for expr in node.comparators:
-                    if isinstance(expr, ast.Attribute) and expr.attr == 'nan' and expr.value.id == library_name:
-                        nan_equivalence = True
-                if nan_equivalence:
-                    number_of_nan_equivalences += 1
+                if hasattr(node.left,"value"):
+                    if hasattr(node.left.value, 'id'):
+                        if isinstance(node.left,
+                                      ast.Attribute) and node.left.attr == 'nan' and node.left.value.id == library_name:
+                            nan_equivalence = True
+                        for expr in node.comparators:
+                            if isinstance(expr, ast.Attribute) and expr.attr == 'nan' and expr.value.id == library_name:
+                                nan_equivalence = True
+                        if nan_equivalence:
+                            number_of_nan_equivalences += 1
         if number_of_nan_equivalences > 0:
             message = "NaN equivalence comparison misused"
             name_smell = "nan_equivalence_comparison_misused"
@@ -179,7 +185,8 @@ def nan_equivalence_comparison_misused(libraries, filename, node):
         return []
     return []
 
-def in_place_apis_misused(libraries, filename, fun_node,df_dict):
+
+def in_place_apis_misused(libraries, filename, fun_node, df_dict):
     function_name = ''
     if [x for x in libraries if 'pandas' in x]:
         function_name = fun_node.name
@@ -188,19 +195,19 @@ def in_place_apis_misused(libraries, filename, fun_node,df_dict):
     in_place_apis = 0
     for node in ast.iter_child_nodes(fun_node):
         in_place_flag = False
-        if isinstance(node,ast.Expr):
-            if isinstance(node.value,ast.Call):
-                if isinstance(node.value.func,ast.Attribute):
-                    if hasattr(node.value,'keywords'):
+        if isinstance(node, ast.Expr):
+            if isinstance(node.value, ast.Call):
+                if isinstance(node.value.func, ast.Attribute):
+                    if hasattr(node.value, 'keywords'):
                         for keyword in node.value.keywords:
                             if keyword.arg == 'inplace':
-                                if keyword.value.value == True:
-                                    in_place_flag = True
+                                if hasattr(keyword.value, 'value'):
+                                    if keyword.value.value == True:
+                                        in_place_flag = True
                     if not in_place_flag:
                         df = df_dict[df_dict['return_type'] == 'DataFrame']
                         if node.value.func.attr in df['method'].values:
                             in_place_apis += 1
-
 
     if in_place_apis > 0:
         message = "We suggest developers check whether the result of the operation is assigned to a variable or the" \
@@ -220,6 +227,7 @@ def memory_not_freed(libraries, filename, fun_node, model_dict):
     else:
         return []
     memory_not_freed = 0
+    method_name = ''
     for node in ast.walk(fun_node):
         if isinstance(node, ast.For):  # add while
             model_defined = False
@@ -258,6 +266,7 @@ def hyperparameters_not_explicitly_set(libraries, filename, fun_node, model_dict
     if [x for x in libraries if x in test_libraries]:
         return []
     model_libs = []
+    method_name = ''
     dict_libs = set(model_dict['library'])
     for lib in dict_libs:
         if [x for x in libraries if lib in x]:
@@ -271,7 +280,8 @@ def hyperparameters_not_explicitly_set(libraries, filename, fun_node, model_dict
             if isinstance(node.func, ast.Attribute):
                 method_name = node.func.attr + str('()')
             else:
-                method_name = node.func.id + str('()')
+                if hasattr(node.func, "id"):
+                    method_name = node.func.id + str('()')
             if check_model_method(method_name, model_dict, model_libs):
                 if get_library_of_node(node, libraries) is None:
                     model_defined = True

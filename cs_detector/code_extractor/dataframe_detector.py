@@ -34,21 +34,24 @@ def recursive_search_variables(fun_node,init_list,df_dict):
                 if isinstance(expr.value, ast.Name):
                     name = expr.value
                     if name.id in list:
-                       if(node.targets[0].id not in list):
-                            list.append(node.target.id)
+                        if hasattr(node.targets[0], 'id'):
+                            if node.targets[0].id not in list:
+                                list.append(node.target.id)
             if isinstance(node.value, ast.Name):
 
                 name = node.value
                 if name.id in list:
-                    if(node.targets[0].id not in list):
-                        list.append(node.targets[0].id)
+                    if hasattr(node.targets[0], 'id'):
+                        if node.targets[0].id not in list:
+                            list.append(node.targets[0].id)
 
             if isinstance(node.value, ast.Call):
                 name_func = node.value.func
                 if isinstance(name_func, ast.Attribute):
                     id = name_func.value
                     if isinstance(name_func.value, ast.Subscript):
-                        id = name_func.value.value.id
+                        if isinstance(name_func.value.value, ast.Name):
+                            id = name_func.value.value.id
                     else:
                         if(isinstance(name_func.value,ast.Name)):
                             id = name_func.value.id
@@ -56,25 +59,30 @@ def recursive_search_variables(fun_node,init_list,df_dict):
                             continue
                     if id in list:
                         if name_func.attr in df_dict['method'].tolist():
-                            if(node.targets[0].id not in list):
-                                list.append(node.targets[0].id)
+                            if hasattr(node.targets[0], 'id'):
+                                if node.targets[0].id not in list:
+                                    list.append(node.targets[0].id)
             else:
                 if isinstance(node.value, ast.Subscript):
                     if isinstance(node.value.value, ast.Name):
                         if node.value.value.id in list:
-                            if(node.targets[0].id not in list):
-                                list.append(node.targets[0].id)
+                            if hasattr(node.targets[0], 'id'):
+                                if node.targets[0].id not in list:
+                                    list.append(node.targets[0].id)
     if list == init_list:
         return list
     else:
         return recursive_search_variables(fun_node,list,df_dict)
 
 def extract_lib_object(lib):
-    split_lib = lib.split(" as ")
-    if split_lib[1] is not None:
-        short = split_lib[1]
-        return short
-    else:
+    try:
+        split_lib = lib.split(" as ")
+        if split_lib[1] is not None and split_lib[1] != "": # this because some libraries are imported with and endwith as
+            short = split_lib[1]
+            return short
+        else:
+            return None
+    except:
         return None
 
 

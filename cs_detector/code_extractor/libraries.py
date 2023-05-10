@@ -37,7 +37,7 @@ def extract_library_name(library):
 
 
 def extract_library_as_name(library):
-    if "as" not in library:
+    if " as " not in library:
         return library
     else:
         return library.split(" as ")[1]

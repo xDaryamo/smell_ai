@@ -9,14 +9,17 @@ import argparse
 def merge_results(input_dir="../output", output_dir="../general_output"):
     dataframes = []
     for subdir, dirs, files in os.walk(input_dir):
-        # Per ogni subdir, verifichiamo se esiste un file "to_save.csv"
         if "to_save.csv" in files:
             df = pd.read_csv(os.path.join(subdir, "to_save.csv"))
-            dataframes.append(df)
-    combined_df = pd.concat(dataframes)
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    combined_df.to_csv(os.path.join(output_dir, "overview_output.csv"), index=False)
+            if len(df) > 0:
+                dataframes.append(df)
+    if dataframes:
+        combined_df = pd.concat(dataframes)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+        combined_df.to_csv(os.path.join(output_dir, "overview_output.csv"), index=False)
+    else:
+        print("Error.")
 
 
 def find_python_files(url):
@@ -71,6 +74,17 @@ def analyze_project(project_path, output_path="."):
                 with open(f"{error_path}/error.txt", "a") as error_file:
                     error_file.write(message)
                 continue
+            except FileNotFoundError as e:
+                message = e
+                error_path = output_path
+                if not os.path.exists(error_path):
+                    os.makedirs(error_path)
+                with open(f"{error_path}/error.txt", "a") as error_file:
+                    error_file.write(str(message))
+                continue
+
+
+
 
     to_save.to_csv(output_path + "/to_save.csv", index=False, mode='a')
 
@@ -131,7 +145,7 @@ def main(args):
         parallel_projects_analysis(args.input, args.output, args.max_workers)
     else:
         projects_analysis(args.input, args.output)
-    merge_results()
+    merge_results(args.output, args.output+"/overview")
 
 
 

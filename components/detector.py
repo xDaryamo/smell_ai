@@ -23,7 +23,7 @@ def rule_check(node, libraries, filename, df_output,models):
     gradients = gradients_not_cleared_before_backward_propagation(libraries, filename, node)
     tensor = tensor_array_not_used(libraries, filename, node)
     pytorch = pytorch_call_method_misused(libraries, filename, node)
-    # hyper_parameters = hyperparameters_not_explicitly_set(libraries, filename, node,models)
+ #   hyper_parameters = hyperparameters_not_explicitly_set(libraries, filename, node,models)
 
     if deterministic:
         df_output.loc[len(df_output)] = deterministic
@@ -59,17 +59,21 @@ def inspect(filename):
     col = ["filename", "function_name", "smell", "name_smell", "message"]
     to_save = pd.DataFrame(columns=col)
     file_path = os.path.join(filename)
-    with open(file_path, "rb") as file:
-        source = file.read()
-        try:
-            tree = ast.parse(source)
-            libraries = extract_libraries(tree)
-            models = load_model_dict()
-            # Visita i nodi dell'albero dell'AST alla ricerca di funzioni
-            for node in ast.walk(tree):
-                if isinstance(node, ast.FunctionDef):
+    try:
+        with open(file_path, "rb") as file:
+            source = file.read()
+    except FileNotFoundError as e:
+        message = f"Error in file {filename}: {e}"
+        raise FileNotFoundError(message)
+    try:
+        tree = ast.parse(source)
+        libraries = extract_libraries(tree)
+        models = load_model_dict()
+        # Visita i nodi dell'albero dell'AST alla ricerca di funzioni
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
                     rule_check(node, libraries, filename, to_save,models)
-        except SyntaxError as e:
-            message = f"Error in file {filename}: {e}"
-            raise SyntaxError(message)
+    except SyntaxError as e:
+        message = f"Error in file {filename}: {e}"
+        raise SyntaxError(message)
     return to_save
