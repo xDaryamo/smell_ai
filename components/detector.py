@@ -12,18 +12,18 @@ def rule_check(node, libraries, filename, df_output,models):
     #start detection
     deterministic = deterministic_algorithm_option_not_used(libraries, filename, node)
     merge = merge_api_parameter_not_explicitly_set(libraries, filename, node,df_dict)
-    columns_and_data = columns_and_datatype_not_explicitly_set(libraries, filename, node)
+    columns_and_data = columns_and_datatype_not_explicitly_set(libraries, filename, node,df_dict)
     empty = empty_column_misinitialization(libraries, filename, node,df_dict)
     nan_equivalence = nan_equivalence_comparison_misused(libraries, filename, node)
     inplace = in_place_apis_misused(libraries, filename, node,df_dict)
     memory_not = memory_not_freed(libraries, filename, node, models)
-    chain = Chain_Indexing(libraries, filename, node)
+    chain = Chain_Indexing(libraries, filename, node,df_dict)
     dataframe_conversion = dataframe_conversion_api_misused(libraries, filename, node,df_dict)
     matrix_mul = matrix_multiplication_api_misused(libraries, filename, node)
     gradients = gradients_not_cleared_before_backward_propagation(libraries, filename, node)
     tensor = tensor_array_not_used(libraries, filename, node)
     pytorch = pytorch_call_method_misused(libraries, filename, node)
- #   hyper_parameters = hyperparameters_not_explicitly_set(libraries, filename, node,models)
+    # hyper_parameters = hyperparameters_not_explicitly_set(libraries, filename, node,models)
 
     if deterministic:
         df_output.loc[len(df_output)] = deterministic

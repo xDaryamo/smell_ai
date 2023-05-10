@@ -63,31 +63,39 @@ def merge_api_parameter_not_explicitly_set(libraries, filename, fun_node, df_dic
     return []
 
 
-def columns_and_datatype_not_explicitly_set(libraries, filename, node):
+def columns_and_datatype_not_explicitly_set(libraries, filename, fun_node, df_dict):
     if [x for x in libraries if x in test_libraries]:
         return []
-    function_name, lines = get_lines_of_code(node)
+    library = None
+    number_of_columns_and_datatype_not_explicit = 0
+    function_name, lines = get_lines_of_code(fun_node)
     if [x for x in libraries if 'pandas' in x]:
-        function_name = node.name
+        function_name = fun_node.name
+        for x in libraries:
+            if 'pandas' in x:
+                library = extract_library_as_name(x)
 
-        # get functions call of read_csv
-        read_csv = []
-        for line in lines:
-            if ('read_csv(' in line) or ('DataFrame(') in line:
-                read_csv.append(line)
-        number_of_apply = 0
-        for line in read_csv:
-            line = line.replace(' ', '')
-            if 'dtype=' not in line or 'columns=' not in line:
-                number_of_apply += 1
-        message = "If the datatype or the columns are not set explicitly, it may silently continue the next step even though the input is unexpected, which may cause errors later." \
-                  "It is recommended to set the columns and DataType explicitly in data processing."
-        if number_of_apply > 0:
+        for node in ast.walk(fun_node):
+            if isinstance(node, ast.Call):
+                if hasattr(node.func,'attr'):
+                    if node.func.attr == 'DataFrame' or node.func.attr == 'read_csv':
+                        if hasattr(node.func, 'value'):
+                            if isinstance(node.func.value, ast.Name) and node.func.value.id == library:
+                                if not(hasattr(node, 'keywords')) or node.keywords is None or len(node.keywords) == 0:
+                                    number_of_columns_and_datatype_not_explicit += 1
+                                    print("Dtype missing:" + str(node.lineno))
+                                else:
+                                    args = [x.arg for x in node.keywords]
+                                    if 'dtype' in args:
+                                        continue
+                                    else:
+                                        number_of_columns_and_datatype_not_explicit += 1
+                                        print("Dtype missing:" + str(node.lineno))
+        if number_of_columns_and_datatype_not_explicit > 0:
+            message = "columns and datatype not explicit"
             name_smell = "columns_and_datatype_not_explicitly_set"
-            to_return = [filename, function_name, number_of_apply, name_smell, message]
+            to_return = [filename, function_name, number_of_columns_and_datatype_not_explicit, name_smell, message]
             return to_return
-        return []
-    return []
 
 
 '''
@@ -170,7 +178,6 @@ def nan_equivalence_comparison_misused(libraries, filename, node):
             return to_return
         return []
     return []
-
 
 def in_place_apis_misused(libraries, filename, fun_node,df_dict):
     function_name = ''

@@ -8,16 +8,22 @@ from cs_detector.code_extractor.libraries import extract_library_as_name
 test_libraries = ["pytest", "robot", "unittest", "doctest", "nose2", "testify", "pytest-cov", "pytest-xdist"]
 
 
-def Chain_Indexing(libraries, filename, node):
+def Chain_Indexing(libraries, filename, node,df_dict):
     if [x for x in libraries if x in test_libraries]:
         return []
     if [x for x in libraries if 'pandas' in x]:
         function_name = node.name
+        variables = dataframe_check(node, libraries,df_dict)
         function_body = ast.unparse(node.body).strip()
         pattern = r'([a-zA-Z]+[a-zA-Z_0-9]*)(\[[a-zA-Z0-9\']*\]){2,}'
         matches = re.findall(pattern, function_body)
         message = "Using chain indexing may cause performance issues."
-        num_matches = len(matches)
+        num_matches = 0
+        for match in matches:
+            #get the variable name
+            variable = match[0]
+            if variable in variables:
+                num_matches += 1
         if num_matches > 0:
             name_smell = "Chain_Indexing"
             return [f"{filename}", f"{function_name}", num_matches, name_smell, message]
@@ -36,7 +42,7 @@ def dataframe_conversion_api_misused(libraries, filename, fun_node, df_dict):
                 if hasattr(node, 'attr'):
                     if node.attr == 'values':
                         if hasattr(node, 'value'):
-                            if node.value.id in variables:
+                            if isinstance(node.value,ast.Name) and node.value.id in variables:
                                 number_of_apply += 1
     if number_of_apply > 0:
         message = "Please consider to use numpy instead values to convert dataframe. The function 'values' is deprecated." \
