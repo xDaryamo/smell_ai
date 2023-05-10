@@ -8,16 +8,22 @@ from cs_detector.code_extractor.libraries import extract_library_as_name
 test_libraries = ["pytest", "robot", "unittest", "doctest", "nose2", "testify", "pytest-cov", "pytest-xdist"]
 
 
-def Chain_Indexing(libraries, filename, node):
+def Chain_Indexing(libraries, filename, node,df_dict):
     if [x for x in libraries if x in test_libraries]:
         return []
     if [x for x in libraries if 'pandas' in x]:
         function_name = node.name
+        variables = dataframe_check(node, libraries,df_dict)
         function_body = ast.unparse(node.body).strip()
         pattern = r'([a-zA-Z]+[a-zA-Z_0-9]*)(\[[a-zA-Z0-9\']*\]){2,}'
         matches = re.findall(pattern, function_body)
         message = "Using chain indexing may cause performance issues."
-        num_matches = len(matches)
+        num_matches = 0
+        for match in matches:
+            #get the variable name
+            variable = match[0]
+            if variable in variables:
+                num_matches += 1
         if num_matches > 0:
             name_smell = "Chain_Indexing"
             return [f"{filename}", f"{function_name}", num_matches, name_smell, message]
@@ -114,39 +120,35 @@ def matrix_multiplication_api_misused(libraries, filename, fun_node):
     return []
 
 
-def gradients_not_cleared_before_backward_propagation(libraries, filename, node):
+def gradients_not_cleared_before_backward_propagation(libraries, filename, fun_node):
+    library_name = ""
     if [x for x in libraries if x in test_libraries]:
         return []
     if [x for x in libraries if 'torch' in x]:
-        function_name = node.name
-        function_body = ast.unparse(node.body).strip()
-        lines = function_body.split('\n')
-        zero_grad_called = False
-        gradients_not_cleared = 0
-        backward_called = False
-        for line in lines:
-            if "zero_grad(" in line:
-                zero_grad_called = True
-                if backward_called:
-                    gradients_not_cleared = 1
-            elif 'loss_fn.backward()' in line:
-                backward_called = True
-                if not zero_grad_called:
-                    gradients_not_cleared = 1
-            elif 'optimizer.step()' in line:
-                if not backward_called:
-                    gradients_not_cleared = 1
-            zero_grad_called = False
-            backward_called = False
-        message = "If optimizer.zero_grad() is not used before loss_- fn.backward(), the gradients will be accumulated" \
-                  "from all loss_- fn.backward() calls and it will lead to the gradient explosion," \
-                  "which fails the training."
-        if gradients_not_cleared > 0:
+        for x in libraries:
+            if 'torch' in x:
+                library_name = extract_library_as_name(x)
+        function_name = fun_node.name
+        number_of_apply = 0
+        for node in ast.walk(fun_node):
+            if isinstance(node, ast.For) or isinstance(node,ast.While):
+                zero_grad_called = False
+                for node2 in ast.walk(node):
+                    if isinstance(node2, ast.Call):
+                        if hasattr(node2, 'func'):
+                            if hasattr(node2.func, 'attr'):
+                                if node2.func.attr == 'zero_grad':
+                                    zero_grad_called = True
+                                if node2.func.attr == 'backward':
+                                    if not zero_grad_called:
+                                        number_of_apply += 1
+                                        print("Zero Grad not used", node2.lineno)
+        if number_of_apply > 0:
+            message = "Please consider to use zero_grad() before backward()."
             name_smell = "gradients_not_cleared_before_backward_propagation"
-            to_return = [filename, function_name, gradients_not_cleared, name_smell, message]
+            to_return = [filename, function_name, number_of_apply, name_smell, message]
             return to_return
         return []
-    return []
 
 
 def tensor_array_not_used(libraries, filename, fun_node):
