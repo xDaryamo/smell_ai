@@ -99,7 +99,6 @@ def columns_and_datatype_not_explicitly_set(libraries, filename, fun_node, df_di
             to_return = [filename, function_name, number_of_columns_and_datatype_not_explicit, name_smell, message]
             return to_return
 
-
 '''
 Title: Empty column misinitialization
     Context: Developers may need a new empty column in DataFrame.
@@ -217,6 +216,7 @@ def in_place_apis_misused(libraries, filename, fun_node, df_dict):
         to_return = [filename, function_name, in_place_apis, name_smell, message]
         return to_return
     return []
+
 
 
 def memory_not_freed(libraries, filename, fun_node, model_dict):

@@ -149,6 +149,8 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, fun_n
             to_return = [filename, function_name, number_of_apply, name_smell, message]
             return to_return
         return []
+    return []
+
 
 
 def tensor_array_not_used(libraries, filename, fun_node):
@@ -180,6 +182,9 @@ def tensor_array_not_used(libraries, filename, fun_node):
             name_smell = "tensor_array_not_used"
             to_return = [filename, function_name, number_of_apply, name_smell, message]
             return to_return
+        return []
+    return []
+
 
 
 def pytorch_call_method_misused(libraries, filename, node):
