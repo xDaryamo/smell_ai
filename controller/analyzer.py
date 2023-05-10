@@ -11,12 +11,19 @@ def merge_results(input_dir="../output", output_dir="../general_output"):
     for subdir, dirs, files in os.walk(input_dir):
         if "to_save.csv" in files:
             df = pd.read_csv(os.path.join(subdir, "to_save.csv"))
-            if len(df) > 0:
+            if len(df) > 1:
                 dataframes.append(df)
+
     if dataframes:
         combined_df = pd.concat(dataframes)
+        #rimuovi tutti le linee contenti filename,function_name,smell,name_smell,message tranne la prima
+        combined_df = combined_df[combined_df["filename"] != "filename"]
+        combined_df = combined_df.reset_index(drop=True)
+
+
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
+
         combined_df.to_csv(os.path.join(output_dir, "overview_output.csv"), index=False)
     else:
         print("Error.")
@@ -47,9 +54,9 @@ def get_python_files(path):
             return result
     for root, dirs, files in os.walk(path):
         if "venv" in dirs:
-            dirs.remove("venv")  # ignora la directory "venv"
+            dirs.remove("venv")
         if "lib" in dirs:
-            dirs.remove("lib")  # ignora la directory "lib"
+            dirs.remove("lib")
         for file in files:
             if file.endswith(".py"):
                 result.append(os.path.abspath(os.path.join(root, file)))
