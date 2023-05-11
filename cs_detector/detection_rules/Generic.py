@@ -79,11 +79,11 @@ def columns_and_datatype_not_explicitly_set(libraries, filename, fun_node, df_di
 
         for node in ast.walk(fun_node):
             if isinstance(node, ast.Call):
-                if hasattr(node.func,'attr'):
+                if hasattr(node.func, 'attr'):
                     if node.func.attr == 'DataFrame' or node.func.attr == 'read_csv':
                         if hasattr(node.func, 'value'):
                             if isinstance(node.func.value, ast.Name) and node.func.value.id == library:
-                                if not(hasattr(node, 'keywords')) or node.keywords is None or len(node.keywords) == 0:
+                                if not (hasattr(node, 'keywords')) or node.keywords is None or len(node.keywords) == 0:
                                     number_of_columns_and_datatype_not_explicit += 1
                                     print("Dtype missing:" + str(node.lineno))
                                 else:
@@ -98,6 +98,7 @@ def columns_and_datatype_not_explicitly_set(libraries, filename, fun_node, df_di
             name_smell = "columns_and_datatype_not_explicitly_set"
             to_return = [filename, function_name, number_of_columns_and_datatype_not_explicit, name_smell, message]
             return to_return
+
 
 '''
 Title: Empty column misinitialization
@@ -166,7 +167,7 @@ def nan_equivalence_comparison_misused(libraries, filename, node):
         for node in ast.walk(node):
             if isinstance(node, ast.Compare):
                 nan_equivalence = False
-                if hasattr(node.left,"value"):
+                if hasattr(node.left, "value"):
                     if hasattr(node.left.value, 'id'):
                         if isinstance(node.left,
                                       ast.Attribute) and node.left.attr == 'nan' and node.left.value.id == library_name:
@@ -216,7 +217,6 @@ def in_place_apis_misused(libraries, filename, fun_node, df_dict):
         to_return = [filename, function_name, in_place_apis, name_smell, message]
         return to_return
     return []
-
 
 
 def memory_not_freed(libraries, filename, fun_node, model_dict):
@@ -298,3 +298,61 @@ def hyperparameters_not_explicitly_set(libraries, filename, fun_node, model_dict
                      "Hyperparameters not explicitly set"]
         return to_return
     return []
+
+
+def unnecessary_iteration(libraries, filename, fun_node, df_dict):
+    function_name = ''
+    if [x for x in libraries if 'pandas' in x]:
+        function_name = fun_node.name
+    if function_name == '':
+        return []
+    variables = dataframe_check(fun_node, libraries, df_dict)
+    unnecessary_iterations = 0
+    for node in ast.walk(fun_node):
+        if isinstance(node, ast.For):
+            if isinstance(node.iter, ast.Call):
+                if hasattr(node.iter, 'func'):
+                    if isinstance(node.iter.func, ast.Attribute):
+                        if node.iter.func.attr == 'iterrows':
+                            # add iterators of the for cycle to variables
+                            if (isinstance(node.target, ast.Tuple)):
+                                for target in node.target.elts:
+                                    if isinstance(target, ast.Name):
+                                        variables.append(target.id)
+                            # check if for contains pandas method
+                            for n in ast.walk(node):
+                                op_to_analyze = None
+
+                                if isinstance(n, ast.Call):
+                                    if isinstance(n.func, ast.Attribute):
+                                        if n.func.attr == 'append':
+                                            for arg in n.args:
+                                                if isinstance(arg, ast.BinOp):
+                                                    op_to_analyze = arg
+
+                                if isinstance(n, ast.Assign):
+                                    if isinstance(n.value, ast.BinOp):
+                                        op_to_analyze = n.value
+
+                                if op_to_analyze is not None:
+                                    op_to_analyze_left = op_to_analyze.left
+                                    op_to_analyze_right = op_to_analyze.right
+                                    while isinstance(op_to_analyze_left, ast.Subscript):
+                                        op_to_analyze_left = op_to_analyze.left.value
+                                    while isinstance(op_to_analyze_right, ast.Subscript):
+                                        op_to_analyze_right = op_to_analyze.right.value
+
+                                    if isinstance(op_to_analyze_left, ast.Name):
+                                        if op_to_analyze_left.id in variables:
+                                            unnecessary_iterations += 1
+
+                                    if isinstance(op_to_analyze_right, ast.Name):
+                                        if op_to_analyze_right.id in variables:
+                                            unnecessary_iterations += 1
+
+    if unnecessary_iterations > 0:
+        message = "Iterating through pandas objects is generally slow. In many cases, iterating manually over the rows is not needed and can be avoided" \
+                  " Pandas’ built-in methods (e.g., join, groupby) are vectorized. It is therefore recommended to use Pandas built-in methods as an alternative to loops."
+        name_smell = "unnecessary_iteration"
+        to_return = [filename, function_name, unnecessary_iterations, name_smell, message]
+        return to_return
