@@ -35,10 +35,11 @@ def search_variable_definition(var, fun_node, limit_node):
                         last_node_definition = node
         if equal_node(node, limit_node):
             return last_node_definition
+    return last_node_definition
 
 
 def equal_node(node1, node2):
-    if isinstance(node1, ast.Call) and isinstance(node2, ast.Call):
+    if hasattr(node1, 'lineno') and hasattr(node2, 'lineno'):
         if node1.lineno == node2.lineno and node1.col_offset == node2.col_offset:
             return True
     return False

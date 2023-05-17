@@ -4,11 +4,12 @@ import pandas as pd
 from cs_detector.code_extractor.libraries import extract_libraries
 from cs_detector.detection_rules.Generic import *
 from cs_detector.detection_rules.APISpecific import *
-from cs_detector.code_extractor.models import load_model_dict
+from cs_detector.code_extractor.models import load_model_dict, load_tensor_operations_dict
 from cs_detector.code_extractor.dataframe_detector import load_dataframe_dict
 def rule_check(node, libraries, filename, df_output,models):
     #create dictionaries and libraries useful for detection
     df_dict = load_dataframe_dict('../obj_dictionaries/dataframes.csv')
+    tensor_dict = load_tensor_operations_dict()
     #start detection
     deterministic = deterministic_algorithm_option_not_used(libraries, filename, node)
     merge = merge_api_parameter_not_explicitly_set(libraries, filename, node,df_dict)
@@ -25,7 +26,7 @@ def rule_check(node, libraries, filename, df_output,models):
     pytorch = pytorch_call_method_misused(libraries, filename, node)
     unnecessary_iterations = unnecessary_iteration(libraries, filename, node, df_dict)
  #   hyper_parameters = hyperparameters_not_explicitly_set(libraries, filename, node,models)
-
+    broadcasting_not_used = broadcasting_feature_not_used(libraries, filename, node,tensor_dict)
     if deterministic:
         df_output.loc[len(df_output)] = deterministic
     if merge:
@@ -54,6 +55,8 @@ def rule_check(node, libraries, filename, df_output,models):
         df_output.loc[len(df_output)] = pytorch
     if unnecessary_iterations:
         df_output.loc[len(df_output)] = unnecessary_iterations
+    if broadcasting_not_used:
+        df_output.loc[len(df_output)] = broadcasting_not_used
  #   if hyper_parameters:
   #      df_output.loc[len(df_output)] = hyper_parameters
     return df_output
