@@ -97,7 +97,7 @@ def matrix_multiplication_api_misused(libraries, filename, fun_node):
                                                         arguments.append(arg.id)
                                             if matrix_multiplication:
                                                 number_of_apply += 1
-                                                print("Matrices are node.args: ", ast.unparse(node))
+
                                             else:
                                                 for arg in arguments:
                                                     node_def = search_variable_definition(arg, fun_node, node)
@@ -109,7 +109,7 @@ def matrix_multiplication_api_misused(libraries, filename, fun_node):
                                                                     matrix_multiplication = True
                                                 if matrix_multiplication:
                                                     number_of_apply += 1
-                                                    print("Matrices are node.args: ", ast.unparse(node))
+
         if number_of_apply > 0:
             message = "Please consider to use np.matmul to multiply matrix. The function dot() not return a scalar value, " \
                       "but a matrix."
@@ -142,7 +142,7 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, fun_n
                                 if node2.func.attr == 'backward':
                                     if not zero_grad_called:
                                         number_of_apply += 1
-                                        print("Zero Grad not used", node2.lineno)
+
         if number_of_apply > 0:
             message = "Please consider to use zero_grad() before backward()."
             name_smell = "gradients_not_cleared_before_backward_propagation"

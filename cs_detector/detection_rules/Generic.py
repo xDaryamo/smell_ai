@@ -378,23 +378,29 @@ def broadcasting_feature_not_used(libraries, filename, fun_node, tensor_dict):
         if isinstance(node, ast.Assign):
             if isinstance(node.value, ast.Call):
                 if isinstance(node.value.func, ast.Attribute):
-                    if (node.value.func.attr == 'constant' or node.value.func.attr == 'Variable') and node.value.func.value.id == library_name:
+
+                    if (node.value.func.attr == 'constant' or node.value.func.attr == 'Variable') and\
+                            hasattr(node.value.func.value,'id') and\
+                            node.value.func.value.id == library_name:
                         n = node.value
         if n:
             if hasattr(n,'args') and len(n.args) > 0:
                 if isinstance(n.args[0], ast.Name):
                     variable = search_variable_definition(n.args[0].id,fun_node,node)
-                    if variable:
+                    if variable and hasattr(node.targets[0],'id'):
                         tensor_c = search_tensor_constants(variable)
                         new_tensor_variable = {node.targets[0].id: tensor_c}
                         tensor_variables.update(new_tensor_variable)
                 if isinstance(n.args[0], ast.List):
-                    new_tensor_variable = {node.targets[0].id: search_tensor_constants(n.args[0])}
-                    tensor_variables.update(new_tensor_variable)
+                    constant = search_tensor_constants(n.args[0])
+                    if constant and hasattr(node.targets[0],'id'):
 
+                        new_tensor_variable = {node.targets[0].id: constant}
+                        tensor_variables.update(new_tensor_variable)
+                    else:
+                        continue
     tensor_variables_with_tiling = tensor_check_tiling(fun_node,tensor_variables)
     #filter operation with tensor variables with tiling
-    print("Tensors:",tensor_variables_with_tiling)
     operations = search_tensor_combination_operation(fun_node, tensor_dict, tensor_variables)
     #check if the operations are compatible with broadcasting
     broadcasting_checking_tensors = []
@@ -415,8 +421,6 @@ def broadcasting_feature_not_used(libraries, filename, fun_node, tensor_dict):
     for b_tensor in broadcasting_checking_tensors:
         if b_tensor["variable"] in tensor_variables_with_tiling:
             broadcasting_features_not_used_counter += 1
-            print("Tensor",b_tensor["variable"],"in line",b_tensor["line"],"is not using broadcasting feature for",b_tensor["operation"],"operation")
-
     if broadcasting_features_not_used_counter > 0:
         message = "Broadcasting is a powerful mechanism that allows numpy to work with arrays of different shapes when performing arithmetic operations. Broadcasting solves the problem of arithmetic between arrays of differing shapes by in effect replicating the smaller array along the last mismatched dimension."
         name_smell = "broadcasting_feature_not_used"
@@ -434,7 +438,6 @@ def broadcasting_check(tensor_list):
         if len(tensor_list) > 2:
             for i in range(len(tensor_list)-1):
                if broadcast(tensor_list[i], tensor_list[i+1]):
-                     print("Broadcasting is applicable for",tensor_list[i],"and",tensor_list[i+1])
                      return True
     return False
 
@@ -458,11 +461,14 @@ def tensor_check_tiling(fun_node,tensor_variables):
                 n = node.value
             if n:
                 if isinstance(n.func, ast.Attribute):
-                    if n.func.value.id == 'tf':
-                        if n.func.attr == 'tile':
-                            if node.value.args[0].id in tensor_variables.keys():
-                                variable_with_tiling.append(node.targets[0].id)
-                                tensor_variables.update({node.targets[0].id: tensor_variables[node.value.args[0].id]})
+                    if isinstance(n.func.value, ast.Name):
+                        if n.func.value.id == 'tf':
+                            if n.func.attr == 'tile':
+                                if hasattr(node.value, "args") and len(node.value.args) > 0:
+                                    if isinstance(node.value.args[0], ast.Name):
+                                        if node.value.args[0].id in tensor_variables.keys():
+                                            variable_with_tiling.append(node.targets[0].id)
+                                            tensor_variables.update({node.targets[0].id: tensor_variables[node.value.args[0].id]})
     return variable_with_tiling
 
 
@@ -527,9 +533,12 @@ def search_for_tensor_variables(libraries, filename, fun_node, tensor_dict):
             return tensor_variables
 
 def search_tensor_constants(node):
-    if isinstance(node, ast.List):
-        collected_list = ast.literal_eval(node)
-        return collected_list
+    try:
+        if isinstance(node, ast.List):
+            collected_list = ast.literal_eval(node)
+            return collected_list
+    except:
+        return []
     return []
 def get_list_dimensions(lst):
     dimensions = []
