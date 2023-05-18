@@ -96,21 +96,36 @@ def analyze_project(project_path, output_path="."):
     to_save.to_csv(output_path + "/to_save.csv", index=False, mode='a')
 
 
-def projects_analysis(base_path='../input/projects', output_path='../output/projects_analysis'):
+def projects_analysis(base_path='../input/projects', output_path='../output/projects_analysis',resume=False):
     start = time.time()
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     dirpath = os.listdir(base_path)
+    if not os.path.exists("../config/execution_log.txt"):
+        open("../config/execution_log.txt", "w").close()
+        resume = False
+    execution_log = open("../config/execution_log.txt", "a")
+    #get last project analyzed in execution_log.txt
+    if resume:
+        with open("../config/execution_log.txt", "r") as f:
+            last_project = f.readlines()[-1]
     for dirname in dirpath:
+        if resume:
+            if dirname <= last_project:
+                continue
         new_path = os.path.join(base_path, dirname)
         if not os.path.exists(f"{output_path}/{dirname}"):
             os.makedirs(f"{output_path}/{dirname}")
+        print(f"Analyzing {dirname}...")
+
         analyze_project(new_path, f"{output_path}/{dirname}")
+        print(f"{dirname} analyzed successfully.")
+        execution_log.write(dirname + "\n")
     end = time.time()
     print(f"Sequential Exec Time completed in: {end - start}")
 
 
-def parallel_projects_analysis(base_path='../input/projects', output_path='../output/projects_analysis', max_workers=5):
+def parallel_projects_analysis(base_path='../input/projects', output_path='../output/projects_analysis', max_workers=5,resume=False):
     start = time.time()
     if not os.path.exists(output_path):
         os.makedirs(output_path)
@@ -139,6 +154,7 @@ def clean():
             os.system("rm -r ../output/parallel_projects_analysis")
 
 
+
 def main(args):
     print(args.input)
     print(args.output)
@@ -146,12 +162,14 @@ def main(args):
     if args.input is None or args.output is None:
         print("Please specify input and output folders")
         exit(0)
-
-    clean()
+    resume = True
+    if not args.resume:
+        resume = False
+        clean()
     if args.parallel:
-        parallel_projects_analysis(args.input, args.output, args.max_workers)
+        parallel_projects_analysis(args.input, args.output, args.max_workers,resume)
     else:
-        projects_analysis(args.input, args.output)
+        projects_analysis(args.input, args.output,resume)
     merge_results(args.output, args.output+"/overview")
 
 
@@ -163,6 +181,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, help="Path to the output folder")
     parser.add_argument("--max_workers", type=int, default=5,help="Number of workers for parallel execution")
     parser.add_argument("--parallel",default=False, type=bool, help="Enable parallel execution")
+    parser.add_argument("--resume", default=False, type=bool, help="Continue previous execution")
     args = parser.parse_args()
     main(args)
 
