@@ -23,7 +23,7 @@ def project_report():
     a.to_csv('project_overview.csv')
 def main():
     project_report()
-
+    smell_report()
 
 if __name__ == '__main__':
     main()
