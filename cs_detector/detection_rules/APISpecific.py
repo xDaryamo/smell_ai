@@ -8,27 +8,32 @@ from cs_detector.code_extractor.libraries import extract_library_as_name
 test_libraries = ["pytest", "robot", "unittest", "doctest", "nose2", "testify", "pytest-cov", "pytest-xdist"]
 
 
-def Chain_Indexing(libraries, filename, node,df_dict):
+def Chain_Indexing(libraries, filename, fun_node,df_dict):
     if [x for x in libraries if x in test_libraries]:
-        return []
+        return [], []
     if [x for x in libraries if 'pandas' in x]:
-        function_name = node.name
-        variables = dataframe_check(node, libraries,df_dict)
-        function_body = ast.unparse(node.body).strip()
+        smell_instance_list = []
+        function_name = fun_node.name
+        variables = dataframe_check(fun_node, libraries,df_dict)
+        function_body = ast.unparse(fun_node.body).strip()
         pattern = r'([a-zA-Z]+[a-zA-Z_0-9]*)(\[[a-zA-Z0-9\']*\]){2,}'
         matches = re.findall(pattern, function_body)
         message = "Using chain indexing may cause performance issues."
         num_matches = 0
-        for match in matches:
-            #get the variable name
-            variable = match[0]
-            if variable in variables:
-                num_matches += 1
+        for node in ast.walk(fun_node):
+            if isinstance(node, ast.Subscript):
+                if hasattr(node, 'value') and isinstance(node.value, ast.Subscript):
+                    if hasattr(node.value, 'id'):
+                        if node.value.id in variables:
+                            new_smell = {'filename': filename, 'function_name': function_name,
+                                            'smell_name': 'Chain_Indexing', 'line': node.lineno}
+                            smell_instance_list.append(new_smell)
+                            num_matches += 1
         if num_matches > 0:
             name_smell = "Chain_Indexing"
-            return [f"{filename}", f"{function_name}", num_matches, name_smell, message]
-        return []
-    return []
+            return [f"{filename}", f"{function_name}", num_matches, name_smell, message], smell_instance_list
+        return [], []
+    return [], []
 
 
 def dataframe_conversion_api_misused(libraries, filename, fun_node, df_dict):
@@ -36,6 +41,7 @@ def dataframe_conversion_api_misused(libraries, filename, fun_node, df_dict):
         function_name = fun_node.name
         variables = dataframe_check(fun_node, libraries, df_dict)
         number_of_apply = 0
+        smell_instance_list = []
         for node in ast.walk(fun_node):
             if isinstance(node, ast.Attribute):
                 if hasattr(node, 'value'):
@@ -44,30 +50,36 @@ def dataframe_conversion_api_misused(libraries, filename, fun_node, df_dict):
                             if hasattr(node, 'value'):
                                 if hasattr(node.value, 'id'):
                                     if node.value.id in variables:
+                                        new_smell = {'filename': filename, 'function_name': function_name,
+                                                     'smell_name': 'dataframe_conversion_api_misused',
+                                                     'line': node.lineno}
+                                        smell_instance_list.append(new_smell)
                                         number_of_apply += 1
         if number_of_apply > 0:
             message = "Please consider to use numpy instead values to convert dataframe. The function 'values' is deprecated." \
                   "The value return of this function is unclear."
             name_smell = "dataframe_conversion_api_misused"
             to_return = [filename, function_name, number_of_apply, name_smell, message]
-            return to_return
-        return []
-    return []
+            return to_return, smell_instance_list
+        return [], []
+    return [], []
+
 
 
 def matrix_multiplication_api_misused(libraries, filename, fun_node):
     number_of_apply = 0
     library_name = ""
     function_name = ""
+    smell_instance_list = []
     if [x for x in libraries if x in test_libraries]:
-        return []
+        return [], []
     if [x for x in libraries if 'numpy' in x]:
         for x in libraries:
             if 'numpy' in x:
                 library_name = extract_library_as_name(x)
                 function_name = fun_node.name
         if library_name == "":
-            return []
+            return [], []
         for node in ast.walk(fun_node):
             # search for dot function usages
             if isinstance(node, ast.Call):
@@ -96,6 +108,10 @@ def matrix_multiplication_api_misused(libraries, filename, fun_node):
                                                         # in this case we have to extract variables and see if it is a matrix
                                                         arguments.append(arg.id)
                                             if matrix_multiplication:
+                                                new_smell = {'filename': filename, 'function_name': function_name,
+                                                                'smell_name': 'matrix_multiplication_api_misused',
+                                                                'line': node.lineno}
+                                                smell_instance_list.append(new_smell)
                                                 number_of_apply += 1
 
                                             else:
@@ -108,6 +124,10 @@ def matrix_multiplication_api_misused(libraries, filename, fun_node):
                                                                 if isinstance(el, ast.List):
                                                                     matrix_multiplication = True
                                                 if matrix_multiplication:
+                                                    new_smell = {'filename': filename, 'function_name': function_name,
+                                                                    'smell_name': 'matrix_multiplication_api_misused',
+                                                                    'line': node.lineno}
+                                                    smell_instance_list.append(new_smell)
                                                     number_of_apply += 1
 
         if number_of_apply > 0:
@@ -115,21 +135,22 @@ def matrix_multiplication_api_misused(libraries, filename, fun_node):
                       "but a matrix."
             name_smell = "matrix_multiplication_api_misused"
             to_return = [filename, function_name, number_of_apply, name_smell, message]
-            return to_return
-        return []
-    return []
+            return to_return, smell_instance_list
+        return [], []
+    return [], []
 
 
 def gradients_not_cleared_before_backward_propagation(libraries, filename, fun_node):
     library_name = ""
     if [x for x in libraries if x in test_libraries]:
-        return []
+        return [], []
     if [x for x in libraries if 'torch' in x]:
         for x in libraries:
             if 'torch' in x:
                 library_name = extract_library_as_name(x)
         function_name = fun_node.name
         number_of_apply = 0
+        smell_instance_list = []
         for node in ast.walk(fun_node):
             if isinstance(node, ast.For) or isinstance(node,ast.While):
                 zero_grad_called = False
@@ -141,22 +162,26 @@ def gradients_not_cleared_before_backward_propagation(libraries, filename, fun_n
                                     zero_grad_called = True
                                 if node2.func.attr == 'backward':
                                     if not zero_grad_called:
+                                        new_smell = {'filename': filename, 'function_name': function_name,
+                                                        'smell_name': 'gradients_not_cleared_before_backward_propagation',
+                                                        'line': node2.lineno}
+                                        smell_instance_list.append(new_smell)
                                         number_of_apply += 1
 
         if number_of_apply > 0:
             message = "Please consider to use zero_grad() before backward()."
             name_smell = "gradients_not_cleared_before_backward_propagation"
             to_return = [filename, function_name, number_of_apply, name_smell, message]
-            return to_return
-        return []
-    return []
+            return to_return, smell_instance_list
+        return [], []
+    return [], []
 
 
 
 def tensor_array_not_used(libraries, filename, fun_node):
     library_name = ""
     if [x for x in libraries if x in test_libraries]:
-        return []
+        return [], []
     if [x for x in libraries if 'tensorflow' in x]:
         function_name = fun_node.name
         function_body = ast.unparse(fun_node.body).strip()
@@ -164,6 +189,7 @@ def tensor_array_not_used(libraries, filename, fun_node):
             if 'tensorflow' in x:
                 library_name = extract_library_as_name(x)
         number_of_apply = 0
+        smell_instance_list = []
         for node in ast.walk(fun_node):
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Attribute):
@@ -173,6 +199,10 @@ def tensor_array_not_used(libraries, filename, fun_node):
                                 parameter = ast.unparse(node.args[0])
                                 for arg_node in node.args:
                                     if isinstance(arg_node, ast.List):
+                                        new_smell = {'filename': filename, 'function_name': function_name,
+                                                        'smell_name': 'tensor_array_not_used',
+                                                        'line': node.lineno}
+                                        smell_instance_list.append(new_smell)
                                         number_of_apply += 1
         if number_of_apply > 0:
             message = "If the developer initializes an array using tf.constant() and tries to assign a new value to " \
@@ -181,27 +211,35 @@ def tensor_array_not_used(libraries, filename, fun_node):
                       "problem in TensorFlow 2."
             name_smell = "tensor_array_not_used"
             to_return = [filename, function_name, number_of_apply, name_smell, message]
-            return to_return
-        return []
-    return []
+            return to_return, smell_instance_list
+        return [], []
+    return [], []
 
 
 
-def pytorch_call_method_misused(libraries, filename, node):
+def pytorch_call_method_misused(libraries, filename, fun_node):
     if [x for x in libraries if x in test_libraries]:
-        return []
+        return [], []
     if [x for x in libraries if 'torch' in x]:
-        function_name = node.name
-        function_body = ast.unparse(node.body).strip()
+        function_name = fun_node.name
+        function_body = ast.unparse(fun_node.body).strip()
         lines = function_body.split('\n')
         number_of_forward = 0
-        for line in lines:
-            if ".forward(" in line:
-                number_of_forward += 1
+        smell_instance_list = []
+        for node in ast.walk(fun_node):
+            if isinstance(node, ast.Call):
+                if hasattr(node, 'func'):
+                    if hasattr(node.func, 'attr') and hasattr(node.func, 'value') and hasattr(node.func.value, 'id'):
+                        if node.func.attr == 'forward' and node.func.value.id == 'self':
+                            new_smell = {'filename': filename, 'function_name': function_name,
+                                            'smell_name': 'pytorch_call_method_misused',
+                                            'line': node.lineno}
+                            smell_instance_list.append(new_smell)
+                            number_of_forward += 1
         if number_of_forward > 0:
             message = "is recommended to use self.net()"
             name_smell = "pytorch_call_method_misused"
             to_return = [filename, function_name, number_of_forward, name_smell, message]
-            return to_return
-        return []
-    return []
+            return to_return, smell_instance_list
+        return [], []
+    return [], []

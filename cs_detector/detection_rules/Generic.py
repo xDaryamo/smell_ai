@@ -19,25 +19,37 @@ def get_lines_of_code(node):
 
 def deterministic_algorithm_option_not_used(libraries, filename, node):
     if [x for x in libraries if x in test_libraries]:
-        return []
-
+        return [], []
+    deterministic_algorithms = 0
+    smell_instance_list = []
+    message = "Please consider to remove the option 'torch.use_deterministic_algorithms(True)'. It can cause " \
+              "performance issues"
     if [x for x in libraries if 'torch' in x]:
         function_name = node.name
-        function_body = ast.unparse(node.body).strip()
-        deterministic_algorithms = function_body.count("torch.use_deterministic_algorithms(True)")
-        message = "Please consider to remove the option 'torch.use_deterministic_algorithms(True)'. It can cause " \
-                  "performance issues"
-        if deterministic_algorithms > 0:
-            name_smell = "deterministic_algorithm_option_not_used"
-            to_return = [filename, function_name, deterministic_algorithms, name_smell, message]
-            return to_return
-        return []
-    return []
 
+        for node in ast.walk(node):
+            if isinstance(node, ast.Call):
+                if hasattr(node, 'func'):
+                    if hasattr(node.func, 'id'):
+                        if node.func.id == 'use_deterministic_algorithms':
+                            if hasattr(node, 'args'):
+                                if len(node.args) == 1:
+                                    if hasattr(node.args[0], 'value'):
+                                        if node.args[0].value:
+                                            new_smell = {'filename': filename, 'function_name': function_name,'smell_name': 'deterministic_algorithm_option_not_used','line': node.lineno}
+                                            smell_instance_list.append(new_smell)
+                                            deterministic_algorithms += 1
+    if deterministic_algorithms > 0:
+        name_smell = "deterministic_algorithm_option_not_used"
 
+        to_return = [filename, function_name, deterministic_algorithms, name_smell, message]
+        return to_return, smell_instance_list
+    else:
+        return [], []
 def merge_api_parameter_not_explicitly_set(libraries, filename, fun_node, df_dict):
     if [x for x in libraries if x in test_libraries]:
-        return []
+        return [], []
+    smell_instance_list = []
     if [x for x in libraries if 'pandas' in x]:
         function_name, lines = get_lines_of_code(fun_node)
         number_of_merge_not_explicit = 0
@@ -50,26 +62,35 @@ def merge_api_parameter_not_explicitly_set(libraries, filename, fun_node, df_dic
                             if hasattr(node.func.value, 'id'):
                                 if node.func.value.id in variables:
                                     if not (hasattr(node, 'keywords')) or node.keywords is None:
+                                        new_smell = {'filename': filename, 'function_name': function_name,
+                                                     'smell_name': 'merge_api_parameter_not_explicitly_set',
+                                                     'line': node.lineno}
+                                        smell_instance_list.append(new_smell)
                                         number_of_merge_not_explicit += 1
                                     else:
                                         args = [x.arg for x in node.keywords]
                                         if 'how' in args and 'on' in args and 'validate' in args:
                                             continue
                                         else:
+                                            new_smell = {'filename': filename, 'function_name': function_name,
+                                                         'smell_name': 'merge_api_parameter_not_explicitly_set',
+                                                         'line': node.lineno}
+                                            smell_instance_list.append(new_smell)
                                             number_of_merge_not_explicit += 1
         if number_of_merge_not_explicit > 0:
             message = "merge not explicit"
             name_smell = "merge_api_parameter_not_explicitly_set"
             to_return = [filename, function_name, number_of_merge_not_explicit, name_smell, message]
-            return to_return
-        return []
-    return []
+            return to_return, smell_instance_list
+        return [], []
+    return [], []
 
 
 def columns_and_datatype_not_explicitly_set(libraries, filename, fun_node, df_dict):
     if [x for x in libraries if x in test_libraries]:
-        return []
+        return [], []
     library = None
+    smell_instance_list = []
     number_of_columns_and_datatype_not_explicit = 0
     function_name, lines = get_lines_of_code(fun_node)
     if [x for x in libraries if 'pandas' in x]:
@@ -85,6 +106,10 @@ def columns_and_datatype_not_explicitly_set(libraries, filename, fun_node, df_di
                         if hasattr(node.func, 'value'):
                             if isinstance(node.func.value, ast.Name) and node.func.value.id == library:
                                 if not (hasattr(node, 'keywords')) or node.keywords is None or len(node.keywords) == 0:
+                                    new_smell = {'filename': filename, 'function_name': function_name,
+                                                 'smell_name': 'columns_and_datatype_not_explicitly_set',
+                                                 'line': node.lineno}
+                                    smell_instance_list.append(new_smell)
                                     number_of_columns_and_datatype_not_explicit += 1
 
                                 else:
@@ -92,14 +117,18 @@ def columns_and_datatype_not_explicitly_set(libraries, filename, fun_node, df_di
                                     if 'dtype' in args:
                                         continue
                                     else:
+                                        new_smell = {'filename': filename, 'function_name': function_name,
+                                                     'smell_name': 'columns_and_datatype_not_explicitly_set',
+                                                     'line': node.lineno}
+                                        smell_instance_list.append(new_smell)
                                         number_of_columns_and_datatype_not_explicit += 1
 
         if number_of_columns_and_datatype_not_explicit > 0:
             message = "columns and datatype not explicit"
             name_smell = "columns_and_datatype_not_explicitly_set"
             to_return = [filename, function_name, number_of_columns_and_datatype_not_explicit, name_smell, message]
-            return to_return
-
+            return to_return, smell_instance_list
+    return [], []
 
 '''
 Title: Empty column misinitialization
@@ -115,57 +144,62 @@ Examples:
     '''
 
 
-def empty_column_misinitialization(libraries, filename, node, df_dict):
+def empty_column_misinitialization(libraries, filename, fun_node, df_dict):
     if [x for x in libraries if x in test_libraries]:
-        return []
+        return [], []
+    smell_instance_list = []
     # this is the list of values that are considered as smelly empty values
     empty_values = ['0', "''", '""']
-    function_name, lines = get_lines_of_code(node)
+    function_name, lines = get_lines_of_code(fun_node)
     if [x for x in libraries if 'pandas' in x]:
         # get functions call of read_csv
         read_csv = []
         variables = []
         number_of_apply = 0
         # get all defined variables that are dataframes
-        variables = dataframe_check(node, libraries, df_dict)
+        variables = dataframe_check(fun_node, libraries, df_dict)
         # for each assignment of a variable
-        for line in lines:
-            assign_pattern = r'(\w)+(\[.*\])+\s*=\s*(\w*)'
-            if re.match(assign_pattern, line):
-                # get the variable name
-                variable = line.split('=')[0].strip().split('[')[0].strip()
+        for node in ast.walk(fun_node):
+            if isinstance(node, ast.Assign):
                 # check if the variable is a dataframe
-                if variable in variables:
-                    # check if the line is an assignment of a column of the dataframe
-                    if '[' in line:
-                        # select a line where uses to define a column df.[*] = *
-                        pattern = variable + '\[.*\]'
-                        # check if the line is an assignment of the value is 0 or ''
-                        if re.match(pattern, line):
-                            if line.split('=')[1].strip() in empty_values:
-                                number_of_apply += 1
+                if hasattr(node.targets[0], 'id'):
+                    if node.targets[0].id in variables:
+                        # check if the line is an assignment of a column of the dataframe
+                        if hasattr(node.targets[0], 'slice'):
+                            # select a line where uses to define a column df.[*] = *
+                            pattern = node.targets[0].id + '\[.*\]'
+                            # check if the line is an assignment of the value is 0 or ''
+                            if re.match(pattern, lines[node.lineno - 1]):
+                                if lines[node.lineno - 1].split('=')[1].strip() in empty_values:
+                                    new_smell = {'filename': filename, 'function_name': function_name,
+                                                    'smell_name': 'empty_column_misinitialization',
+                                                    'line': node.lineno}
+                                    smell_instance_list.append(new_smell)
+                                    number_of_apply += 1
+
         if number_of_apply > 0:
             message = "If they use zeros or empty strings to initialize a new empty column in Pandas" \
                       "the ability to use methods such as .isnull() or .notnull() is retained." \
                       "Use NaN value (e.g. np.nan) if a new empty column in a DataFrame is needed. Do not use “filler values” such as zeros or empty strings."
             name_smell = "empty_column_misinitialization"
             to_return = [filename, function_name, number_of_apply, name_smell, message]
-            return to_return
-        return []
-    return []
+            return to_return, smell_instance_list
+        return [], []
+    return [], []
 
 
-def nan_equivalence_comparison_misused(libraries, filename, node):
+def nan_equivalence_comparison_misused(libraries, filename, fun_node):
     library_name = ""
     if [x for x in libraries if x in test_libraries]:
-        return []
+        return [], []
+    smell_instance_list = []
     if [x for x in libraries if 'numpy' in x]:
         for x in libraries:
             if 'numpy' in x:
                 library_name = extract_library_as_name(x)
-        function_name = node.name
+        function_name = fun_node.name
         number_of_nan_equivalences = 0
-        for node in ast.walk(node):
+        for node in ast.walk(fun_node):
             if isinstance(node, ast.Compare):
                 nan_equivalence = False
                 if hasattr(node.left, "value"):
@@ -177,14 +211,18 @@ def nan_equivalence_comparison_misused(libraries, filename, node):
                             if isinstance(expr, ast.Attribute) and expr.attr == 'nan' and expr.value.id == library_name:
                                 nan_equivalence = True
                         if nan_equivalence:
+                            new_smell = {'filename': filename, 'function_name': function_name,
+                                            'smell_name': 'nan_equivalence_comparison_misused',
+                                            'line': node.lineno}
+                            smell_instance_list.append(new_smell)
                             number_of_nan_equivalences += 1
         if number_of_nan_equivalences > 0:
             message = "NaN equivalence comparison misused"
             name_smell = "nan_equivalence_comparison_misused"
             to_return = [filename, function_name, number_of_nan_equivalences, name_smell, message]
-            return to_return
-        return []
-    return []
+            return to_return, smell_instance_list
+        return [], []
+    return [], []
 
 
 def in_place_apis_misused(libraries, filename, fun_node, df_dict):
@@ -192,7 +230,8 @@ def in_place_apis_misused(libraries, filename, fun_node, df_dict):
     if [x for x in libraries if 'pandas' in x]:
         function_name = fun_node.name
     if function_name == '':
-        return []
+        return [], []
+    smell_instance_list = []
     in_place_apis = 0
     for node in ast.iter_child_nodes(fun_node):
         in_place_flag = False
@@ -208,6 +247,10 @@ def in_place_apis_misused(libraries, filename, fun_node, df_dict):
                     if not in_place_flag:
                         df = df_dict[df_dict['return_type'] == 'DataFrame']
                         if node.value.func.attr in df['method'].values:
+                            new_smell = {'filename': filename, 'function_name': function_name,
+                                            'smell_name': 'in_place_apis_misused',
+                                            'line': node.lineno}
+                            smell_instance_list.append(new_smell)
                             in_place_apis += 1
 
     if in_place_apis > 0:
@@ -216,17 +259,18 @@ def in_place_apis_misused(libraries, filename, fun_node, df_dict):
                   " will save memory"
         name_smell = "in_place_apis_misused"
         to_return = [filename, function_name, in_place_apis, name_smell, message]
-        return to_return
-    return []
+        return to_return, smell_instance_list
+    return [], []
 
 
 def memory_not_freed(libraries, filename, fun_node, model_dict):
     if [x for x in libraries if x in test_libraries]:
-        return []
+        return [], []
+    smell_instance_list = []
     if [x for x in libraries if 'tensorflow' in x]:
         model_libs = ['tensorflow']
     else:
-        return []
+        return [], []
     memory_not_freed = 0
     method_name = ''
     for node in ast.walk(fun_node):
@@ -256,17 +300,22 @@ def memory_not_freed(libraries, filename, fun_node, model_dict):
                         if method_name == 'clear_session':
                             free_memory = True
                 if not free_memory:
+                    new_smell = {'filename': filename, 'function_name': fun_node.name,
+                                    'smell_name': 'memory_not_freed',
+                                    'line': node.lineno}
+                    smell_instance_list.append(new_smell)
                     memory_not_freed += 1
     if memory_not_freed > 0:
         to_return = [filename, fun_node.name, memory_not_freed, "memory_not_freed", "Memory not freed"]
-        return to_return
-    return []
+        return to_return, smell_instance_list
+    return [], []
 
 
 def hyperparameters_not_explicitly_set(libraries, filename, fun_node, model_dict):
     if [x for x in libraries if x in test_libraries]:
-        return []
+        return [], []
     model_libs = []
+    smell_instance_list = []
     method_name = ''
     dict_libs = set(model_dict['library'])
     for lib in dict_libs:
@@ -292,13 +341,17 @@ def hyperparameters_not_explicitly_set(libraries, filename, fun_node, model_dict
             if model_defined:
                 # check if hyperparameters are set
                 if node.args == []:
+                    new_smell = {'filename': filename, 'function_name': fun_node.name,
+                                    'smell_name': 'hyperparameters_not_explicitly_set',
+                                    'line': node.lineno}
+                    smell_instance_list.append(new_smell)
                     hyperparameters_not_explicitly_set += 1
 
     if hyperparameters_not_explicitly_set > 0:
         to_return = [filename, fun_node.name, hyperparameters_not_explicitly_set, "hyperparameters_not_explicitly_set",
                      "Hyperparameters not explicitly set"]
-        return to_return
-    return []
+        return to_return, smell_instance_list
+    return [], []
 
 
 def unnecessary_iteration(libraries, filename, fun_node, df_dict):
@@ -306,7 +359,8 @@ def unnecessary_iteration(libraries, filename, fun_node, df_dict):
     if [x for x in libraries if 'pandas' in x]:
         function_name = fun_node.name
     if function_name == '':
-        return []
+        return [], []
+    smell_instance_list = []
     variables = dataframe_check(fun_node, libraries, df_dict)
     unnecessary_iterations = 0
     for node in ast.walk(fun_node):
@@ -338,16 +392,24 @@ def unnecessary_iteration(libraries, filename, fun_node, df_dict):
                                     op_to_analyze_left = op_to_analyze.left
                                     op_to_analyze_right = op_to_analyze.right
                                     while isinstance(op_to_analyze_left, ast.Subscript):
-                                        op_to_analyze_left = op_to_analyze.left.value
+                                        op_to_analyze_left = op_to_analyze_left.value
                                     while isinstance(op_to_analyze_right, ast.Subscript):
-                                        op_to_analyze_right = op_to_analyze.right.value
+                                        op_to_analyze_right = op_to_analyze_right.value
 
                                     if isinstance(op_to_analyze_left, ast.Name):
                                         if op_to_analyze_left.id in variables:
+                                            new_smell = {'filename': filename, 'function_name': fun_node.name,
+                                                            'smell_name': 'unnecessary_iteration',
+                                                            'line': node.lineno}
+                                            smell_instance_list.append(new_smell)
                                             unnecessary_iterations += 1
 
                                     if isinstance(op_to_analyze_right, ast.Name):
                                         if op_to_analyze_right.id in variables:
+                                            new_smell = {'filename': filename, 'function_name': fun_node.name,
+                                                            'smell_name': 'unnecessary_iteration',
+                                                            'line': node.lineno}
+                                            smell_instance_list.append(new_smell)
                                             unnecessary_iterations += 1
 
     if unnecessary_iterations > 0:
@@ -355,19 +417,21 @@ def unnecessary_iteration(libraries, filename, fun_node, df_dict):
                   " Pandas’ built-in methods (e.g., join, groupby) are vectorized. It is therefore recommended to use Pandas built-in methods as an alternative to loops."
         name_smell = "unnecessary_iteration"
         to_return = [filename, function_name, unnecessary_iterations, name_smell, message]
-        return to_return
+        return to_return, smell_instance_list
+    return [], []
 
 
 def broadcasting_feature_not_used(libraries, filename, fun_node, tensor_dict):
     function_name = ''
     library_name = ''
+    smell_instance_list = []
     if [x for x in libraries if 'tensorflow' in x]:
         function_name = fun_node.name
     for x in libraries:
         if 'tensorflow' in x:
             library_name = extract_library_as_name(x)
     if function_name == '':
-        return []
+        return [], []
     broadcasting_features_not_used_counter = 0
     tensor_constants = []
     tensor_variables = dict()
@@ -420,13 +484,18 @@ def broadcasting_feature_not_used(libraries, filename, fun_node, tensor_dict):
 
     for b_tensor in broadcasting_checking_tensors:
         if b_tensor["variable"] in tensor_variables_with_tiling:
+            new_smell = {'filename': filename, 'function_name': fun_node.name,
+                            'smell_name': 'broadcasting_feature_not_used',
+                            'line': b_tensor["line"]}
+            smell_instance_list.append(new_smell)
             broadcasting_features_not_used_counter += 1
     if broadcasting_features_not_used_counter > 0:
         message = "Broadcasting is a powerful mechanism that allows numpy to work with arrays of different shapes when performing arithmetic operations. Broadcasting solves the problem of arithmetic between arrays of differing shapes by in effect replicating the smaller array along the last mismatched dimension."
         name_smell = "broadcasting_feature_not_used"
         to_return = [filename, function_name, broadcasting_features_not_used_counter, name_smell, message]
-        return to_return
-
+        return to_return, smell_instance_list
+    else:
+        return [], []
 def broadcasting_check(tensor_list):
     #check if broadcasting is applicable between the tensors
     if len(tensor_list) < 2:

@@ -71,7 +71,7 @@ def analyze_project(project_path, output_path="."):
     for filename in filenames:
         if "tests/" not in filename:  # ignore test files
             try:
-                result = detector.inspect(filename)
+                result = detector.inspect(filename, output_path)
                 to_save = to_save.merge(result, how='outer')
             except SyntaxError as e:
                 message = e.msg
@@ -140,18 +140,17 @@ def parallel_projects_analysis(base_path='../input/projects', output_path='../ou
     print(f"Parallel Exec Time completed in: {end - start}")
 
 
-def clean():
+def clean(output_path="../output/projects_analysis"):
     # check os windows or linux
+
     if os.name == "nt":
-        if os.path.exists("..\\output\\projects_analysis"):
-            os.system("rmdir /s /q ..\\output\\projects_analysis")
-        if os.path.exists("..\\output\\parallel_projects_analysis"):
-            os.system("rmdir /s /q ..\\output\\parallel_projects_analysis")
+        clean_win_path = output_path.replace("/", "\\")
+        if os.path.exists(clean_win_path):
+            os.system(f"rmdir /s /q {clean_win_path}")
+
     else:
-        if os.path.exists("../output/projects_analysis"):
-            os.system("rm -r ../output/projects_analysis")
-        if os.path.exists("../output/parallel_projects_analysis"):
-            os.system("rm -r ../output/parallel_projects_analysis")
+        if os.path.exists(output_path):
+            os.system(f"rm -r {output_path}")
 
 
 
@@ -165,7 +164,7 @@ def main(args):
     resume = True
     if not args.resume:
         resume = False
-        clean()
+        clean(args.output)
     if args.parallel:
         parallel_projects_analysis(args.input, args.output, args.max_workers,resume)
     else:
