@@ -11,14 +11,14 @@ def merge_results(input_dir="../output", output_dir="../general_output"):
     for subdir, dirs, files in os.walk(input_dir):
         if "to_save.csv" in files:
             df = pd.read_csv(os.path.join(subdir, "to_save.csv"))
-            if len(df) > 1:
+            if len(df) > 0:
                 dataframes.append(df)
 
     if dataframes:
         combined_df = pd.concat(dataframes)
         #rimuovi tutti le linee contenti filename,function_name,smell,name_smell,message tranne la prima
         combined_df = combined_df[combined_df["filename"] != "filename"]
-        combined_df = combined_df.reset_index(drop=True)
+        combined_df = combined_df.reset_index()
 
 
         if not os.path.exists(output_dir):
@@ -89,9 +89,6 @@ def analyze_project(project_path, output_path="."):
                 with open(f"{error_path}/error.txt", "a") as error_file:
                     error_file.write(str(message))
                 continue
-
-
-
 
     to_save.to_csv(output_path + "/to_save.csv", index=False, mode='a')
 
@@ -182,7 +179,7 @@ if __name__ == "__main__":
     parser.add_argument("--parallel",default=False, type=bool, help="Enable parallel execution")
     parser.add_argument("--resume", default=False, type=bool, help="Continue previous execution")
     args = parser.parse_args()
-    main(args)
+    merge_results(args.output, args.output+"/overview")
 
 
 
