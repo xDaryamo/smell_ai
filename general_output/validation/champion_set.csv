@@ -383,3 +383,4 @@ F:\projects\AdlikAdlik\adlik_serving\clients\task\task_client_tmpl.py,_create_re
 F:\projects\AdlikAdlik\adlik_serving\clients\task\task_client_tmpl.py,_grpc_visit,{'negative'}
 F:\projects\AdlikAdlik\adlik_serving\clients\task\task_client_tmpl.py,_http_visit,{'negative'}
 F:\projects\AdlikAdlik\adlik_serving\clients\task\task_client_tmpl.py,_main,{'negative'}
+F:\projects\facebookresearchClassyVision\classy_vision\models\classy_model.py,extract_features,{'dataframe_conversion_api_misused'}
