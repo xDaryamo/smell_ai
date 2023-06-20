@@ -99,6 +99,9 @@ def projects_analysis(base_path='../input/projects', output_path='../output/proj
         os.makedirs(output_path)
     dirpath = os.listdir(base_path)
     if not os.path.exists("../config/execution_log.txt"):
+        #get abs path of execution_log.txt
+        execution_log_path = os.path.abspath("../config/execution_log.txt")
+        print("Path:"+execution_log_path)
         open("../config/execution_log.txt", "w").close()
         resume = False
     execution_log = open("../config/execution_log.txt", "a")
@@ -159,13 +162,18 @@ def main(args):
         print("Please specify input and output folders")
         exit(0)
     resume = True
-    if not args.resume:
-        resume = False
-        clean(args.output)
-    if args.parallel:
-        parallel_projects_analysis(args.input, args.output, args.max_workers,resume)
+
+    multiple = args.multiple
+    if multiple:
+        if not args.resume:
+            resume = False
+            clean(args.output)
+        if args.parallel:
+            parallel_projects_analysis(args.input, args.output, args.max_workers,resume)
+        else:
+            projects_analysis(args.input, args.output,resume)
     else:
-        projects_analysis(args.input, args.output,resume)
+        analyze_project(args.input, args.output)
     merge_results(args.output, args.output+"/overview")
 
 
@@ -178,8 +186,9 @@ if __name__ == "__main__":
     parser.add_argument("--max_workers", type=int, default=5,help="Number of workers for parallel execution")
     parser.add_argument("--parallel",default=False, type=bool, help="Enable parallel execution")
     parser.add_argument("--resume", default=False, type=bool, help="Continue previous execution")
+    parser.add_argument("--multiple", default=False, type=bool, help="Enable multiple projects analysis")
     args = parser.parse_args()
-    merge_results(args.output, args.output+"/overview")
+    main(args)
 
 
 
