@@ -171,8 +171,11 @@ def main(args):
         if args.parallel:
             parallel_projects_analysis(args.input, args.output, args.max_workers,resume)
         else:
+            if not os.path.exists(f"{args.output}"):
+                os.makedirs(f"{args.output}")
             projects_analysis(args.input, args.output,resume)
     else:
+
         analyze_project(args.input, args.output)
     merge_results(args.output, args.output+"/overview")
 
