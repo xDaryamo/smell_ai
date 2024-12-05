@@ -1,11 +1,11 @@
 import os
 import pandas as pd
 
-from cs_detector.code_extractor.libraries import extract_libraries
+from cs_detector.code_extractor.LibraryExtractor import extract_libraries
 from cs_detector.detection_rules.Generic import *
 from cs_detector.detection_rules.APISpecific import *
-from cs_detector.code_extractor.models import load_model_dict, load_tensor_operations_dict
-from cs_detector.code_extractor.dataframe_detector import load_dataframe_dict
+from cs_detector.code_extractor.ModelExtractor import load_model_dict, load_tensor_operations_dict
+from cs_detector.code_extractor.DataFrameExtractor import load_dataframe_dict
 def rule_check(node, libraries, filename, df_output,models,output_path):
     #create dictionaries and libraries useful for detection
     dataframe_path = os.path.abspath("../obj_dictionaries/dataframes.csv")

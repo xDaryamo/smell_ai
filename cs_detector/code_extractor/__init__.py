@@ -1,8 +1,8 @@
 
 import ast
 
-from cs_detector.code_extractor.libraries import extract_libraries
-from cs_detector.code_extractor.dataframe_detector import dataframe_check
+from cs_detector.code_extractor.LibraryUtils import extract_libraries
+from cs_detector.code_extractor.DataFrameExtractor import dataframe_check
 def analyze_example(filename):
     with open(filename, 'r') as f:
         content = f.read()

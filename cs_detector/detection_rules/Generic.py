@@ -1,10 +1,9 @@
 import ast
 import re
-from ..code_extractor.models import check_model_method
-from ..code_extractor.libraries import get_library_of_node, extract_library_name, extract_library_as_name
-
-from ..code_extractor.dataframe_detector import dataframe_check
-from ..code_extractor.variables import search_variable_definition
+from ..code_extractor.ModelExtractor import check_model_method
+from ..code_extractor.LibraryExtractor import get_library_of_node, extract_library_name, extract_library_as_name
+from ..code_extractor.DataFrameExtractor import dataframe_check
+from ..code_extractor.VariableExtractor import search_variable_definition
 
 test_libraries = ["pytest", "robot", "unittest", "doctest", "nose2", "testify", "pytest-cov", "pytest-xdist"]
 

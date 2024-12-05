@@ -1,5 +1,5 @@
-from cs_detector.code_extractor.models import check_model_method, load_model_dict
-from cs_detector.code_extractor.libraries import *
+from cs_detector.code_extractor.ModelExtractor import check_model_method, load_model_dict
+from cs_detector.code_extractor.LibraryExtractor import *
 import ast
 
 def test_model_list():

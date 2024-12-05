@@ -1,9 +1,9 @@
 import ast
 import re
 
-from cs_detector.code_extractor.dataframe_detector import dataframe_check
-from cs_detector.code_extractor.variables import search_variable_definition
-from cs_detector.code_extractor.libraries import extract_library_as_name
+from cs_detector.code_extractor.DataFrameExtractor import dataframe_check
+from cs_detector.code_extractor.VariableExtractor import search_variable_definition
+from cs_detector.code_extractor.LibraryExtractor import extract_library_as_name
 
 test_libraries = ["pytest", "robot", "unittest", "doctest", "nose2", "testify", "pytest-cov", "pytest-xdist"]
 
