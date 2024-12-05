@@ -2,22 +2,46 @@ import ast
 import pandas as pd
 
 class DataFrameExtractor:
-    
-    def __init__(self, libraries: set[str], df_dict_path: str) -> None:
+    def __init__(self, libraries: set[str], df_dict_path: str):
+        """
+        Initializes the DataFrameExtractor.
+
+        Parameters:
+        - libraries (set[str]): A set of libraries used in the code (e.g., {"pandas as pd"}).
+        - df_dict_path (str): Path to the CSV file containing the DataFrame method definitions.
+
+        Instance Variables:
+        - self.libraries (set[str]): A set of library imports provided during initialization.
+        - self.df_dict (dict[str, list]): A dictionary representing DataFrame-related methods (loaded from CSV).
+        - self.df_dict_path (str): Path to the DataFrame method definitions file.
+        """
         self.libraries = libraries
         self.df_dict = None
         self.df_dict_path = df_dict_path
 
-    def load_dataframe_dict(self) -> dict[str, str, str]:
+    def load_dataframe_dict(self) -> dict[str, list]:
         """
         Loads the DataFrame methods dictionary from a CSV file.
+
+        Returns:
+        - dict[str, list]: A dictionary where the keys are column names from the CSV, and the values are lists of column data.
+
+        Raises:
+        - FileNotFoundError: If the CSV file cannot be found.
         """
-        self.df_dict = pd.read_csv(self.df_dict_path, dtype={'id': 'string', 'library': 'string', 'method': 'string'})
+        self.df_dict = pd.read_csv(self.df_dict_path, dtype={'id': 'string', 'library': 'string', 'method': 'string'}).to_dict(orient='list')
         return self.df_dict
 
     def search_pandas_library(self) -> str:
         """
-        Searches for pandas in the stored library list.
+        Searches for the pandas library in the stored library list.
+
+        Returns:
+        - str: The alias of the pandas library (e.g., "pd") if found, or None if pandas is not used.
+
+        Notes:
+        - This method assumes that the library is imported with an alias (e.g., `import pandas as pd`).
+        - If pandas is imported without an alias, this method will return None.
         """
         for lib in self.libraries:
             short = self.extract_lib_object(lib)
@@ -25,19 +49,42 @@ class DataFrameExtractor:
                 return short
         return None
 
-    def dataframe_check(self, fun_node: any) -> List[str]:
+    def dataframe_check(self, fun_node: ast.AST) -> list[str]:
         """
         Checks if a function node uses pandas DataFrames.
+
+        Parameters:
+        - fun_node (ast.AST): The AST node representing the function to analyze.
+
+        Returns:
+        - list[str]: A list of variables related to pandas DataFrames, or None if pandas is not used.
+
+        Notes:
+        - Uses `search_pandas_library` to ensure pandas is being used.
+        - Initiates a recursive search for variables starting from the pandas alias.
         """
         short = self.search_pandas_library()
         if short is None:
             return None
         return self.recursive_search_variables(fun_node, [short])
 
-    def recursive_search_variables(self, fun_node: any, init_list: list[str]) -> list[str]:
+    def recursive_search_variables(self, fun_node: ast.AST, init_list: list[str]) -> list[str]:
+        """
+        Recursively searches for variables within a function node related to DataFrame operations.
+
+        Parameters:
+        - fun_node (ast.AST): The AST node representing the function to analyze.
+        - init_list (list[str]): A list of initial variable names to start the search.
+
+        Returns:
+        - list[str]: A list of variables related to pandas DataFrame operations.
+
+        Notes:
+        - The method analyzes assignments to identify variables that interact with DataFrame-related variables.
+        - Recursion continues until no new variables are added to the list.
+        """
         list_vars = init_list.copy()
         for node in ast.walk(fun_node):
-            # Check assignments
             if isinstance(node, ast.Assign):
                 # Case 1: Right-hand side is an expression involving a variable in list_vars
                 if isinstance(node.value, ast.Expr):
@@ -60,7 +107,7 @@ class DataFrameExtractor:
                             id = name_func.value.value.id
                         elif isinstance(name_func.value, ast.Name):
                             id = name_func.value.id
-                        if id in list_vars and name_func.attr in self.df_dict['method'].tolist():
+                        if id in list_vars and name_func.attr in self.df_dict['method']:
                             if hasattr(node.targets[0], 'id') and node.targets[0].id not in list_vars:
                                 list_vars.append(node.targets[0].id)
 
@@ -78,7 +125,16 @@ class DataFrameExtractor:
 
     def extract_lib_object(self, lib: str) -> str:
         """
-        Extracts the alias for a library.
+        Extracts the alias of a library from an import statement.
+
+        Parameters:
+        - lib (str): The library import string (e.g., "pandas as pd").
+
+        Returns:
+        - str: The alias of the library (e.g., "pd") if present, or None otherwise.
+
+        Notes:
+        - If the library string does not include an alias, this method will return None.
         """
         split_lib = lib.split(" as ")
         return split_lib[1] if len(split_lib) > 1 else None
@@ -86,5 +142,8 @@ class DataFrameExtractor:
     def extract_variables(self, list_variables):
         """
         Placeholder for extracting additional variables (to be implemented).
+
+        Parameters:
+        - list_variables: The variables to extract (implementation pending).
         """
         pass
