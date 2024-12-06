@@ -29,18 +29,16 @@ class LibraryExtractor:
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     if alias.asname:
-                        self.libraries.add(alias.name + " as " + alias.asname)
+                        self.libraries.add(alias.name + ' as ' + alias.asname)
                     else:
                         self.libraries.add(alias.name)
             elif isinstance(node, ast.ImportFrom):
                 if node.module and node.module != "*":
                     for alias in node.names:
                         if alias.asname:
-                            self.libraries.add(
-                                node.module + "." + alias.name + " as " + alias.asname
-                            )
+                            self.libraries.add(node.module + '.' + alias.name + ' as ' + alias.asname)
                         else:
-                            self.libraries.add(node.module + "." + alias.name)
+                            self.libraries.add(node.module + '.' + alias.name)
         return self.libraries
 
     def extract_library_name(self, library: str) -> str:

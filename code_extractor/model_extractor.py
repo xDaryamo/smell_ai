@@ -52,6 +52,17 @@ class ModelExtractor:
         self.tensor_operations_dict = tensors_df.to_dict(orient='list')
         return self.tensor_operations_dict
 
+    def load_model_methods(self) -> list[str]:
+        """
+        Extracts model methods from the loaded model dictionary.
+
+        Returns:
+        - list[str]: A list of model methods.
+        """
+        if not self.model_dict:
+            raise ValueError("Model dictionary not loaded. Call `load_model_dict` first.")
+        return self.model_dict.get('method', [])
+
     def check_model_method(self, model: str, libraries: list[str]) -> bool:
         """
         Checks if the specified model belongs to any of the provided libraries.
@@ -62,13 +73,6 @@ class ModelExtractor:
 
         Returns:
         - bool: True if the model belongs to any of the specified libraries; False otherwise.
-
-        Raises:
-        - ValueError: If the model dictionary has not been loaded by calling `load_model_dict`.
-
-        Notes:
-        - This function checks if `model` exists in the `method` column of the model dictionary and if the corresponding
-          library exists in the `library` column of the dictionary.
         """
         if not self.model_dict:
             raise ValueError("Model dictionary not loaded. Call `load_model_dict` first.")

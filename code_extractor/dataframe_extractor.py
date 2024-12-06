@@ -2,12 +2,11 @@ import ast
 import pandas as pd
 
 class DataFrameExtractor:
-    def __init__(self, libraries: set[str], df_dict_path: str):
+    def __init__(self, df_dict_path: str):
         """
         Initializes the DataFrameExtractor.
 
         Parameters:
-        - libraries (set[str]): A set of libraries used in the code (e.g., {"pandas as pd"}).
         - df_dict_path (str): Path to the CSV file containing the DataFrame method definitions.
 
         Instance Variables:
@@ -15,9 +14,18 @@ class DataFrameExtractor:
         - self.df_dict (dict[str, list]): A dictionary representing DataFrame-related methods (loaded from CSV).
         - self.df_dict_path (str): Path to the DataFrame method definitions file.
         """
-        self.libraries = libraries
+        self.libraries = None
         self.df_dict = None
         self.df_dict_path = df_dict_path
+
+    def set_libraries(libraries: set[str]) -> None:
+         """
+        Initializes the DataFrameExtractor libraries instance variable
+
+        Parameters:
+        - libraries (set[str]): A set of libraries used in the code (e.g., {"pandas as pd"}).
+         """
+        self.libraries = libraries
 
     def load_dataframe_dict(self) -> dict[str, list]:
         """
@@ -139,11 +147,19 @@ class DataFrameExtractor:
         split_lib = lib.split(" as ")
         return split_lib[1] if len(split_lib) > 1 else None
 
-    def extract_variables(self, list_variables):
+    def get_dataframe_variables(self, variables: list[str]) -> list[str]:
         """
-        Placeholder for extracting additional variables (to be implemented).
+        Identifies DataFrame-related variables.
 
         Parameters:
-        - list_variables: The variables to extract (implementation pending).
+        - variables (list[str]): A list of variable names.
+
+        Returns:
+        - list[str]: Variables associated with DataFrame operations.
         """
-        pass
+        dataframe_vars = []
+        for var in variables:
+            if self.df_dict and 'method' in self.df_dict:
+                if var in self.df_dict['method']:
+                    dataframe_vars.append(var)
+        return dataframe_vars
