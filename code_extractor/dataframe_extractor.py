@@ -1,6 +1,7 @@
 import ast
 import pandas as pd
 
+
 class DataFrameExtractor:
     def __init__(self, df_dict_path: str):
         """
@@ -37,7 +38,10 @@ class DataFrameExtractor:
         Raises:
         - FileNotFoundError: If the CSV file cannot be found.
         """
-        self.df_dict = pd.read_csv(self.df_dict_path, dtype={'id': 'string', 'library': 'string', 'method': 'string'}).to_dict(orient='list')
+        self.df_dict = pd.read_csv(
+            self.df_dict_path,
+            dtype={"id": "string", "library": "string", "method": "string"},
+        ).to_dict(orient="list")
         return self.df_dict
 
     def search_pandas_library(self) -> str:
@@ -76,7 +80,9 @@ class DataFrameExtractor:
             return None
         return self.recursive_search_variables(fun_node, [short])
 
-    def recursive_search_variables(self, fun_node: ast.AST, init_list: list[str]) -> list[str]:
+    def recursive_search_variables(
+        self, fun_node: ast.AST, init_list: list[str]
+    ) -> list[str]:
         """
         Recursively searches for variables within a function node related to DataFrame operations.
 
@@ -98,12 +104,18 @@ class DataFrameExtractor:
                 if isinstance(node.value, ast.Expr):
                     expr = node.value
                     if isinstance(expr.value, ast.Name) and expr.value.id in list_vars:
-                        if hasattr(node.targets[0], 'id') and node.targets[0].id not in list_vars:
+                        if (
+                            hasattr(node.targets[0], "id")
+                            and node.targets[0].id not in list_vars
+                        ):
                             list_vars.append(node.targets[0].id)
 
                 # Case 2: Right-hand side is a variable name already in list_vars
                 if isinstance(node.value, ast.Name) and node.value.id in list_vars:
-                    if hasattr(node.targets[0], 'id') and node.targets[0].id not in list_vars:
+                    if (
+                        hasattr(node.targets[0], "id")
+                        and node.targets[0].id not in list_vars
+                    ):
                         list_vars.append(node.targets[0].id)
 
                 # Case 3: Right-hand side is a function call using a variable in list_vars
@@ -111,18 +123,28 @@ class DataFrameExtractor:
                     name_func = node.value.func
                     if isinstance(name_func, ast.Attribute):
                         id = None
-                        if isinstance(name_func.value, ast.Subscript) and isinstance(name_func.value.value, ast.Name):
+                        if isinstance(name_func.value, ast.Subscript) and isinstance(
+                            name_func.value.value, ast.Name
+                        ):
                             id = name_func.value.value.id
                         elif isinstance(name_func.value, ast.Name):
                             id = name_func.value.id
-                        if id in list_vars and name_func.attr in self.df_dict['method']:
-                            if hasattr(node.targets[0], 'id') and node.targets[0].id not in list_vars:
+                        if id in list_vars and name_func.attr in self.df_dict["method"]:
+                            if (
+                                hasattr(node.targets[0], "id")
+                                and node.targets[0].id not in list_vars
+                            ):
                                 list_vars.append(node.targets[0].id)
 
                 # Case 4: Right-hand side is a subscript involving a variable in list_vars
-                elif isinstance(node.value, ast.Subscript) and isinstance(node.value.value, ast.Name):
+                elif isinstance(node.value, ast.Subscript) and isinstance(
+                    node.value.value, ast.Name
+                ):
                     if node.value.value.id in list_vars:
-                        if hasattr(node.targets[0], 'id') and node.targets[0].id not in list_vars:
+                        if (
+                            hasattr(node.targets[0], "id")
+                            and node.targets[0].id not in list_vars
+                        ):
                             list_vars.append(node.targets[0].id)
 
         # Recursive call if new variables were added, otherwise return the final list
@@ -159,7 +181,7 @@ class DataFrameExtractor:
         """
         dataframe_vars = []
         for var in variables:
-            if self.df_dict and 'method' in self.df_dict:
-                if var in self.df_dict['method']:
+            if self.df_dict and "method" in self.df_dict:
+                if var in self.df_dict["method"]:
                     dataframe_vars.append(var)
         return dataframe_vars

@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 
+
 class ModelExtractor:
     def __init__(self, models_path: str, tensors_path: str):
         """
@@ -31,7 +32,7 @@ class ModelExtractor:
         Raises:
         - FileNotFoundError: If the CSV file at `self.models_path` cannot be found.
         """
-        self.model_dict = pd.read_csv(self.models_path).to_dict(orient='list')
+        self.model_dict = pd.read_csv(self.models_path).to_dict(orient="list")
         return self.model_dict
 
     def load_tensor_operations_dict(self) -> dict[str, list]:
@@ -48,8 +49,8 @@ class ModelExtractor:
         - FileNotFoundError: If the CSV file at `self.tensors_path` cannot be found.
         """
         tensors_df = pd.read_csv(self.tensors_path)
-        tensors_df = tensors_df[tensors_df['number_of_tensors_input'] > 1]
-        self.tensor_operations_dict = tensors_df.to_dict(orient='list')
+        tensors_df = tensors_df[tensors_df["number_of_tensors_input"] > 1]
+        self.tensor_operations_dict = tensors_df.to_dict(orient="list")
         return self.tensor_operations_dict
 
     def load_model_methods(self) -> list[str]:
@@ -60,8 +61,10 @@ class ModelExtractor:
         - list[str]: A list of model methods.
         """
         if not self.model_dict:
-            raise ValueError("Model dictionary not loaded. Call `load_model_dict` first.")
-        return self.model_dict.get('method', [])
+            raise ValueError(
+                "Model dictionary not loaded. Call `load_model_dict` first."
+            )
+        return self.model_dict.get("method", [])
 
     def check_model_method(self, model: str, libraries: list[str]) -> bool:
         """
@@ -75,10 +78,12 @@ class ModelExtractor:
         - bool: True if the model belongs to any of the specified libraries; False otherwise.
         """
         if not self.model_dict:
-            raise ValueError("Model dictionary not loaded. Call `load_model_dict` first.")
+            raise ValueError(
+                "Model dictionary not loaded. Call `load_model_dict` first."
+            )
         for lib in libraries:
-            if lib in self.model_dict['library']:
-                for model_part in self.model_dict['method']:
-                    if model_part == model and lib in self.model_dict['library']:
+            if lib in self.model_dict["library"]:
+                for model_part in self.model_dict["method"]:
+                    if model_part == model and lib in self.model_dict["library"]:
                         return True
         return False

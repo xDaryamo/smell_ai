@@ -1,12 +1,17 @@
-#Collect all projects repositories of NICHE dataset
-#Please consider to use debug mode with debug_filter_repo function to avoid downloading a lot of data
-#The debug mode is used to test the code and the experiment setup
+# Collect all projects repositories of NICHE dataset
+# Please consider to use debug mode with debug_filter_repo function to avoid downloading a lot of data
+# The debug mode is used to test the code and the experiment setup
 
 import os
 import pandas as pd
 
+
 class ProjectRepositoryCloner:
-    def __init__(self, base_path: str = "../input/projects/", repo_data_path: str = "../input/dataset/NICHE.csv"):
+    def __init__(
+        self,
+        base_path: str = "../input/projects/",
+        repo_data_path: str = "../input/dataset/NICHE.csv",
+    ):
         """
         Initializes the ProjectRepositoryCloner with the base path for projects and the repository data CSV path.
 
@@ -35,7 +40,9 @@ class ProjectRepositoryCloner:
             os.mkdir(build_path)
         os.system(f"git clone https://github.com/{repo_url} {build_path}")
 
-    def filter_repos(self, df: pd.DataFrame, stars: int = 200, commits: int = 100) -> pd.DataFrame:
+    def filter_repos(
+        self, df: pd.DataFrame, stars: int = 200, commits: int = 100
+    ) -> pd.DataFrame:
         """
         Filters the repositories based on stars and commits.
 
@@ -47,7 +54,7 @@ class ProjectRepositoryCloner:
         Returns:
         - pd.DataFrame: The filtered DataFrame.
         """
-        df = df[df["Engineered ML Project"] == 'Y']
+        df = df[df["Engineered ML Project"] == "Y"]
         df = df[df["Stars"] > stars]
         df = df[df["Commits"] > commits]
         return df
@@ -127,4 +134,3 @@ class ProjectRepositoryCloner:
         self.clean()
         self.setup()
         self.get_projects()
-

@@ -2,8 +2,27 @@ import os
 import pandas as pd
 import ast
 from detection_rules import smell
-from detection_rules.api_specific import chain_indexing_smell, dataframe_conversion_api_misused, gradients_not_cleared_before_backward_propagation, matrix_multiplication_api_misused, pytorch_call_method_misused, tensor_array_not_used
-from detection_rules.generic import broadcasting_feature_not_used, columns_and_datatype_not_explicitly_set, deterministic_algorithm_option_not_used, empty_column_misinitialization, hyperparameters_not_explicitly_set, in_place_apis_misused, memory_not_freed, merge_api_parameter_not_explicitly_set, nan_equivalence_comparison_misused, unnecessary_iteration
+from detection_rules.api_specific import (
+    chain_indexing_smell,
+    dataframe_conversion_api_misused,
+    gradients_not_cleared_before_backward_propagation,
+    matrix_multiplication_api_misused,
+    pytorch_call_method_misused,
+    tensor_array_not_used,
+)
+from detection_rules.generic import (
+    broadcasting_feature_not_used,
+    columns_and_datatype_not_explicitly_set,
+    deterministic_algorithm_option_not_used,
+    empty_column_misinitialization,
+    hyperparameters_not_explicitly_set,
+    in_place_apis_misused,
+    memory_not_freed,
+    merge_api_parameter_not_explicitly_set,
+    nan_equivalence_comparison_misused,
+    unnecessary_iteration,
+)
+
 
 class RuleChecker:
     def __init__(self, output_path: str):
@@ -28,7 +47,6 @@ class RuleChecker:
             matrix_multiplication_api_misused.MatrixMultiplicationAPIMisused(),
             pytorch_call_method_misused.PyTorchCallMethodMisusedSmell(),
             tensor_array_not_used.TensorArrayNotUsedSmell(),
-
             # Generic Smells
             broadcasting_feature_not_used.BroadcastingFeatureNotUsedSmell(),
             columns_and_datatype_not_explicitly_set.ColumnsAndDatatypeNotExplicitlySetSmell(),
@@ -42,7 +60,13 @@ class RuleChecker:
             unnecessary_iteration.UnnecessaryIterationSmell(),
         ]
 
-    def rule_check(self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str, df_output: pd.DataFrame) -> pd.DataFrame:
+    def rule_check(
+        self,
+        ast_node: ast.AST,
+        extracted_data: dict[str, any],
+        filename: str,
+        df_output: pd.DataFrame,
+    ) -> pd.DataFrame:
         """
         Applies all registered smell detectors to the given AST node.
 

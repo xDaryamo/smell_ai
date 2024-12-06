@@ -7,6 +7,7 @@ from code_extractor.dataframe_extractor import DataFrameExtractor
 from code_extractor.variable_extractor import VariableExtractor
 from components.rule_checker import RuleChecker
 
+
 class Inspector:
     def __init__(self, output_path: str):
         """
@@ -23,7 +24,9 @@ class Inspector:
         self.dataframe_extractor = None
         self.variable_extractor = None
 
-    def setup(self, dataframe_dict_path: str, model_dict_path: str, tensor_dict_path: str) -> None:
+    def setup(
+        self, dataframe_dict_path: str, model_dict_path: str, tensor_dict_path: str
+    ) -> None:
         """
         Sets up the necessary components for the Inspector.
 
@@ -67,12 +70,14 @@ class Inspector:
 
             # Parse the file into an AST
             tree = ast.parse(source)
-            lines = source.decode('utf-8').splitlines()  
+            lines = source.decode("utf-8").splitlines()
 
             # Extract libraries
             libraries = self.library_extractor.extract_libraries(tree)
             library_aliases = {
-                self.library_extractor.extract_library_name(lib): self.library_extractor.extract_library_as_name(lib)
+                self.library_extractor.extract_library_name(
+                    lib
+                ): self.library_extractor.extract_library_as_name(lib)
                 for lib in libraries
             }
 
@@ -82,7 +87,9 @@ class Inspector:
             set_variables = self.variable_extractor.get_all_set_variables(lines)
 
             # Extract DataFrame-related variables
-            dataframe_variables = self.dataframe_extractor.get_dataframe_variables(set_variables)
+            dataframe_variables = self.dataframe_extractor.get_dataframe_variables(
+                set_variables
+            )
 
             # Load dictionaries
             models = self.model_extractor.load_model_dict()
@@ -96,9 +103,21 @@ class Inspector:
                 "library_aliases": library_aliases,
                 "variables": set_variables,
                 "dataframe_variables": dataframe_variables,
-                "lines": {node.lineno: source.splitlines()[node.lineno - 1] for node in ast.walk(tree) if hasattr(node, "lineno")},
-                "dataframe_methods": df_dict["method"] if isinstance(df_dict["method"], list) else df_dict["method"].tolist(),
-                "tensor_operations": tensor_operations["operation"].tolist() if "operation" in tensor_operations else [],
+                "lines": {
+                    node.lineno: source.splitlines()[node.lineno - 1]
+                    for node in ast.walk(tree)
+                    if hasattr(node, "lineno")
+                },
+                "dataframe_methods": (
+                    df_dict["method"]
+                    if isinstance(df_dict["method"], list)
+                    else df_dict["method"].tolist()
+                ),
+                "tensor_operations": (
+                    tensor_operations["operation"].tolist()
+                    if "operation" in tensor_operations
+                    else []
+                ),
                 "models": list(models.keys()),
                 "model_methods": model_methods,
             }
@@ -116,4 +135,3 @@ class Inspector:
             raise SyntaxError(f"Error in file {filename}: {e}")
 
         return to_save
-
