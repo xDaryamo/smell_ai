@@ -18,13 +18,13 @@ class DataFrameExtractor:
         self.df_dict = None
         self.df_dict_path = df_dict_path
 
-    def set_libraries(libraries: set[str]) -> None:
-         """
+    def set_libraries(self, libraries: set[str]) -> None:
+        """
         Initializes the DataFrameExtractor libraries instance variable
 
         Parameters:
         - libraries (set[str]): A set of libraries used in the code (e.g., {"pandas as pd"}).
-         """
+        """
         self.libraries = libraries
 
     def load_dataframe_dict(self) -> dict[str, list]:

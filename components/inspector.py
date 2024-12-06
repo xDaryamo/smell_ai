@@ -23,7 +23,7 @@ class Inspector:
         self.dataframe_extractor = None
         self.variable_extractor = None
 
-    def setup(self, dataframe_dict_path: str, model_dict_path: str, tensor_dict_path: str, smells: list):
+    def setup(self, dataframe_dict_path: str, model_dict_path: str, tensor_dict_path: str) -> None:
         """
         Sets up the necessary components for the Inspector.
 
@@ -97,7 +97,7 @@ class Inspector:
                 "variables": set_variables,
                 "dataframe_variables": dataframe_variables,
                 "lines": {node.lineno: source.splitlines()[node.lineno - 1] for node in ast.walk(tree) if hasattr(node, "lineno")},
-                "dataframe_methods": df_dict["method"].tolist() if "method" in df_dict else [],
+                "dataframe_methods": df_dict["method"] if isinstance(df_dict["method"], list) else df_dict["method"].tolist(),
                 "tensor_operations": tensor_operations["operation"].tolist() if "operation" in tensor_operations else [],
                 "models": list(models.keys()),
                 "model_methods": model_methods,
