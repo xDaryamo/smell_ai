@@ -42,22 +42,22 @@ class RuleChecker:
         self.smells = [
             # API-Specific Smells
             chain_indexing_smell.ChainIndexingSmell(),
-            dataframe_conversion_api_misused.DataFrameConversionAPIMisused(),
-            gradients_not_cleared_before_backward_propagation.GradientsNotClearedSmell(),
-            matrix_multiplication_api_misused.MatrixMultiplicationAPIMisused(),
-            pytorch_call_method_misused.PyTorchCallMethodMisusedSmell(),
-            tensor_array_not_used.TensorArrayNotUsedSmell(),
-            # Generic Smells
-            broadcasting_feature_not_used.BroadcastingFeatureNotUsedSmell(),
-            columns_and_datatype_not_explicitly_set.ColumnsAndDatatypeNotExplicitlySetSmell(),
-            deterministic_algorithm_option_not_used.DeterministicAlgorithmOptionSmell(),
-            empty_column_misinitialization.EmptyColumnMisinitializationSmell(),
-            hyperparameters_not_explicitly_set.HyperparametersNotExplicitlySetSmell(),
-            in_place_apis_misused.InPlaceAPIsMisusedSmell(),
-            memory_not_freed.MemoryNotFreedSmell(),
-            merge_api_parameter_not_explicitly_set.MergeAPIParameterNotExplicitlySetSmell(),
-            nan_equivalence_comparison_misused.NanEquivalenceComparisonMisusedSmell(),
-            unnecessary_iteration.UnnecessaryIterationSmell(),
+            # dataframe_conversion_api_misused.DataFrameConversionAPIMisused(),
+            # gradients_not_cleared_before_backward_propagation.GradientsNotClearedSmell(),
+            # matrix_multiplication_api_misused.MatrixMultiplicationAPIMisused(),
+            # pytorch_call_method_misused.PyTorchCallMethodMisusedSmell(),
+            # tensor_array_not_used.TensorArrayNotUsedSmell(),
+            # # Generic Smells
+            # broadcasting_feature_not_used.BroadcastingFeatureNotUsedSmell(),
+            # columns_and_datatype_not_explicitly_set.ColumnsAndDatatypeNotExplicitlySetSmell(),
+            # deterministic_algorithm_option_not_used.DeterministicAlgorithmOptionSmell(),
+            # empty_column_misinitialization.EmptyColumnMisinitializationSmell(),
+            # hyperparameters_not_explicitly_set.HyperparametersNotExplicitlySetSmell(),
+            # in_place_apis_misused.InPlaceAPIsMisusedSmell(),
+            # memory_not_freed.MemoryNotFreedSmell(),
+            # merge_api_parameter_not_explicitly_set.MergeAPIParameterNotExplicitlySetSmell(),
+            # nan_equivalence_comparison_misused.NanEquivalenceComparisonMisusedSmell(),
+            # unnecessary_iteration.UnnecessaryIterationSmell(),
         ]
 
     def rule_check(
@@ -79,6 +79,7 @@ class RuleChecker:
         Returns:
         - pd.DataFrame: The updated DataFrame containing detected smells.
         """
+
         for smell in self.smells:
             detected_smells = smell.detect(ast_node, extracted_data, filename)
 
