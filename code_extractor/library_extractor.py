@@ -2,101 +2,120 @@ import ast
 
 
 class LibraryExtractor:
-    def __init__(self):
-        """
-        Initializes the LibraryExtractor.
+    """
+    A utility class for extracting information about libraries and imports
+    from Python code represented as an Abstract Syntax Tree (AST).
+    """
 
-        Instance Variables:
-        - self.libraries (set[str]): A set of libraries used in the code, extracted from the AST tree.
+    def extract_libraries(self, tree: ast.AST) -> list[dict[str, str]]:
         """
-        self.libraries = set()
-
-    def extract_libraries(self, tree: ast.AST) -> set[str]:
-        """
-        Extracts all libraries used in the parsed AST tree and updates the `self.libraries` set.
+        Extracts all libraries imported in the given AST.
 
         Parameters:
-        - tree (ast.AST): The parsed abstract syntax tree (AST) of the code to analyze.
+        - tree (ast.AST): The AST of a Python module.
 
         Returns:
-        - set[str]: A set of library names (and aliases, if any) used in the code.
+        - list[dict[str, str]]: A list of dictionaries, where each dictionary contains:
+          - 'name': The name of the library/module.
+          - 'alias': The alias of the library/module (if present, otherwise None).
 
-        Notes:
-        - Handles both `import` and `from ... import` statements.
-        - Libraries are stored as strings. If an alias is present, the format is `library_name as alias`.
+        Example:
+        ----------
+        Code:
+            import pandas as pd
+            from numpy import array
+
+        Output:
+            [
+                {'name': 'pandas', 'alias': 'pd'},
+                {'name': 'numpy.array', 'alias': None}
+            ]
         """
+        libraries = []
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    if alias.asname:
-                        self.libraries.add(alias.name + " as " + alias.asname)
-                    else:
-                        self.libraries.add(alias.name)
+                    libraries.append({"name": alias.name, "alias": alias.asname})
             elif isinstance(node, ast.ImportFrom):
-                if node.module and node.module != "*":
-                    for alias in node.names:
-                        if alias.asname:
-                            self.libraries.add(
-                                node.module + "." + alias.name + " as " + alias.asname
-                            )
-                        else:
-                            self.libraries.add(node.module + "." + alias.name)
-        return self.libraries
+                module = node.module or ""  # Handle cases where module is None
+                for alias in node.names:
+                    full_name = f"{module}.{alias.name}" if module else alias.name
+                    libraries.append({"name": full_name, "alias": alias.asname})
+        return libraries
 
-    def extract_library_name(self, library: str) -> str:
+    def get_library_aliases(self, libraries: list[dict[str, str]]) -> dict[str, str]:
         """
-        Extracts the original library name from an import statement.
+        Extracts a mapping of library/module names to their aliases.
 
         Parameters:
-        - library (str): The library import string (e.g., "pandas as pd" or "pandas").
+        - libraries (list[dict[str, str]]): A list of dictionaries as returned by `extract_libraries`.
 
         Returns:
-        - str: The original library name (e.g., "pandas").
+        - dict[str, str]: A dictionary where:
+          - Keys are the full names of the libraries.
+          - Values are their aliases (or the original name if no alias is used).
 
-        Notes:
-        - If the library string includes an alias (e.g., `as pd`), only the base library name is returned.
+        Example:
+        ----------
+        Input:
+            [
+                {'name': 'pandas', 'alias': 'pd'},
+                {'name': 'numpy.array', 'alias': None}
+            ]
+
+        Output:
+            {
+                'pandas': 'pd',
+                'numpy.array': 'numpy.array'
+            }
         """
-        return library.split(" as ")[0] if " as " in library else library
+        aliases = {}
+        for lib in libraries:
+            name = lib["name"]
+            alias = lib["alias"] if lib["alias"] else name  # Use name if alias is None
+            aliases[name] = alias
+        return aliases
 
-    def extract_library_as_name(self, library: str) -> str:
-        """
-        Extracts the alias of a library from an import statement, if one exists.
-
-        Parameters:
-        - library (str): The library import string (e.g., "pandas as pd" or "pandas").
-
-        Returns:
-        - str: The alias of the library (e.g., "pd") if present. If no alias exists, returns the original library name.
-
-        Notes:
-        - If the library does not use an alias, the original library name is returned.
-        """
-        return library.split(" as ")[1] if " as " in library else library
-
-    def get_library_of_node(self, node: ast.AST) -> str:
+    def get_library_of_node(self, node: ast.AST, aliases: dict[str, str]) -> str:
         """
         Determines the library associated with a given AST node.
 
         Parameters:
         - node (ast.AST): The AST node to analyze. Typically represents a function or method call.
+        - aliases (dict[str, str]): A mapping of library names to their aliases (as returned by `get_library_aliases`).
 
         Returns:
         - str: The library associated with the node, or "Unknown" if the library cannot be determined.
 
+        Example:
+        ----------
+        Code:
+            import pandas as pd
+            pd.read_csv("file.csv")
+
+        Node:
+            <Call AST node for pd.read_csv>
+
+        Output:
+            "pandas"
+
         Notes:
-        - This method inspects function calls (`ast.Call`) to see if they belong to a library in `self.libraries`.
+        - This method inspects function calls (`ast.Call`) to determine if they belong to a library in `aliases`.
         - For method calls (e.g., `pd.read_csv`), the method checks the base object (`pd`) to match it with a library.
-        - Returns "Unknown" if the node appears to be a method of an object but the library cannot be determined.
+        - Returns "Unknown" if the node does not clearly belong to any library.
         """
-        from_object = False
-        n = node
-        if isinstance(n, ast.Call):
-            n = n.func
-            while isinstance(n, ast.Attribute):
-                from_object = True
-                n = n.value
-            method_name = n.id if isinstance(n, ast.Name) else ""
-            for lib in self.libraries:
-                if method_name in lib:
-                    return lib
-        return "Unknown" if from_object else None
+        if isinstance(node, ast.Call):
+            if isinstance(node.func, ast.Attribute):  # e.g., pd.read_csv
+                if isinstance(node.func.value, ast.Name):  # e.g., pd
+                    base_object = node.func.value.id
+                    for library, alias in aliases.items():
+                        if alias == base_object:
+                            return library
+            elif isinstance(
+                node.func, ast.Name
+            ):  # Direct function calls without attributes
+                func_name = node.func.id
+                for library, alias in aliases.items():
+                    if alias == func_name:  # The function name matches a library alias
+                        return library
+        return "Unknown"

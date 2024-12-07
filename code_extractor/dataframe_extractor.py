@@ -3,185 +3,149 @@ import pandas as pd
 
 
 class DataFrameExtractor:
-    def __init__(self, df_dict_path: str):
+    """
+    A utility class for extracting information related to Pandas DataFrames
+    from Python code represented as an Abstract Syntax Tree (AST).
+    """
+
+    def __init__(self, df_dict_path: str = None):
         """
         Initializes the DataFrameExtractor.
 
         Parameters:
-        - df_dict_path (str): Path to the CSV file containing the DataFrame method definitions.
+        - df_dict_path (str): Optional path to the CSV file containing the DataFrame method definitions.
 
         Instance Variables:
-        - self.libraries (set[str]): A set of library imports provided during initialization.
-        - self.df_dict (dict[str, list]): A dictionary representing DataFrame-related methods (loaded from CSV).
-        - self.df_dict_path (str): Path to the DataFrame method definitions file.
+        - self.df_methods (list[str]): A list of Pandas DataFrame methods loaded from the CSV file.
         """
-        self.libraries = None
-        self.df_dict = None
-        self.df_dict_path = df_dict_path
+        self.df_methods = []
+        if df_dict_path:
+            self.load_dataframe_dict(df_dict_path)
 
-    def set_libraries(self, libraries: set[str]) -> None:
+    def load_dataframe_dict(self, path: str):
         """
-        Initializes the DataFrameExtractor libraries instance variable
+        Loads a dictionary of Pandas DataFrame methods from a CSV file.
 
         Parameters:
-        - libraries (set[str]): A set of libraries used in the code (e.g., {"pandas as pd"}).
-        """
-        self.libraries = libraries
-
-    def load_dataframe_dict(self) -> dict[str, list]:
-        """
-        Loads the DataFrame methods dictionary from a CSV file.
+        - path (str): Path to the CSV file.
 
         Returns:
-        - dict[str, list]: A dictionary where the keys are column names from the CSV, and the values are lists of column data.
-
-        Raises:
-        - FileNotFoundError: If the CSV file cannot be found.
+        - None: Updates `self.df_methods` with a list of method names.
         """
-        self.df_dict = pd.read_csv(
-            self.df_dict_path,
-            dtype={"id": "string", "library": "string", "method": "string"},
-        ).to_dict(orient="list")
-        return self.df_dict
+        df = pd.read_csv(path, dtype={"method": "string"})
+        self.df_methods = df["method"].tolist()
 
-    def search_pandas_library(self) -> str:
+    def extract_dataframe_variables(self, fun_node: ast.AST, alias: str) -> list[str]:
         """
-        Searches for the pandas library in the stored library list.
-
-        Returns:
-        - str: The alias of the pandas library (e.g., "pd") if found, or None if pandas is not used.
-
-        Notes:
-        - This method assumes that the library is imported with an alias (e.g., `import pandas as pd`).
-        - If pandas is imported without an alias, this method will return None.
-        """
-        for lib in self.libraries:
-            short = self.extract_lib_object(lib)
-            if short:
-                return short
-        return None
-
-    def dataframe_check(self, fun_node: ast.AST) -> list[str]:
-        """
-        Checks if a function node uses pandas DataFrames.
+        Identifies variables initialized as Pandas DataFrames in a function.
 
         Parameters:
-        - fun_node (ast.AST): The AST node representing the function to analyze.
+        - fun_node (ast.AST): The AST node representing a Python function.
+        - alias (str): The alias used for Pandas (e.g., "pd").
 
         Returns:
-        - list[str]: A list of variables related to pandas DataFrames, or None if pandas is not used.
+        - list[str]: A list of variable names initialized as DataFrames.
 
-        Notes:
-        - Uses `search_pandas_library` to ensure pandas is being used.
-        - Initiates a recursive search for variables starting from the pandas alias.
-        """
-        short = self.search_pandas_library()
-        if short is None:
-            return None
-        return self.recursive_search_variables(fun_node, [short])
+        Example:
+        ----------
+        Code:
+            def example():
+                df = pd.DataFrame({'a': [1, 2, 3]})
+                result = df['a']
 
-    def recursive_search_variables(
-        self, fun_node: ast.AST, init_list: list[str]
-    ) -> list[str]:
-        """
-        Recursively searches for variables within a function node related to DataFrame operations.
-
-        Parameters:
-        - fun_node (ast.AST): The AST node representing the function to analyze.
-        - init_list (list[str]): A list of initial variable names to start the search.
-
-        Returns:
-        - list[str]: A list of variables related to pandas DataFrame operations.
-
-        Notes:
-        - The method analyzes assignments to identify variables that interact with DataFrame-related variables.
-        - Recursion continues until no new variables are added to the list.
-        """
-        list_vars = init_list.copy()
-        for node in ast.walk(fun_node):
-            if isinstance(node, ast.Assign):
-                # Case 1: Right-hand side is an expression involving a variable in list_vars
-                if isinstance(node.value, ast.Expr):
-                    expr = node.value
-                    if isinstance(expr.value, ast.Name) and expr.value.id in list_vars:
-                        if (
-                            hasattr(node.targets[0], "id")
-                            and node.targets[0].id not in list_vars
-                        ):
-                            list_vars.append(node.targets[0].id)
-
-                # Case 2: Right-hand side is a variable name already in list_vars
-                if isinstance(node.value, ast.Name) and node.value.id in list_vars:
-                    if (
-                        hasattr(node.targets[0], "id")
-                        and node.targets[0].id not in list_vars
-                    ):
-                        list_vars.append(node.targets[0].id)
-
-                # Case 3: Right-hand side is a function call using a variable in list_vars
-                if isinstance(node.value, ast.Call):
-                    name_func = node.value.func
-                    if isinstance(name_func, ast.Attribute):
-                        id = None
-                        if isinstance(name_func.value, ast.Subscript) and isinstance(
-                            name_func.value.value, ast.Name
-                        ):
-                            id = name_func.value.value.id
-                        elif isinstance(name_func.value, ast.Name):
-                            id = name_func.value.id
-                        if id in list_vars and name_func.attr in self.df_dict["method"]:
-                            if (
-                                hasattr(node.targets[0], "id")
-                                and node.targets[0].id not in list_vars
-                            ):
-                                list_vars.append(node.targets[0].id)
-
-                # Case 4: Right-hand side is a subscript involving a variable in list_vars
-                elif isinstance(node.value, ast.Subscript) and isinstance(
-                    node.value.value, ast.Name
-                ):
-                    if node.value.value.id in list_vars:
-                        if (
-                            hasattr(node.targets[0], "id")
-                            and node.targets[0].id not in list_vars
-                        ):
-                            list_vars.append(node.targets[0].id)
-
-        # Recursive call if new variables were added, otherwise return the final list
-        if list_vars == init_list:
-            return list_vars
-        else:
-            return self.recursive_search_variables(fun_node, list_vars)
-
-    def extract_lib_object(self, lib: str) -> str:
-        """
-        Extracts the alias of a library from an import statement.
-
-        Parameters:
-        - lib (str): The library import string (e.g., "pandas as pd").
-
-        Returns:
-        - str: The alias of the library (e.g., "pd") if present, or None otherwise.
-
-        Notes:
-        - If the library string does not include an alias, this method will return None.
-        """
-        split_lib = lib.split(" as ")
-        return split_lib[1] if len(split_lib) > 1 else None
-
-    def get_dataframe_variables(self, variables: list[str]) -> list[str]:
-        """
-        Identifies DataFrame-related variables.
-
-        Parameters:
-        - variables (list[str]): A list of variable names.
-
-        Returns:
-        - list[str]: Variables associated with DataFrame operations.
+        Output:
+            ['df']
         """
         dataframe_vars = []
-        for var in variables:
-            if self.df_dict and "method" in self.df_dict:
-                if var in self.df_dict["method"]:
-                    dataframe_vars.append(var)
+        for node in ast.walk(fun_node):
+            if isinstance(node, ast.Assign):  # Look for assignment statements
+                if isinstance(
+                    node.value, ast.Call
+                ):  # Check if right-hand side is a function call
+                    func = node.value.func
+                    if (
+                        isinstance(func, ast.Attribute)
+                        and isinstance(func.value, ast.Name)
+                        and func.value.id == alias
+                        and func.attr == "DataFrame"
+                    ):
+                        for target in node.targets:
+                            if isinstance(
+                                target, ast.Name
+                            ):  # Ensure it's a simple variable
+                                dataframe_vars.append(target.id)
         return dataframe_vars
+
+    def track_dataframe_methods(
+        self, fun_node: ast.AST, dataframe_vars: list[str]
+    ) -> dict[str, list[str]]:
+        """
+        Tracks methods called on Pandas DataFrames within a function.
+
+        Parameters:
+        - fun_node (ast.AST): The AST node representing a Python function.
+        - dataframe_vars (list[str]): A list of DataFrame variable names.
+
+        Returns:
+        - dict[str, list[str]]: A dictionary where keys are DataFrame variable names,
+          and values are lists of method names called on those DataFrames.
+
+        Example:
+        ----------
+        Code:
+            def example():
+                df = pd.DataFrame({'a': [1, 2, 3]})
+                df2 = df.drop('a', axis=1)
+
+        Output:
+            {
+                'df': ['drop'],
+                'df2': []
+            }
+        """
+        methods_usage = {var: [] for var in dataframe_vars}
+        for node in ast.walk(fun_node):
+            if isinstance(node, ast.Call):  # Look for function/method calls
+                func = node.func
+                if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
+                    if func.value.id in dataframe_vars and func.attr in self.df_methods:
+                        methods_usage[func.value.id].append(func.attr)
+        return methods_usage
+
+    def track_dataframe_accesses(
+        self, fun_node: ast.AST, dataframe_vars: list[str]
+    ) -> dict[str, list[str]]:
+        """
+        Tracks column accesses on Pandas DataFrames within a function.
+
+        Parameters:
+        - fun_node (ast.AST): The AST node representing a Python function.
+        - dataframe_vars (list[str]): A list of DataFrame variable names.
+
+        Returns:
+        - dict[str, list[str]]: A dictionary where keys are DataFrame variable names,
+          and values are lists of column names accessed on those DataFrames.
+
+        Example:
+        ----------
+        Code:
+            def example():
+                df = pd.DataFrame({'a': [1, 2, 3]})
+                result = df['a']
+
+        Output:
+            {
+                'df': ['a']
+            }
+        """
+        accesses = {var: [] for var in dataframe_vars}
+        for node in ast.walk(fun_node):
+            if isinstance(
+                node, ast.Subscript
+            ):  # Look for subscript accesses (e.g., df['a'])
+                if isinstance(node.value, ast.Name) and node.value.id in dataframe_vars:
+                    if isinstance(
+                        node.slice, ast.Constant
+                    ):  # Ensure the key is a constant
+                        accesses[node.value.id].append(node.slice.value)
+        return accesses

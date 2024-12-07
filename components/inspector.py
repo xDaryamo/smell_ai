@@ -9,6 +9,11 @@ from components.rule_checker import RuleChecker
 
 
 class Inspector:
+    """
+    Inspects Python code for code smells by extracting relevant information
+    and applying detection rules using AST-based analysis.
+    """
+
     def __init__(self, output_path: str):
         """
         Initializes the Inspector with the output path for saving detected smells.
@@ -34,7 +39,6 @@ class Inspector:
         - dataframe_dict_path (str): Path to the DataFrame dictionary CSV.
         - model_dict_path (str): Path to the model dictionary CSV.
         - tensor_dict_path (str): Path to the tensor operations CSV.
-        - smells (list): List of `Smell` instances to be used by the `RuleChecker`.
         """
         # Initialize the RuleChecker with smells and extractors
         self.rule_checker = RuleChecker(self.output_path)
@@ -49,6 +53,11 @@ class Inspector:
         self.dataframe_extractor = DataFrameExtractor(
             df_dict_path=dataframe_dict_path,
         )
+
+        # Preload dictionaries to avoid runtime errors
+        self.model_extractor.load_model_dict()
+        self.model_extractor.load_tensor_operations_dict()
+        self.dataframe_extractor.load_dataframe_dict(dataframe_dict_path)
 
     def inspect(self, filename: str) -> pd.DataFrame:
         """
@@ -65,61 +74,47 @@ class Inspector:
         file_path = os.path.abspath(filename)
 
         try:
-            with open(file_path, "rb") as file:
+            with open(file_path, "r", encoding="utf-8") as file:
                 source = file.read()
 
             # Parse the file into an AST
             tree = ast.parse(source)
-            lines = source.decode("utf-8").splitlines()
+            lines = source.splitlines()
 
             # Extract libraries
-            libraries = self.library_extractor.extract_libraries(tree)
-            library_aliases = {
-                self.library_extractor.extract_library_name(
-                    lib
-                ): self.library_extractor.extract_library_as_name(lib)
-                for lib in libraries
-            }
-
-            self.dataframe_extractor.set_libraries(libraries)
-
-            # Extract variables using VariableExtractor
-            set_variables = self.variable_extractor.get_all_set_variables(lines)
-
-            # Extract DataFrame-related variables
-            dataframe_variables = self.dataframe_extractor.get_dataframe_variables(
-                set_variables
+            libraries = self.library_extractor.get_library_aliases(
+                self.library_extractor.extract_libraries(tree)
             )
 
-            # Load dictionaries
-            models = self.model_extractor.load_model_dict()
-            model_methods = self.model_extractor.load_model_methods()
-            df_dict = self.dataframe_extractor.load_dataframe_dict()
-            tensor_operations = self.model_extractor.load_tensor_operations_dict()
+            # Extract variables using VariableExtractor
+            variable_definitions = self.variable_extractor.extract_variable_definitions(
+                tree
+            )
+
+            # Extract DataFrame-related variables
+            dataframe_variables = self.dataframe_extractor.extract_dataframe_variables(
+                tree, alias=libraries.get("pandas", None)
+            )
+
+            # Load dictionaries (already preloaded in setup, used here for context)
+            models = self.model_extractor.model_dict
+            tensor_operations = self.model_extractor.tensor_operations_dict
+            dataframe_methods = self.dataframe_extractor.df_methods
 
             # Combine all extracted data into a unified dictionary
             extracted_data = {
                 "libraries": libraries,
-                "library_aliases": library_aliases,
-                "variables": set_variables,
-                "dataframe_variables": dataframe_variables,
+                "variables": variable_definitions,  # Mappa nome variabile → nodo AST
                 "lines": {
-                    node.lineno: source.splitlines()[node.lineno - 1]
+                    node.lineno: lines[node.lineno - 1]
                     for node in ast.walk(tree)
                     if hasattr(node, "lineno")
                 },
-                "dataframe_methods": (
-                    df_dict["method"]
-                    if isinstance(df_dict["method"], list)
-                    else df_dict["method"].tolist()
-                ),
-                "tensor_operations": (
-                    tensor_operations["operation"].tolist()
-                    if "operation" in tensor_operations
-                    else []
-                ),
-                "models": list(models.keys()),
-                "model_methods": model_methods,
+                "dataframe_methods": dataframe_methods,
+                "dataframe_variables": dataframe_variables,  # Aggiunto questo campo
+                "tensor_operations": tensor_operations.get("operation", []),
+                "models": {model: models[model] for model in models.keys()},
+                "model_methods": self.model_extractor.load_model_methods(),
             }
 
             # Traverse the AST and analyze each function
