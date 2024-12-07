@@ -22,56 +22,69 @@ class MatrixMultiplicationAPIMisused(Smell):
     def detect(
         self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
     ) -> list[dict[str, any]]:
+        """
+        Detects occurrences where `dot()` is used for matrix multiplication.
+
+        Parameters:
+        - ast_node (ast.AST): The root AST node of the file being analyzed.
+        - extracted_data (dict[str, any]): A dictionary containing preprocessed information from the code.
+        - filename (str): The name of the file being analyzed.
+
+        Returns:
+        - list[dict[str, any]]: A list of detected smells, each represented as a dictionary.
+        """
         smells = []
 
-        # Check for Numpy library
-        if not any("numpy" in lib for lib in extracted_data["libraries"]):
+        # Ensure NumPy library is used
+        numpy_alias = extracted_data["libraries"].get("numpy")
+        if not numpy_alias:
             return smells
 
-        library_name = extracted_data["library_aliases"].get("numpy", None)
+        lines = extracted_data.get("lines", {})
+
         for node in ast.walk(ast_node):
-            if isinstance(node, ast.Call):
-                # Check for calls to `dot` in NumPy
-                if hasattr(node.func, "attr") and node.func.attr == "dot":
-                    if (
-                        hasattr(node.func.value, "id")
-                        and node.func.value.id == library_name
-                    ):
-                        # Check the arguments of the `dot()` call
-                        matrix_multiplication = self._is_matrix_multiplication(
-                            node, extracted_data
-                        )
-                        if matrix_multiplication:
-                            smells.append(
-                                self.format_smell(
-                                    line=node.lineno,
-                                    additional_info="Please consider to use np.matmul to multiply matrix. The function dot() does not return a scalar value, "
-                                    "but a matrix.",
-                                )
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                # Check if `dot` is called using the NumPy alias
+                if (
+                    node.func.attr == "dot"
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == numpy_alias
+                ):
+                    # Check if the `dot()` call arguments involve matrices
+                    if self._is_matrix_multiplication(node):
+                        code_snippet = lines.get(node.lineno, "<Code not available>")
+                        smells.append(
+                            self.format_smell(
+                                line=node.lineno,
+                                additional_info=(
+                                    f"Detected misuse of `dot()` for matrix multiplication. "
+                                    f"Consider using `np.matmul` instead. Code: {code_snippet}"
+                                ),
                             )
+                        )
         return smells
 
-    def _is_matrix_multiplication(
-        self, node: ast.Call, extracted_data: dict[str, any]
-    ) -> bool:
+    def _is_matrix_multiplication(self, node: ast.Call) -> bool:
         """
         Checks if the arguments of a `dot()` function call represent matrices.
 
-        :param node: The AST node of the `dot()` function call.
-        :param extracted_data: Dictionary of pre-extracted data.
-        :return: True if matrix multiplication is detected, False otherwise.
+        Parameters:
+        - node (ast.Call): The AST node of the `dot()` function call.
+
+        Returns:
+        - bool: True if matrix multiplication is detected, False otherwise.
         """
         if not hasattr(node, "args") or len(node.args) < 2:
             return False
 
         for arg in node.args:
-            # Case 1: Check if the argument is a matrix (list of lists)
-            if isinstance(arg, ast.List):
-                if all(isinstance(el, ast.List) for el in arg.elts):
-                    return True
-            # Case 2: Check if the argument is in the list of variables
-            elif isinstance(arg, ast.Name) and arg.id in extracted_data["variables"]:
-                # Assuming the extracted_data contains all variables as a list without differentiation
+            # Case 1: Check if the argument is a matrix literal (list of lists)
+            if isinstance(arg, ast.List) and all(
+                isinstance(el, ast.List) for el in arg.elts
+            ):
+                return True
+            # Case 2: Check if the argument is a variable representing a matrix
+            elif isinstance(arg, ast.Name):
                 return True
 
         return False

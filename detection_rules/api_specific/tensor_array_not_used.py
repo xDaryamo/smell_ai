@@ -33,7 +33,7 @@ class TensorArrayNotUsedSmell(Smell):
         if not any("tensorflow" in lib for lib in extracted_data["libraries"]):
             return smells
 
-        library_name = extracted_data["library_aliases"].get("tensorflow", None)
+        library_name = extracted_data["libraries"].get("tensorflow", None)
 
         # Traverse the AST
         for node in ast.walk(ast_node):

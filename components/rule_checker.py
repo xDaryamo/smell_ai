@@ -42,11 +42,11 @@ class RuleChecker:
         self.smells = [
             # API-Specific Smells
             chain_indexing_smell.ChainIndexingSmell(),
-            # dataframe_conversion_api_misused.DataFrameConversionAPIMisused(),
-            # gradients_not_cleared_before_backward_propagation.GradientsNotClearedSmell(),
-            # matrix_multiplication_api_misused.MatrixMultiplicationAPIMisused(),
-            # pytorch_call_method_misused.PyTorchCallMethodMisusedSmell(),
-            # tensor_array_not_used.TensorArrayNotUsedSmell(),
+            dataframe_conversion_api_misused.DataFrameConversionAPIMisused(),
+            gradients_not_cleared_before_backward_propagation.GradientsNotClearedSmell(),
+            matrix_multiplication_api_misused.MatrixMultiplicationAPIMisused(),
+            pytorch_call_method_misused.PyTorchCallMethodMisusedSmell(),
+            tensor_array_not_used.TensorArrayNotUsedSmell(),
             # # Generic Smells
             # broadcasting_feature_not_used.BroadcastingFeatureNotUsedSmell(),
             # columns_and_datatype_not_explicitly_set.ColumnsAndDatatypeNotExplicitlySetSmell(),

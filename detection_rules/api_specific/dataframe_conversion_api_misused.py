@@ -22,28 +22,45 @@ class DataFrameConversionAPIMisused(Smell):
     def detect(
         self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
     ) -> list[dict[str, any]]:
+        """
+        Detects misuse of the `values` attribute in DataFrames.
+
+        Parameters:
+        - ast_node (ast.AST): The root AST node of the file being analyzed.
+        - extracted_data (dict[str, any]): A dictionary containing preprocessed information from the code.
+        - filename (str): The name of the file being analyzed.
+
+        Returns:
+        - list[dict[str, any]]: A list of detected smells, each represented as a dictionary.
+        """
         smells = []
 
-        # Check for Pandas library
-        if not any("pandas" in lib for lib in extracted_data["libraries"]):
+        # Ensure the Pandas library is used
+        pandas_alias = extracted_data["libraries"].get("pandas")
+        if not pandas_alias:
             return smells
 
         dataframe_variables = extracted_data.get("dataframe_variables", [])
+        lines = extracted_data.get("lines", {})
 
         # Traverse the AST
         for node in ast.walk(ast_node):
             if (
                 isinstance(node, ast.Attribute)
                 and node.attr == "values"  # Check for the `values` attribute
-                and hasattr(node.value, "id")
+                and isinstance(node.value, ast.Name)
                 and node.value.id in dataframe_variables
             ):
+                # Extract the offending line for additional context
+                code_snippet = lines.get(node.lineno, "<Code not available>")
                 smells.append(
                     self.format_smell(
                         line=node.lineno,
                         additional_info=(
-                            "Please consider using numpy or explicit methods instead of `values` for DataFrame conversion. "
-                            "The function 'values' is deprecated and its return type is unclear."
+                            f"Misuse of the 'values' attribute detected in variable '{node.value.id}'. "
+                            "Please consider using NumPy or explicit methods instead of `values` for DataFrame conversion. "
+                            "The function 'values' is deprecated and its return type is unclear. "
+                            f"Code: {code_snippet}"
                         ),
                     )
                 )
