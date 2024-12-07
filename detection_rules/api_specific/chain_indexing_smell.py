@@ -22,22 +22,40 @@ class ChainIndexingSmell(Smell):
     def detect(
         self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
     ) -> list[dict[str, any]]:
+        """
+        Detects occurrences of chained indexing in the provided AST node.
+
+        Parameters:
+        - ast_node (ast.AST): The root AST node of the file being analyzed.
+        - extracted_data (dict[str, any]): A dictionary containing preprocessed information from the code.
+        - filename (str): The name of the file being analyzed.
+
+        Returns:
+        - list[dict[str, any]]: A list of detected smells, each represented as a dictionary.
+        """
         smells = []
 
-        # Check for Pandas library
-        if not any("pandas" in lib for lib in extracted_data["libraries"]):
+        # Ensure the Pandas library is used
+        pandas_alias = extracted_data["libraries"].get("pandas")
+        if not pandas_alias:
             return smells
 
-        variables = extracted_data["variables"]
+        dataframe_variables = extracted_data["dataframe_variables"]
+
+        # Traverse the entire AST
         for node in ast.walk(ast_node):
-            if isinstance(node, ast.Subscript) and isinstance(
-                node.value, ast.Subscript
+            # Check if the node is a chained indexing
+            if (
+                isinstance(node, ast.Subscript)
+                and isinstance(node.value, ast.Subscript)
+                and isinstance(node.value.value, ast.Name)
+                and node.value.value.id in dataframe_variables
             ):
-                if hasattr(node.value, "id") and node.value.id in variables:
-                    smells.append(
-                        self.format_smell(
-                            line=node.lineno,
-                            additional_info="Chained indexing detected.",
-                        )
+                smells.append(
+                    self.format_smell(
+                        line=node.lineno,
+                        additional_info=f"Chained indexing detected in variable '{node.value.value.id}'.",
                     )
+                )
+
         return smells
