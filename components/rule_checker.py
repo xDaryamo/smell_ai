@@ -114,6 +114,9 @@ class RuleChecker:
 
         output_file = os.path.join(self.output_path, f"{smell_name}.csv")
 
+        # Ensure the directory exists
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+
         if os.path.exists(output_file):
             to_save = pd.read_csv(output_file)
         else:
