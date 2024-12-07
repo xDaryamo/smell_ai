@@ -88,8 +88,6 @@ class ProjectAnalyzer:
                 continue
 
             project_path = os.path.join(base_path, dirname)
-            output_dir = os.path.join(self.output_path, dirname)
-            os.makedirs(output_dir, exist_ok=True)
 
             print(f"Analyzing {dirname}...")
             self.analyze_project(project_path)
@@ -124,7 +122,6 @@ class ProjectAnalyzer:
     def projects_analysis(
         self,
         base_path: str,
-        output_path: str,
         max_workers: int = 5,
         resume: bool = False,
         parallel: bool = False,

@@ -145,7 +145,6 @@ class CodeSmellDetectorGUI:
         try:
             self.project_analyzer.projects_analysis(
                 base_path=input_path,
-                output_path=output_path,
                 max_workers=num_walkers,
                 resume=False,
                 parallel=is_parallel,
