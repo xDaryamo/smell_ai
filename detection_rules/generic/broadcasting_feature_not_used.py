@@ -20,7 +20,7 @@ class BroadcastingFeatureNotUsedSmell(Smell):
 
     def __init__(self):
         super().__init__(
-            name="broadcasting_feature_not_used",
+            name="Broadcasting_Feature_Not_Used",
             description=(
                 "Using broadcasting in TensorFlow is preferred over tiling arrays unnecessarily. "
                 "Broadcasting allows arithmetic between arrays of different shapes, saving memory and computation time."
@@ -32,110 +32,63 @@ class BroadcastingFeatureNotUsedSmell(Smell):
     ) -> list[dict[str, any]]:
         smells = []
 
-        # Check for Tensorflow library
-        library_alias = extracted_data["library_aliases"].get("tensorflow", None)
-        if not library_alias:
+        # Check for TensorFlow library
+        tensorflow_alias = extracted_data["libraries"].get("tensorflow", None)
+        if not tensorflow_alias:
             return smells
 
-        tensor_variables = {}
-        tensor_dict = extracted_data.get("tensor_operations", [])
+        # Identify variables created by tf.tile
+        tiled_variables = self._tensor_check_tiling(ast_node, tensorflow_alias)
 
-        # Traverse the AST nodes to find TensorFlow constants and variables
-        for node in ast.walk(ast_node):
-            if isinstance(node, ast.Assign):
-                if (
-                    isinstance(node.value, ast.Call)
-                    and isinstance(node.value.func, ast.Attribute)
-                    and node.value.func.attr in {"constant", "Variable"}
-                    and getattr(node.value.func.value, "id", None) == library_alias
-                ):
-                    if hasattr(node.targets[0], "id"):
-                        tensor_name = node.targets[0].id
-                        tensor_constants = self._extract_tensor_constants(node.value)
-                        if tensor_constants:
-                            tensor_variables[tensor_name] = tensor_constants
-
-        # Check for tiling operations
-        tensor_variables_with_tiling = self._tensor_check_tiling(
-            ast_node, tensor_variables
-        )
-
-        # Find tensor operations and check for broadcasting opportunities
-        operations = self._search_tensor_combination_operation(
-            ast_node, tensor_dict, tensor_variables
-        )
-        broadcasting_checking_tensors = self._check_broadcasting(
-            operations, tensor_variables, tensor_variables_with_tiling
-        )
-
-        # Add detected smells
-        for tensor in broadcasting_checking_tensors:
-            smells.append(
-                self.format_smell(
-                    line=tensor["line"],
-                    additional_info=(
-                        "Broadcasting allows arrays of different shapes to be used in arithmetic operations, "
-                        "avoiding unnecessary tiling."
-                    ),
-                )
-            )
+        # Check for arithmetic operations involving tiled variables
+        smells.extend(self._check_broadcasting(ast_node, tiled_variables))
 
         return smells
 
-    def _extract_tensor_constants(self, node: ast.Call) -> list:
-        """
-        Extracts constants from a TensorFlow tensor creation call.
-
-        :param node: The AST node representing a tensor creation call.
-        :return: A list of constants if found, otherwise an empty list.
-        """
-        if not hasattr(node, "args") or len(node.args) == 0:
-            return []
-        arg = node.args[0]
-        if isinstance(arg, ast.List):
-            return [elt for elt in arg.elts if isinstance(elt, ast.Constant)]
-        return []
-
-    def _tensor_check_tiling(
-        self, fun_node: ast.AST, tensor_variables: dict
-    ) -> list[str]:
+    def _tensor_check_tiling(self, fun_node: ast.AST, tensorflow_alias: str) -> dict:
         """
         Identifies tensor variables that have undergone tiling operations.
 
         :param fun_node: The AST node representing the function.
-        :param tensor_variables: Dictionary of tensor variables and their properties.
-        :return: List of tensor variables with tiling applied.
+        :param tensorflow_alias: Alias used for TensorFlow in the code (e.g., "tf").
+        :return: Dictionary mapping tiled variable names to their AST nodes.
         """
-        # Implement tiling detection logic (placeholder)
-        return []
-
-    def _search_tensor_combination_operation(
-        self, fun_node: ast.AST, tensor_dict: list[str], tensor_variables: dict
-    ) -> list[ast.Call]:
-        """
-        Searches for operations involving tensor combinations.
-
-        :param fun_node: The AST node representing the function.
-        :param tensor_dict: List of tensor operation methods.
-        :param tensor_variables: Dictionary of tensor variables.
-        :return: List of AST nodes representing combination operations.
-        """
-        # Implement tensor combination detection logic (placeholder)
-        return []
+        tiled_variables = {}
+        for node in ast.walk(fun_node):
+            if (
+                isinstance(node, ast.Assign)
+                and isinstance(node.value, ast.Call)
+                and isinstance(node.value.func, ast.Attribute)
+                and node.value.func.attr == "tile"
+                and getattr(node.value.func.value, "id", None) == tensorflow_alias
+            ):
+                if isinstance(node.targets[0], ast.Name):
+                    tiled_variables[node.targets[0].id] = node
+        return tiled_variables
 
     def _check_broadcasting(
-        self,
-        operations: list[ast.Call],
-        tensor_variables: dict,
-        tensor_variables_with_tiling: list[str],
-    ) -> list[dict[str, any]]:
+        self, fun_node: ast.AST, tiled_variables: dict
+    ) -> list[dict]:
         """
-        Checks whether tensor operations can benefit from broadcasting instead of tiling.
+        Checks whether arithmetic operations involve tiled variables.
 
-        :param operations: List of AST nodes representing operations.
-        :param tensor_variables: Dictionary of tensor variables.
-        :param tensor_variables_with_tiling: List of tensor variables with tiling applied.
-        :return: List of tensors where broadcasting could be applied.
+        :param fun_node: The AST node representing the function.
+        :param tiled_variables: Dictionary mapping tiled variable names to their AST nodes.
+        :return: List of detected broadcasting smells.
         """
-        # Implement broadcasting check logic (placeholder)
-        return []
+        smells = []
+        for node in ast.walk(fun_node):
+            if isinstance(node, ast.BinOp):  # Arithmetic operation (e.g., +, -, *, /)
+                if (
+                    isinstance(node.left, ast.Name) and node.left.id in tiled_variables
+                ) or (
+                    isinstance(node.right, ast.Name)
+                    and node.right.id in tiled_variables
+                ):
+                    smells.append(
+                        self.format_smell(
+                            line=node.lineno,
+                            additional_info=f"Variable '{node.left.id if isinstance(node.left, ast.Name) else node.right.id}' involves unnecessary tiling. Consider using broadcasting instead.",
+                        )
+                    )
+        return smells

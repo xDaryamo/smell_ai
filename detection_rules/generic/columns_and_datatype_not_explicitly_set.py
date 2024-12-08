@@ -26,33 +26,57 @@ class ColumnsAndDatatypeNotExplicitlySetSmell(Smell):
     def detect(
         self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
     ) -> list[dict[str, any]]:
+        """
+        Detects occurrences where Pandas' DataFrame or read_csv are called without 'dtype'.
 
+        Parameters:
+        - ast_node: The root AST node being analyzed.
+        - extracted_data: Preprocessed data from the code, including libraries and variables.
+        - filename: The name of the file being analyzed.
+
+        Returns:
+        - list[dict[str, any]]: A list of detected smells.
+        """
         smells = []
 
-        # Check for Pandas library
-        if not any("pandas" in lib for lib in extracted_data["libraries"]):
+        # Ensure Pandas library is used
+        pandas_alias = extracted_data["libraries"].get("pandas")
+        if not pandas_alias:
             return smells
 
-        library_name = extracted_data["library_aliases"].get("pandas", None)
+        dataframe_methods = extracted_data.get("dataframe_methods", [])
 
-        if not library_name:
-            return smells
-
-        # Traverse the AST nodes
+        # Traverse AST to find calls to DataFrame or read_csv
         for node in ast.walk(ast_node):
             if (
                 isinstance(node, ast.Call)
                 and hasattr(node.func, "attr")
-                and node.func.attr in {"DataFrame", "read_csv"}
+                and node.func.attr
+                in {"DataFrame", "read_csv"}  # Specific methods to check
                 and hasattr(node.func.value, "id")
-                and node.func.value.id == library_name
+                and node.func.value.id == pandas_alias
             ):
                 # Check for missing or incomplete keyword arguments
                 if not hasattr(node, "keywords") or not node.keywords:
                     smells.append(
                         self.format_smell(
                             line=node.lineno,
-                            additional_info="Missing explicit 'dtype' in DataFrame or read_csv call.",
+                            additional_info=f"Missing explicit 'dtype' in {node.func.attr} call.",
                         )
                     )
+                else:
+                    # Check if 'dtype' is explicitly set
+                    has_dtype = any(
+                        kw.arg == "dtype"
+                        for kw in node.keywords
+                        if isinstance(kw, ast.keyword)
+                    )
+                    if not has_dtype:
+                        smells.append(
+                            self.format_smell(
+                                line=node.lineno,
+                                additional_info=f"'dtype' not explicitly set in {node.func.attr} call.",
+                            )
+                        )
+
         return smells

@@ -24,40 +24,73 @@ class HyperparametersNotExplicitlySetSmell(Smell):
     def detect(
         self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
     ) -> list[dict[str, any]]:
+        """
+        Detects cases where hyperparameters are not explicitly set for models.
+
+        Parameters:
+        - ast_node: The root AST node being analyzed.
+        - extracted_data: Preprocessed data from the code, including libraries and variables.
+        - filename: The name of the file being analyzed.
+
+        Returns:
+        - list[dict[str, any]]: A list of detected smells.
+        """
         smells = []
 
-        # Ensure relevant libraries are imported
-        model_libs = extracted_data.get("model_methods", [])
-        if not model_libs:
-            return smells
+        # Retrieve model methods and libraries
+        model_methods = extracted_data.get("model_methods", [])
+        libraries = extracted_data.get("libraries", {})
 
+        # Normalize model method names (remove '()' if present)
+        normalized_model_methods = [
+            method.replace("()", "") for method in model_methods
+        ]
+
+        # Traverse AST to find calls to model definitions
         for node in ast.walk(ast_node):
             if isinstance(node, ast.Call):
-                method_name = self._extract_method_name(node)
+                # Extract the full function name
+                func_name = self._get_full_function_name(node.func, libraries)
 
-                # Check if the method belongs to model libraries
-                if method_name in model_libs:
-                    # Check if hyperparameters are explicitly set
+                # Match the function name with normalized methods
+                base_func_name = func_name.split(".")[-1]
+                if base_func_name in normalized_model_methods:
                     if not node.args and not getattr(node, "keywords", None):
                         smells.append(
                             self.format_smell(
                                 line=node.lineno,
-                                additional_info="Hyperparameters not explicitly set for model definition.",
+                                additional_info=(
+                                    f"Hyperparameters not explicitly set for model '{func_name}'. "
+                                    "Consider defining key hyperparameters for clarity."
+                                ),
                             )
                         )
+
         return smells
 
-    def _extract_method_name(self, node: ast.Call) -> str:
+    def _get_full_function_name(self, func: ast.AST, libraries: dict) -> str:
         """
-        Extracts the method name from an AST Call node.
+        Extracts the full name of a function or method from an AST node, handling library aliases.
 
-        :param node: The AST node representing a function or method call.
-        :return: The method name as a string.
+        Parameters:
+        - func: The AST node representing the function or method.
+        - libraries: Dictionary of library aliases from extracted_data.
+
+        Returns:
+        - str: The full name of the function (e.g., "sklearn.ensemble.RandomForestClassifier").
         """
-        while isinstance(node.func, ast.Call):
-            node = node.func
-        if isinstance(node.func, ast.Attribute):
-            return f"{node.func.attr}()"
-        if hasattr(node.func, "id"):
-            return f"{node.func.id}()"
-        return ""
+        names = []
+        while isinstance(func, ast.Attribute):
+            names.append(func.attr)
+            func = func.value
+
+        if isinstance(func, ast.Name):
+            # Handle aliases for libraries
+            if func.id in libraries.values():
+                alias = next(
+                    key for key, value in libraries.items() if value == func.id
+                )
+                names.append(alias)
+            else:
+                names.append(func.id)
+        return ".".join(reversed(names))

@@ -1,5 +1,4 @@
 import ast
-import re
 from detection_rules.smell import Smell
 
 
@@ -28,43 +27,53 @@ class EmptyColumnMisinitializationSmell(Smell):
     def detect(
         self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
     ) -> list[dict[str, any]]:
+        """
+        Detects cases of misinitialization of DataFrame columns.
 
+        Parameters:
+        - ast_node: The root AST node being analyzed.
+        - extracted_data: Preprocessed data from the code, including libraries and variables.
+        - filename: The name of the file being analyzed.
+
+        Returns:
+        - list[dict[str, any]]: A list of detected smells.
+        """
         smells = []
 
-        # Check for Pandas library
-        if not any("pandas" in lib for lib in extracted_data["libraries"]):
+        # Ensure Pandas library is used
+        pandas_alias = extracted_data["libraries"].get("pandas")
+        if not pandas_alias:
             return smells
 
-        # Extract relevant data
-        variables = extracted_data.get("dataframe_variables", [])
-        lines = extracted_data.get("lines", {})
-        empty_values = {"0", "''", '""'}
+        dataframe_variables = extracted_data.get("dataframe_variables", [])
 
-        # Traverse AST nodes
+        # Traverse AST to find DataFrame column assignments
         for node in ast.walk(ast_node):
-            if isinstance(node, ast.Assign) and node.targets:
-                # Check if target is a DataFrame variable
-                if (
-                    isinstance(node.targets[0], ast.Name)
-                    and node.targets[0].id in variables
-                ):
-                    # Retrieve the corresponding line of code
-                    line = lines.get(node.lineno - 1, "")
-                    pattern = rf"{re.escape(node.targets[0].id)}\[\s*.*\s*\]"
+            if (
+                isinstance(node, ast.Assign)  # An assignment statement
+                and len(node.targets) == 1  # Single assignment target
+                and isinstance(
+                    node.targets[0], ast.Subscript
+                )  # Accessing a DataFrame column (e.g., df["col"])
+                and isinstance(
+                    node.targets[0].value, ast.Name
+                )  # Base variable (e.g., df)
+                and node.targets[0].value.id
+                in dataframe_variables  # Variable is a known DataFrame
+            ):
+                # Check the assigned value
+                assigned_value = node.value
+                if isinstance(
+                    assigned_value, ast.Constant
+                ) and assigned_value.value in {0, "", ""}:
+                    smells.append(
+                        self.format_smell(
+                            line=node.lineno,
+                            additional_info=(
+                                f"Column '{node.targets[0].slice.value}' in DataFrame '{node.targets[0].value.id}' "
+                                "is initialized with a zero or empty string. Consider using NaN instead."
+                            ),
+                        )
+                    )
 
-                    # Check if the assignment matches the pattern
-                    if re.match(pattern, line):
-                        assigned_value = line.split("=", 1)[
-                            1
-                        ].strip()  # Split on first '='
-                        if assigned_value in empty_values:
-                            smells.append(
-                                self.format_smell(
-                                    line=node.lineno,
-                                    additional_info=(
-                                        "Avoid using zeros or empty strings to initialize DataFrame columns. "
-                                        "Use NaN instead."
-                                    ),
-                                )
-                            )
         return smells

@@ -28,7 +28,6 @@ class TensorArrayNotUsedSmell(Smell):
 
         # Track tensor variables initialized with `tf.constant`
         tensor_constants = set()
-
         # First Pass: Detect `tf.constant` assignments and track the variable
         for node in ast.walk(ast_node):
             if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):

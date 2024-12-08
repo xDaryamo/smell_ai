@@ -25,27 +25,72 @@ class DeterministicAlgorithmOptionSmell(Smell):
     def detect(
         self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
     ) -> list[dict[str, any]]:
+        """
+        Detects occurrences of `torch.use_deterministic_algorithms(True)`.
+
+        Parameters:
+        - ast_node: The root AST node being analyzed.
+        - extracted_data: Preprocessed data from the code, including libraries and variables.
+        - filename: The name of the file being analyzed.
+
+        Returns:
+        - list[dict[str, any]]: A list of detected smells.
+        """
         smells = []
 
-        # Check for Torch library
-        if not any("torch" in lib for lib in extracted_data["libraries"]):
-            return smells
+        # Retrieve libraries and alias mapping
+        libraries = extracted_data.get("libraries", {})
 
+        # Traverse AST to detect calls to `use_deterministic_algorithms`
         for node in ast.walk(ast_node):
-            if (
-                isinstance(node, ast.Call)
-                and hasattr(node.func, "id")
-                and node.func.id == "use_deterministic_algorithms"
-            ):
-                if (
-                    len(node.args) == 1
-                    and hasattr(node.args[0], "value")
-                    and node.args[0].value == True
-                ):
-                    smells.append(
-                        self.format_smell(
-                            line=node.lineno,
-                            additional_info="Using `torch.use_deterministic_algorithms(True)` detected. Avoid for performance.",
+            if isinstance(node, ast.Call):
+                # Extract the full function name
+                func_name = self._get_full_function_name(node.func, libraries)
+
+                # Match the function name with the target method
+                if func_name in [
+                    "torch.use_deterministic_algorithms",
+                    "use_deterministic_algorithms",
+                ]:
+                    if (
+                        len(node.args) == 1
+                        and isinstance(node.args[0], ast.Constant)
+                        and node.args[0].value is True
+                    ):
+                        smells.append(
+                            self.format_smell(
+                                line=node.lineno,
+                                additional_info=(
+                                    f"Using `{func_name}(True)` detected. Avoid for performance."
+                                ),
+                            )
                         )
-                    )
+
         return smells
+
+    def _get_full_function_name(self, func: ast.AST, libraries: dict) -> str:
+        """
+        Extracts the full name of a function or method from an AST node, handling library aliases.
+
+        Parameters:
+        - func: The AST node representing the function or method.
+        - libraries: Dictionary of library aliases from extracted_data.
+
+        Returns:
+        - str: The full name of the function (e.g., "torch.use_deterministic_algorithms").
+        """
+        names = []
+        while isinstance(func, ast.Attribute):
+            names.append(func.attr)
+            func = func.value
+
+        if isinstance(func, ast.Name):
+            # Handle aliases for libraries
+            if func.id in libraries.values():
+                alias = next(
+                    key for key, value in libraries.items() if value == func.id
+                )
+                names.append(alias)
+            else:
+                names.append(func.id)
+        return ".".join(reversed(names))
