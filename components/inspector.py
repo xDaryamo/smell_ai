@@ -81,47 +81,55 @@ class Inspector:
             tree = ast.parse(source)
             lines = source.splitlines()
 
-            # Extract libraries
+            # Step 1: Extract Libraries
             libraries = self.library_extractor.get_library_aliases(
                 self.library_extractor.extract_libraries(tree)
             )
 
-            # Extract variables using VariableExtractor
-            variable_definitions = self.variable_extractor.extract_variable_definitions(
-                tree
-            )
+            # Step 2: Analyze Functions and Extract Variables & DataFrame Variables
+            variables_by_function = {}
+            dataframe_variables_by_function = {}
+            for node in ast.walk(tree):
+                if isinstance(node, ast.FunctionDef):
+                    function_name = node.name
+                    variables_by_function[function_name] = (
+                        self.variable_extractor.extract_variable_definitions(node)
+                    )
+                    dataframe_variables_by_function[function_name] = (
+                        self.dataframe_extractor.extract_dataframe_variables(
+                            node, alias=libraries.get("pandas", None)
+                        )
+                    )
 
-            # Extract DataFrame-related variables
-            dataframe_variables = self.dataframe_extractor.extract_dataframe_variables(
-                tree, alias=libraries.get("pandas", None)
-            )
-
-            # Load dictionaries (already preloaded in setup, used here for context)
+            # Step 3: Load Dictionaries (preloaded during setup)
             models = self.model_extractor.model_dict
             tensor_operations = self.model_extractor.tensor_operations_dict
             dataframe_methods = self.dataframe_extractor.df_methods
 
-            # Combine all extracted data into a unified dictionary
-            extracted_data = {
-                "libraries": libraries,
-                "variables": variable_definitions,  # Mappa nome variabile → nodo AST
-                "lines": {
-                    node.lineno: lines[node.lineno - 1]
-                    for node in ast.walk(tree)
-                    if hasattr(node, "lineno")
-                },
-                "dataframe_methods": dataframe_methods,
-                "dataframe_variables": dataframe_variables,  # Aggiunto questo campo
-                "tensor_operations": tensor_operations.get("operation", []),
-                "models": {model: models[model] for model in models.keys()},
-                "model_methods": self.model_extractor.load_model_methods(),
-            }
-
-            # Traverse the AST and analyze each function
+            # Step 4: Rule Check on Each Function
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
+                    # Prepare extracted data specific to the function
+                    function_data = {
+                        "libraries": libraries,
+                        "variables": variables_by_function[node.name],
+                        "lines": {
+                            node.lineno: lines[node.lineno - 1]
+                            for node in ast.walk(tree)
+                            if hasattr(node, "lineno")
+                        },
+                        "dataframe_methods": dataframe_methods,
+                        "dataframe_variables": dataframe_variables_by_function[
+                            node.name
+                        ],
+                        "tensor_operations": tensor_operations.get("operation", []),
+                        "models": {model: models[model] for model in models.keys()},
+                        "model_methods": self.model_extractor.load_model_methods(),
+                    }
+
+                    # Pass data to the Rule Checker
                     to_save = self.rule_checker.rule_check(
-                        node, extracted_data, filename, to_save
+                        node, function_data, filename, to_save
                     )
 
         except FileNotFoundError as e:

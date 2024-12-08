@@ -55,7 +55,7 @@ class RuleChecker:
             hyperparameters_not_explicitly_set.HyperparametersNotExplicitlySetSmell(),
             # in_place_apis_misused.InPlaceAPIsMisusedSmell(),
             # memory_not_freed.MemoryNotFreedSmell(),
-            # merge_api_parameter_not_explicitly_set.MergeAPIParameterNotExplicitlySetSmell(),
+            merge_api_parameter_not_explicitly_set.MergeAPIParameterNotExplicitlySetSmell(),
             # nan_equivalence_comparison_misused.NanEquivalenceComparisonMisusedSmell(),
             # unnecessary_iteration.UnnecessaryIterationSmell(),
         ]

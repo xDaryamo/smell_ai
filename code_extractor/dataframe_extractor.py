@@ -37,31 +37,28 @@ class DataFrameExtractor:
 
     def extract_dataframe_variables(self, fun_node: ast.AST, alias: str) -> list[str]:
         """
-        Identifies variables initialized as Pandas DataFrames in a function.
+        Identifies variables initialized as Pandas DataFrames in a function or function parameters.
 
         Parameters:
         - fun_node (ast.AST): The AST node representing a Python function.
         - alias (str): The alias used for Pandas (e.g., "pd").
 
         Returns:
-        - list[str]: A list of variable names initialized as DataFrames.
-
-        Example:
-        ----------
-        Code:
-            def example():
-                df = pd.DataFrame({'a': [1, 2, 3]})
-                result = df['a']
-
-        Output:
-            ['df']
+        - list[str]: A list of variable names identified as DataFrames.
         """
-        dataframe_vars = []
+        dataframe_vars = set()
+
+        # Include function parameters
+        if isinstance(fun_node, ast.FunctionDef):
+            for param in getattr(fun_node.args, "args", []):
+                if isinstance(param, ast.arg):
+                    dataframe_vars.add(param.arg)
+
+        # Include variables assigned as DataFrames
         for node in ast.walk(fun_node):
-            if isinstance(node, ast.Assign):  # Look for assignment statements
-                if isinstance(
-                    node.value, ast.Call
-                ):  # Check if right-hand side is a function call
+            if isinstance(node, ast.Assign):
+
+                if isinstance(node.value, ast.Call):
                     func = node.value.func
                     if (
                         isinstance(func, ast.Attribute)
@@ -70,11 +67,23 @@ class DataFrameExtractor:
                         and func.attr == "DataFrame"
                     ):
                         for target in node.targets:
-                            if isinstance(
-                                target, ast.Name
-                            ):  # Ensure it's a simple variable
-                                dataframe_vars.append(target.id)
-        return dataframe_vars
+                            if isinstance(target, ast.Name):
+                                dataframe_vars.add(target.id)
+
+            # Derive new DataFrame variables from methods
+            if isinstance(node, ast.Assign):
+                if isinstance(node.value, ast.Call):
+                    func = node.value.func
+                    if (
+                        isinstance(func, ast.Attribute)
+                        and isinstance(func.value, ast.Name)
+                        and func.value.id in dataframe_vars
+                        and func.attr in self.df_methods
+                    ):
+                        for target in node.targets:
+                            if isinstance(target, ast.Name):
+                                dataframe_vars.add(target.id)
+        return list(dataframe_vars)
 
     def track_dataframe_methods(
         self, fun_node: ast.AST, dataframe_vars: list[str]
@@ -89,19 +98,6 @@ class DataFrameExtractor:
         Returns:
         - dict[str, list[str]]: A dictionary where keys are DataFrame variable names,
           and values are lists of method names called on those DataFrames.
-
-        Example:
-        ----------
-        Code:
-            def example():
-                df = pd.DataFrame({'a': [1, 2, 3]})
-                df2 = df.drop('a', axis=1)
-
-        Output:
-            {
-                'df': ['drop'],
-                'df2': []
-            }
         """
         methods_usage = {var: [] for var in dataframe_vars}
         for node in ast.walk(fun_node):
@@ -125,18 +121,6 @@ class DataFrameExtractor:
         Returns:
         - dict[str, list[str]]: A dictionary where keys are DataFrame variable names,
           and values are lists of column names accessed on those DataFrames.
-
-        Example:
-        ----------
-        Code:
-            def example():
-                df = pd.DataFrame({'a': [1, 2, 3]})
-                result = df['a']
-
-        Output:
-            {
-                'df': ['a']
-            }
         """
         accesses = {var: [] for var in dataframe_vars}
         for node in ast.walk(fun_node):

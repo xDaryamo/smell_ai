@@ -25,29 +25,50 @@ class MergeAPIParameterNotExplicitlySetSmell(Smell):
     def detect(
         self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
     ) -> list[dict[str, any]]:
+        """
+        Detects calls to Pandas' `merge` API without explicit parameters.
 
+        Parameters:
+        - ast_node: The root AST node being analyzed.
+        - extracted_data: Preprocessed data from the code, including libraries and variables.
+        - filename: The name of the file being analyzed.
+
+        Returns:
+        - list[dict[str, any]]: A list of detected smells.
+        """
         smells = []
 
-        # Check for Pandas library
-        if not any("pandas" in lib for lib in extracted_data["libraries"]):
-            return smells
-
+        # Retrieve library aliases and DataFrame variables
+        pandas_alias = extracted_data["libraries"].get("pandas")
         dataframe_variables = extracted_data.get("dataframe_variables", [])
 
-        # Traverse AST nodes
+        if not pandas_alias:
+            return smells
+
+        # Traverse AST nodes to find calls to `merge`
         for node in ast.walk(ast_node):
             if (
                 isinstance(node, ast.Call)
                 and hasattr(node.func, "attr")
                 and node.func.attr == "merge"
             ):
-                # Check if the method is applied on a DataFrame variable
-                if (
-                    hasattr(node.func.value, "id")
-                    and node.func.value.id in dataframe_variables
-                ):
+                # Resolve the base object calling `merge`
+                base_obj = node.func.value
+
+                # Check if `merge` is called on a DataFrame variable or Pandas alias
+                is_dataframe_call = (
+                    isinstance(base_obj, ast.Name)
+                    and base_obj.id in dataframe_variables
+                )
+                is_pandas_call = (
+                    isinstance(base_obj, ast.Attribute)
+                    and hasattr(base_obj.value, "id")
+                    and base_obj.value.id == pandas_alias
+                )
+
+                if is_dataframe_call or is_pandas_call:
                     # Check for missing or incomplete parameters
-                    if not hasattr(node, "keywords") or node.keywords is None:
+                    if not hasattr(node, "keywords") or not node.keywords:
                         smells.append(
                             self.format_smell(
                                 line=node.lineno,
@@ -55,12 +76,15 @@ class MergeAPIParameterNotExplicitlySetSmell(Smell):
                             )
                         )
                     else:
-                        args = [x.arg for x in node.keywords]
-                        if not {"how", "on", "validate"}.issubset(set(args)):
+                        args = {kw.arg for kw in node.keywords if kw.arg is not None}
+                        required_args = {"how", "on", "validate"}
+                        if not required_args.issubset(args):
                             smells.append(
                                 self.format_smell(
                                     line=node.lineno,
-                                    additional_info="Incomplete parameters in `merge` (e.g., 'how', 'on', 'validate').",
+                                    additional_info=(
+                                        "Incomplete parameters in `merge`. Consider specifying 'how', 'on', and 'validate'."
+                                    ),
                                 )
                             )
 

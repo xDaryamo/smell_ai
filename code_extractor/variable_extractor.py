@@ -17,19 +17,6 @@ class VariableExtractor:
         Returns:
         - dict[str, ast.Assign]: A dictionary where keys are variable names and values
           are the corresponding AST nodes for their definitions.
-
-        Example:
-        ----------
-        Code:
-            def example():
-                x = 10
-                y = x + 5
-
-        Output:
-            {
-                'x': <Assign AST node>,
-                'y': <Assign AST node>
-            }
         """
         definitions = {}
         for node in ast.walk(fun_node):
