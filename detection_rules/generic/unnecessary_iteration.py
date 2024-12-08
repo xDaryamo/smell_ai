@@ -4,11 +4,15 @@ from detection_rules.smell import Smell
 
 class UnnecessaryIterationSmell(Smell):
     """
-    Detects unnecessary iterations over Pandas objects, such as using `iterrows()`.
+    Detects unnecessary iterations or inefficient operations on Pandas objects,
+    such as using `iterrows()`, `itertuples()`, `apply()`, or `applymap()` in loops.
 
     Example of code smell:
-        for index, row in df.iterrows():
-            df["column"] = row["value"]  # Inefficient
+        for index, row in df.iterrows():  # Inefficient
+            df["column"] = row["value"]
+
+        while condition:
+            df["b"] = df["a"].apply(lambda x: x + 1)  # Inefficient
 
     Preferred alternative:
         Use vectorized Pandas operations (e.g., `df["column"] = df["value"]`).
@@ -18,7 +22,7 @@ class UnnecessaryIterationSmell(Smell):
         super().__init__(
             name="unnecessary_iteration",
             description=(
-                "Iterating through Pandas objects is generally slow. "
+                "Iterating through Pandas objects or using inefficient operations like `apply` is generally slow. "
                 "Use built-in vectorized methods (e.g., join, groupby) instead of loops."
             ),
         )
@@ -29,64 +33,99 @@ class UnnecessaryIterationSmell(Smell):
         smells = []
 
         # Check for Pandas library
-        if not any("pandas" in lib for lib in extracted_data["libraries"]):
+        if "pandas" not in extracted_data["libraries"]:
             return smells
 
-        dataframe_variables = extracted_data.get("dataframe_variables", [])
+        dataframe_variables = set(extracted_data.get("dataframe_variables", []))
+        inefficient_methods = {"iterrows", "itertuples", "apply", "applymap"}
 
-        for node in ast.walk(ast_node):
-            # Identify `for` loops iterating over `iterrows()`
-            if isinstance(node, ast.For) and isinstance(node.iter, ast.Call):
-                if (
-                    isinstance(node.iter.func, ast.Attribute)
-                    and node.iter.func.attr == "iterrows"
-                    and hasattr(node.iter.func.value, "id")
-                    and node.iter.func.value.id in dataframe_variables
+        loop_nodes = [
+            node
+            for node in ast.walk(ast_node)
+            if isinstance(node, (ast.For, ast.While))  # Include both `for` and `while`
+        ]
+
+        for loop_node in loop_nodes:
+
+            # Check loop iterable or body for inefficient methods
+            if isinstance(loop_node, ast.For):
+                # Check for inefficient iterable in `for` loops
+                if self._is_inefficient_iterable(
+                    loop_node, dataframe_variables, inefficient_methods
                 ):
-                    # Add loop variables to the DataFrame variable list
-                    if isinstance(node.target, ast.Tuple):
-                        for target in node.target.elts:
-                            if isinstance(target, ast.Name):
-                                dataframe_variables.append(target.id)
+                    smells.append(
+                        self.format_smell(
+                            line=loop_node.lineno,
+                            additional_info=(
+                                "Inefficient iteration detected. "
+                                "Consider using vectorized operations instead."
+                            ),
+                        )
+                    )
 
-                    # Check for operations on the DataFrame inside the loop
-                    for n in ast.walk(node):
-                        op_to_analyze = None
-                        if isinstance(n, ast.Call) and isinstance(
-                            n.func, ast.Attribute
-                        ):
-                            if n.func.attr == "append":
-                                op_to_analyze = n.args[0] if n.args else None
+            # Check the loop body for inefficient operations
+            if self._has_inefficient_operations(
+                loop_node, dataframe_variables, inefficient_methods
+            ):
+                smells.append(
+                    self.format_smell(
+                        line=loop_node.lineno,
+                        additional_info=(
+                            "Inefficient operation detected inside the loop. "
+                            "Consider using vectorized operations instead."
+                        ),
+                    )
+                )
 
-                        if isinstance(n, ast.Assign):
-                            if isinstance(n.value, ast.BinOp):
-                                op_to_analyze = n.value
-
-                        if op_to_analyze:
-                            left = self._get_base_variable(op_to_analyze.left)
-                            right = self._get_base_variable(op_to_analyze.right)
-
-                            if (
-                                left in dataframe_variables
-                                or right in dataframe_variables
-                            ):
-                                smells.append(
-                                    self.format_smell(
-                                        line=node.lineno,
-                                        additional_info=(
-                                            "Using `iterrows` detected. Consider using vectorized operations instead."
-                                        ),
-                                    )
-                                )
         return smells
 
-    def _get_base_variable(self, node: ast.AST) -> str:
+    def _is_dataframe(self, node: ast.AST, dataframe_variables: set[str]) -> bool:
         """
-        Recursively retrieves the base variable of a subscript or attribute.
+        Checks if the given node represents a DataFrame variable or a subscript (e.g., df["a"]).
+        """
+        if isinstance(node, ast.Name) and node.id in dataframe_variables:
+            return True
 
-        :param node: The AST node to analyze.
-        :return: The base variable name, or None if not found.
+        # Handle subscript (e.g., df["a"])
+        if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Name):
+            if node.value.id in dataframe_variables:
+                return True
+
+        return False
+
+    def _is_inefficient_iterable(
+        self,
+        node: ast.For,
+        dataframe_variables: set[str],
+        inefficient_methods: set[str],
+    ) -> bool:
         """
-        while isinstance(node, ast.Subscript):
-            node = node.value
-        return node.id if isinstance(node, ast.Name) else None
+        Checks if a `for` loop iterates over an inefficient method (e.g., `iterrows`).
+        """
+        if (
+            isinstance(node.iter, ast.Call)
+            and isinstance(node.iter.func, ast.Attribute)
+            and node.iter.func.attr in inefficient_methods
+            and self._is_dataframe(node.iter.func.value, dataframe_variables)
+        ):
+            return True
+        return False
+
+    def _has_inefficient_operations(
+        self,
+        loop_node: ast.AST,
+        dataframe_variables: set[str],
+        inefficient_methods: set[str],
+    ) -> bool:
+        """
+        Checks if the loop body contains inefficient operations on DataFrame objects.
+        """
+        for body_node in ast.walk(loop_node):
+            if isinstance(body_node, ast.Call):
+                if (
+                    isinstance(body_node.func, ast.Attribute)
+                    and body_node.func.attr in inefficient_methods
+                    and self._is_dataframe(body_node.func.value, dataframe_variables)
+                ):
+                    return True
+        return False

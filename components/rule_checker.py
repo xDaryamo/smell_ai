@@ -53,11 +53,11 @@ class RuleChecker:
             deterministic_algorithm_option_not_used.DeterministicAlgorithmOptionSmell(),
             empty_column_misinitialization.EmptyColumnMisinitializationSmell(),
             hyperparameters_not_explicitly_set.HyperparametersNotExplicitlySetSmell(),
-            # in_place_apis_misused.InPlaceAPIsMisusedSmell(),
-            # memory_not_freed.MemoryNotFreedSmell(),
+            in_place_apis_misused.InPlaceAPIsMisusedSmell(),
+            memory_not_freed.MemoryNotFreedSmell(),
             # merge_api_parameter_not_explicitly_set.MergeAPIParameterNotExplicitlySetSmell(),
-            # nan_equivalence_comparison_misused.NanEquivalenceComparisonMisusedSmell(),
-            # unnecessary_iteration.UnnecessaryIterationSmell(),
+            nan_equivalence_comparison_misused.NanEquivalenceComparisonMisusedSmell(),
+            unnecessary_iteration.UnnecessaryIterationSmell(),
         ]
 
     def rule_check(

@@ -27,48 +27,82 @@ class InPlaceAPIsMisusedSmell(Smell):
     def detect(
         self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
     ) -> list[dict[str, any]]:
+        """
+        Detects the misuse of in-place APIs in Pandas.
 
+        Parameters:
+        - ast_node: The root AST node of the file being analyzed.
+        - extracted_data: A dictionary containing preprocessed information from the code.
+        - filename: The name of the file being analyzed.
+
+        Returns:
+        - list[dict[str, any]]: A list of detected smells, each represented as a dictionary.
+        """
         smells = []
 
         # Check for Pandas library
-        if not any("pandas" in lib for lib in extracted_data["libraries"]):
+        pandas_alias = extracted_data["libraries"].get("pandas")
+        if not pandas_alias:
             return smells
 
-        dataframe_methods = extracted_data.get("dataframe_methods", [])
         dataframe_variables = extracted_data.get("dataframe_variables", [])
+        dataframe_methods = extracted_data.get("dataframe_methods", [])
 
         # Traverse AST nodes
         for node in ast.walk(ast_node):
+            # Identify calls like `df.method(...)`
             if (
-                isinstance(node, ast.Expr)
-                and isinstance(node.value, ast.Call)
-                and isinstance(node.value.func, ast.Attribute)
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and hasattr(node.func.value, "id")
+                and node.func.value.id in dataframe_variables
+                and node.func.attr in dataframe_methods
             ):
-                # Ensure the method is applied on a DataFrame variable
-                if (
-                    hasattr(node.value.func.value, "id")
-                    and node.value.func.value.id in dataframe_variables
-                    and node.value.func.attr in dataframe_methods
-                ):
-                    # Check for the "inplace" parameter
-                    inplace_flag = False
-                    for keyword in getattr(node.value, "keywords", []):
-                        if (
-                            keyword.arg == "inplace"
-                            and getattr(keyword.value, "value", None) is True
-                        ):
-                            inplace_flag = True
+                # Check if the call uses the "inplace" parameter
+                inplace_flag = None
+                for keyword in getattr(node, "keywords", []):
+                    if keyword.arg == "inplace":
+                        inplace_flag = getattr(keyword.value, "value", None)
 
-                    # If "inplace" is not set, flag it as a smell
-                    if not inplace_flag:
-                        smells.append(
-                            self.format_smell(
-                                line=node.lineno,
-                                additional_info=(
-                                    "We suggest developers check whether the result of the operation is assigned to a variable "
-                                    "or the in-place parameter is set explicitly."
-                                ),
-                            )
+                # Flag cases where "inplace" is explicitly set to False
+                if inplace_flag is False:
+                    smells.append(
+                        self.format_smell(
+                            line=node.lineno,
+                            additional_info=(
+                                f"Explicitly setting `inplace=False` for `{node.func.attr}` "
+                                "may cause confusion. Consider assigning the result to a variable or explicitly using `inplace=True`."
+                            ),
                         )
+                    )
+
+                # Flag cases where "inplace" is not set and the result is not assigned
+                if inplace_flag is None and not self._is_assignment(node, ast_node):
+                    smells.append(
+                        self.format_smell(
+                            line=node.lineno,
+                            additional_info=(
+                                f"The result of the `{node.func.attr}` method is not assigned to a variable, "
+                                "and the `inplace` parameter is not explicitly set. Consider assigning the result or setting `inplace=True`."
+                            ),
+                        )
+                    )
 
         return smells
+
+    def _is_assignment(self, node: ast.Call, root_node: ast.AST) -> bool:
+        """
+        Determines if the result of a method call is assigned to a variable.
+
+        Parameters:
+        - node: The method call node to check.
+        - root_node: The root AST node of the function or file.
+
+        Returns:
+        - bool: True if the method call result is assigned, False otherwise.
+        """
+        for parent in ast.walk(root_node):
+            if isinstance(parent, ast.Assign):
+                if node in parent.value:
+                    return True
+        return False
