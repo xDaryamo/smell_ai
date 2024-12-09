@@ -46,22 +46,19 @@ class UnnecessaryIterationSmell(Smell):
         ]
 
         for loop_node in loop_nodes:
-
-            # Check loop iterable or body for inefficient methods
-            if isinstance(loop_node, ast.For):
-                # Check for inefficient iterable in `for` loops
-                if self._is_inefficient_iterable(
-                    loop_node, dataframe_variables, inefficient_methods
-                ):
-                    smells.append(
-                        self.format_smell(
-                            line=loop_node.lineno,
-                            additional_info=(
-                                "Inefficient iteration detected. "
-                                "Consider using vectorized operations instead."
-                            ),
-                        )
+            # Check for inefficient iterable in `for` loops
+            if self._is_inefficient_iterable(
+                loop_node, dataframe_variables, inefficient_methods
+            ):
+                smells.append(
+                    self.format_smell(
+                        line=loop_node.lineno,
+                        additional_info=(
+                            "Inefficient iteration detected. "
+                            "Consider using vectorized operations instead."
+                        ),
                     )
+                )
 
             # Check the loop body for inefficient operations
             if self._has_inefficient_operations(
@@ -95,7 +92,7 @@ class UnnecessaryIterationSmell(Smell):
 
     def _is_inefficient_iterable(
         self,
-        node: ast.For,
+        node: ast.AST,
         dataframe_variables: set[str],
         inefficient_methods: set[str],
     ) -> bool:
