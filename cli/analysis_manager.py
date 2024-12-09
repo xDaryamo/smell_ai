@@ -1,5 +1,6 @@
 import argparse
 import os
+import sys
 from cli.file_utils import FileUtils
 from cli.project_analyzer import ProjectAnalyzer
 
@@ -21,6 +22,12 @@ class AnalysisManager:
         """
         Executes the analysis workflow based on CLI arguments.
         """
+        print("Starting analysis with the following configuration:")
+        print(f"Input folder: {self.args.input}")
+        print(f"Output folder: {self.args.output}")
+        print(f"Parallel execution: {self.args.parallel}")
+        print(f"Resume execution: {self.args.resume}")
+        print(f"Analyze multiple projects: {self.args.multiple}")
 
         self.analyzer.setup_inspector(
             "obj_dictionaries/dataframes.csv",
@@ -29,12 +36,16 @@ class AnalysisManager:
         )
 
         if self.args.input is None or self.args.output is None:
-            print("Please specify input and output folders.")
+            print("Error: Please specify both input and output folders.")
             exit(1)
 
+        # Clean or create the output folder
         if not self.args.resume:
-            FileUtils.clean_directory(self.args.output)
+            self.analyzer.output_path = FileUtils.clean_directory(
+                self.args.output, "output"
+            )
 
+        # Run analysis
         if self.args.multiple:
             if self.args.parallel:
                 self.analyzer.analyze_projects_parallel(
@@ -45,36 +56,59 @@ class AnalysisManager:
                     self.args.input, resume=self.args.resume
                 )
         else:
-            self.analyzer.analyze_project(self.args.input)
+            total_smells = self.analyzer.analyze_project(self.args.input)
+            print(f"Analysis completed. Total code smells found: {total_smells}")
 
         FileUtils.merge_results(
-            self.args.output, os.path.join(self.args.output, "overview")
+            self.analyzer.output_path,
+            os.path.join(self.analyzer.output_path, "overview"),
         )
+        print("Analysis results saved successfully.")
 
 
 def main():
     parser = argparse.ArgumentParser(
         description="Code Smile: AI-specific code smells detector for Python projects."
     )
-    parser.add_argument("--input", type=str, help="Path to the input folder")
-    parser.add_argument("--output", type=str, help="Path to the output folder")
+    parser.add_argument(
+        "--input", type=str, help="Path to the input folder", required=True
+    )
+    parser.add_argument(
+        "--output", type=str, help="Path to the output folder", required=True
+    )
     parser.add_argument(
         "--max_workers",
         type=int,
         default=5,
-        help="Number of workers for parallel execution",
+        help="Number of workers for parallel execution (default: 5)",
     )
     parser.add_argument(
-        "--parallel", default=False, type=bool, help="Enable parallel execution"
+        "--parallel",
+        action="store_true",
+        help="Enable parallel execution (default: False)",
     )
     parser.add_argument(
-        "--resume", default=False, type=bool, help="Resume previous execution"
+        "--resume",
+        action="store_true",
+        help="Resume previous execution (default: False)",
     )
     parser.add_argument(
-        "--multiple", default=False, type=bool, help="Analyze multiple projects"
+        "--multiple",
+        action="store_true",
+        help="Analyze multiple projects (default: False)",
     )
-    args = parser.parse_args()
 
+    # Parse arguments
+    try:
+        args = parser.parse_args()
+    except SystemExit:
+        # SystemExit will be raised automatically for missing arguments
+        print("Error: Missing required arguments or invalid input.\n")
+        parser.print_help()
+        sys.exit(1)
+
+    # Execute main logic
+    print("Starting Code Smile analysis...")
     manager = AnalysisManager(args)
     manager.execute()
 

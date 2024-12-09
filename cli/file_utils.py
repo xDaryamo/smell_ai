@@ -1,4 +1,5 @@
 import os
+import shutil
 import pandas as pd
 
 
@@ -34,18 +35,35 @@ class FileUtils:
             print("No valid results found for merging.")
 
     @staticmethod
-    def clean_directory(output_path: str) -> None:
+    def clean_directory(root_path: str, subfolder_name: str = "output") -> str:
         """
-        Cleans the specified output directory.
+        Cleans or creates a specified subfolder within a root directory.
 
         Parameters:
-        - output_path (str): Path to the directory to be cleaned.
+        - root_path (str): Root directory where the subfolder will be created.
+        - subfolder_name (str): Name of the subfolder to clean or create.
+
+        Returns:
+        - str: Path to the cleaned or created subfolder.
         """
+        output_path = os.path.join(root_path, subfolder_name)
+
         if os.path.exists(output_path):
-            if os.name == "nt":
-                os.system(f"rmdir /s /q {output_path}")
-            else:
-                os.system(f"rm -r {output_path}")
+            # Remove only the contents of the 'output' folder
+            for filename in os.listdir(output_path):
+                file_path = os.path.join(output_path, filename)
+                try:
+                    if os.path.isfile(file_path) or os.path.islink(file_path):
+                        os.unlink(file_path)  # Remove file or symlink
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path)  # Remove directory
+                except Exception as e:
+                    print(f"Failed to delete {file_path}. Reason: {e}")
+        else:
+            # Create the 'output' folder if it doesn't exist
+            os.makedirs(output_path)
+
+        return output_path
 
     @staticmethod
     def get_python_files(path: str) -> list[str]:

@@ -103,6 +103,7 @@ class InPlaceAPIsMisusedSmell(Smell):
         """
         for parent in ast.walk(root_node):
             if isinstance(parent, ast.Assign):
-                if node in parent.value:
+                # Check if the current node is assigned to a variable
+                if parent.value is node:  # Direct assignment check
                     return True
         return False

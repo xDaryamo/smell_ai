@@ -110,31 +110,42 @@ class Inspector:
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
                     # Prepare extracted data specific to the function
-                    function_data = {
-                        "libraries": libraries,
-                        "variables": variables_by_function[node.name],
-                        "lines": {
-                            node.lineno: lines[node.lineno - 1]
-                            for node in ast.walk(tree)
-                            if hasattr(node, "lineno")
-                        },
-                        "dataframe_methods": dataframe_methods,
-                        "dataframe_variables": dataframe_variables_by_function[
-                            node.name
-                        ],
-                        "tensor_operations": tensor_operations.get("operation", []),
-                        "models": {model: models[model] for model in models.keys()},
-                        "model_methods": self.model_extractor.load_model_methods(),
-                    }
+                    try:
+                        function_data = {
+                            "libraries": libraries,
+                            "variables": variables_by_function[node.name],
+                            "lines": {
+                                node.lineno: lines[node.lineno - 1]
+                                for node in ast.walk(tree)
+                                if hasattr(node, "lineno")
+                            },
+                            "dataframe_methods": dataframe_methods,
+                            "dataframe_variables": dataframe_variables_by_function[
+                                node.name
+                            ],
+                            "tensor_operations": tensor_operations.get("operation", []),
+                            "models": {model: models[model] for model in models.keys()},
+                            "model_methods": self.model_extractor.load_model_methods(),
+                        }
 
-                    # Pass data to the Rule Checker
-                    to_save = self.rule_checker.rule_check(
-                        node, function_data, filename, to_save
-                    )
+                        # Pass data to the Rule Checker
+                        to_save = self.rule_checker.rule_check(
+                            node, function_data, filename, to_save
+                        )
+                    except Exception as e:
+                        print(
+                            f"Error processing function '{node.name}' in file '{filename}': {e}"
+                        )
+                        raise e
 
         except FileNotFoundError as e:
+            print(f"Error: File '{filename}' not found. {e}")
             raise FileNotFoundError(f"Error in file {filename}: {e}")
         except SyntaxError as e:
+            print(f"Syntax error in file '{filename}': {e}")
             raise SyntaxError(f"Error in file {filename}: {e}")
+        except Exception as e:
+            print(f"Unexpected error while analyzing file '{filename}': {e}")
+            raise e
 
         return to_save

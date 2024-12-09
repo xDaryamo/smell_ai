@@ -68,7 +68,9 @@ class MergeAPIParameterNotExplicitlySetSmell(Smell):
 
                 if is_dataframe_call or is_pandas_call:
                     # Check for missing or incomplete parameters
-                    if not hasattr(node, "keywords") or not node.keywords:
+                    if not hasattr(node, "keywords") or not isinstance(
+                        node.keywords, list
+                    ):
                         smells.append(
                             self.format_smell(
                                 line=node.lineno,
@@ -76,9 +78,14 @@ class MergeAPIParameterNotExplicitlySetSmell(Smell):
                             )
                         )
                     else:
-                        args = {kw.arg for kw in node.keywords if kw.arg is not None}
+                        # Ensure keywords are valid before processing
+                        valid_keywords = [
+                            kw.arg
+                            for kw in node.keywords
+                            if isinstance(kw, ast.keyword) and kw.arg is not None
+                        ]
                         required_args = {"how", "on", "validate"}
-                        if not required_args.issubset(args):
+                        if not required_args.issubset(set(valid_keywords)):
                             smells.append(
                                 self.format_smell(
                                     line=node.lineno,
