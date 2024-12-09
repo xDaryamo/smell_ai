@@ -30,10 +30,6 @@ class NanEquivalenceComparisonMisusedSmell(Smell):
     ) -> list[dict[str, any]]:
         smells = []
 
-        # Ensure Numpy is imported
-        if "numpy" not in extracted_data["libraries"]:
-            return smells
-
         library_name = extracted_data["libraries"].get("numpy")
         if not library_name:
             return smells

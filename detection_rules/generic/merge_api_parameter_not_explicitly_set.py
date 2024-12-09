@@ -40,10 +40,10 @@ class MergeAPIParameterNotExplicitlySetSmell(Smell):
 
         # Retrieve library aliases and DataFrame variables
         pandas_alias = extracted_data["libraries"].get("pandas")
-        dataframe_variables = extracted_data.get("dataframe_variables", [])
-
         if not pandas_alias:
             return smells
+
+        dataframe_variables = extracted_data.get("dataframe_variables", [])
 
         # Traverse AST nodes to find calls to `merge`
         for node in ast.walk(ast_node):

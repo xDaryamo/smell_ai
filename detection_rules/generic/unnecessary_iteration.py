@@ -33,7 +33,8 @@ class UnnecessaryIterationSmell(Smell):
         smells = []
 
         # Check for Pandas library
-        if "pandas" not in extracted_data["libraries"]:
+        pandas_alias = extracted_data["libraries"].get("pandas")
+        if not pandas_alias:
             return smells
 
         dataframe_variables = set(extracted_data.get("dataframe_variables", []))
