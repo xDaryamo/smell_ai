@@ -45,7 +45,14 @@ class ProjectAnalyzer:
         print(f"Starting analysis for project: {project_path}")
 
         filenames = FileUtils.get_python_files(project_path)
-        col = ["filename", "function_name", "smell", "name_smell", "message"]
+        col = [
+            "filename",
+            "function_name",
+            "smell_name",
+            "line",
+            "description",
+            "additional_info",
+        ]
         to_save = pd.DataFrame(columns=col)
         total_smells = 0  # Initialize a counter for total smells
 
@@ -53,6 +60,7 @@ class ProjectAnalyzer:
             if "tests/" not in filename:  # Ignore test files
                 try:
                     result = self.inspector.inspect(filename)
+
                     smell_count = len(result)  # Count smells in the current file
                     total_smells += smell_count
                     if smell_count > 0:

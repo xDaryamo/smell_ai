@@ -69,7 +69,14 @@ class Inspector:
         Returns:
         - pd.DataFrame: A DataFrame containing detected code smells.
         """
-        col = ["filename", "smell_name", "line", "description", "additional_info"]
+        col = [
+            "filename",
+            "function_name",
+            "smell_name",
+            "line",
+            "description",
+            "additional_info",
+        ]
         to_save = pd.DataFrame(columns=col)
         file_path = os.path.abspath(filename)
 
@@ -130,7 +137,7 @@ class Inspector:
 
                         # Pass data to the Rule Checker
                         to_save = self.rule_checker.rule_check(
-                            node, function_data, filename, to_save
+                            node, function_data, filename, node.name, to_save
                         )
                     except Exception as e:
                         print(

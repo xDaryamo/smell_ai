@@ -65,6 +65,7 @@ class RuleChecker:
         ast_node: ast.AST,
         extracted_data: dict[str, any],
         filename: str,
+        function_name: str,
         df_output: pd.DataFrame,
     ) -> pd.DataFrame:
         """
@@ -74,6 +75,7 @@ class RuleChecker:
         - ast_node (ast.AST): The AST node to analyze.
         - extracted_data (dict): Pre-extracted data (e.g., libraries, variables, etc.).
         - filename (str): The name of the file being analyzed.
+        - function_name (str): The name of the function node being analyzed.
         - df_output (pd.DataFrame): The DataFrame to store detected smells.
 
         Returns:
@@ -82,10 +84,10 @@ class RuleChecker:
 
         for smell in self.smells:
             detected_smells = smell.detect(ast_node, extracted_data, filename)
-
             for detected_smell in detected_smells:
                 df_output.loc[len(df_output)] = {
                     "filename": filename,
+                    "function_name": function_name,
                     "smell_name": detected_smell["name"],
                     "line": detected_smell["line"],
                     "description": detected_smell["description"],
