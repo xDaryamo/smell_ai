@@ -67,6 +67,13 @@ class CodeSmellDetectorGUI:
         )
         self.parallel_check.grid(row=3, column=0, sticky="w")
 
+        # Resume Checkbox
+        self.resume_var = tk.BooleanVar()
+        self.resume_check = tk.Checkbutton(
+            self.master, text="Resume", variable=self.resume_var
+        )
+        self.resume_check.grid(row=3, column=1, sticky="w")
+
         # Output Textbox
         self.output_textbox = tk.Text(self.master, height=8, width=50, state="disabled")
         self.output_textbox.grid(row=4, column=0, columnspan=3, pady=10, sticky="nsew")
@@ -124,6 +131,7 @@ class CodeSmellDetectorGUI:
         output_path = self.output_path.cget("text")
         num_walkers = int(self.walker_picker.get())
         is_parallel = self.parallel_var.get()
+        is_resume = self.resume_var.get()
 
         # Validate paths
         if input_path == "No path selected" or output_path == "No path selected":
@@ -146,7 +154,7 @@ class CodeSmellDetectorGUI:
             self.project_analyzer.projects_analysis(
                 base_path=input_path,
                 max_workers=num_walkers,
-                resume=False,
+                resume=is_resume,
                 parallel=is_parallel,
             )
         except Exception as e:

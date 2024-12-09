@@ -91,44 +91,5 @@ class RuleChecker:
                     "description": detected_smell["description"],
                     "additional_info": detected_smell["additional_info"],
                 }
-                self.save_single_file(filename, [detected_smell])
 
         return df_output
-
-    def save_single_file(self, filename: str, smell_list: list[dict[str, any]]) -> None:
-        """
-        Saves detected smells to a CSV file.
-
-        Parameters:
-        - filename (str): The name of the file being analyzed.
-        - smell_list (list[dict[str, any]]): A list of dictionaries containing detected smells.
-
-        Returns:
-        - None
-        """
-        if not smell_list:
-            return
-
-        cols = ["filename", "smell_name", "line", "description", "additional_info"]
-        smell_name = smell_list[0]["name"]
-
-        output_file = os.path.join(self.output_path, f"{smell_name}.csv")
-
-        # Ensure the directory exists
-        os.makedirs(os.path.dirname(output_file), exist_ok=True)
-
-        if os.path.exists(output_file):
-            to_save = pd.read_csv(output_file)
-        else:
-            to_save = pd.DataFrame(columns=cols)
-
-        for smell in smell_list:
-            to_save.loc[len(to_save)] = {
-                "filename": filename,
-                "smell_name": smell["name"],
-                "line": smell["line"],
-                "description": smell["description"],
-                "additional_info": smell["additional_info"],
-            }
-
-        to_save.to_csv(output_file, index=False)
