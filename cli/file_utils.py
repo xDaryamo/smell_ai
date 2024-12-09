@@ -12,27 +12,29 @@ class FileUtils:
         Merges analysis results from multiple projects into a single CSV.
 
         Parameters:
-        - input_dir (str): Directory containing analysis results.
+        - input_dir (str): Directory containing analysis results (project_name.csv files).
         - output_dir (str): Directory where the merged results will be saved.
         """
         dataframes = []
         for subdir, _, files in os.walk(input_dir):
-            if "to_save.csv" in files:
-                df = pd.read_csv(os.path.join(subdir, "to_save.csv"))
-                if len(df) > 0:
-                    dataframes.append(df)
+            for file in files:
+                if file.endswith(".csv"):  # Look for all CSV files
+                    df = pd.read_csv(os.path.join(subdir, file))
+                    if len(df) > 0:
+                        dataframes.append(df)
 
         if dataframes:
             combined_df = pd.concat(dataframes)
-            combined_df = combined_df[combined_df["filename"] != "filename"]
-            combined_df = combined_df.reset_index()
+            combined_df = combined_df[
+                combined_df["filename"] != "filename"
+            ]  # Remove any invalid rows
+            combined_df = combined_df.reset_index(drop=True)
 
             os.makedirs(output_dir, exist_ok=True)
-            combined_df.to_csv(
-                os.path.join(output_dir, "overview_output.csv"), index=False
-            )
+            combined_df.to_csv(os.path.join(output_dir, "overview.csv"), index=False)
+            print(f"Results successfully merged and saved to {output_dir}/overview.csv")
         else:
-            print("No valid results found for merging.")
+            print("No Smells Detected.")
 
     @staticmethod
     def clean_directory(root_path: str, subfolder_name: str = "output") -> str:

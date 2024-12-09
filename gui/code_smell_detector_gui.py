@@ -1,6 +1,8 @@
+import os
 import sys
 import tkinter as tk
 from tkinter import filedialog
+from cli.file_utils import FileUtils
 from cli.project_analyzer import ProjectAnalyzer
 from gui.textbox_redirect import TextBoxRedirect
 
@@ -142,6 +144,7 @@ class CodeSmellDetectorGUI:
         print(f"Output Path: {output_path}")
         print(f"Number of Walkers: {num_walkers}")
         print(f"Parallel Execution: {is_parallel}")
+        print(f"Resume Execution: {is_resume}")
 
         self.project_analyzer = ProjectAnalyzer(output_path)
         self.project_analyzer.setup_inspector(
@@ -151,11 +154,17 @@ class CodeSmellDetectorGUI:
         )
 
         try:
-            self.project_analyzer.projects_analysis(
-                base_path=input_path,
-                max_workers=num_walkers,
-                resume=is_resume,
-                parallel=is_parallel,
-            )
+            # Check if the input is a single project or multiple projects
+            if os.path.isdir(input_path):
+                print("Analyzing project(s)...")
+                self.project_analyzer.projects_analysis(
+                    base_path=input_path,
+                    max_workers=num_walkers,
+                    resume=is_resume,
+                    parallel=is_parallel,
+                )
+
+            else:
+                print("Error: Input path must be a directory.")
         except Exception as e:
             print(f"An error occurred during analysis: {e}")

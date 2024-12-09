@@ -76,22 +76,30 @@ class ProjectAnalyzer:
                     print(f"Error analyzing file: {filename} - {str(e)}")
                     continue
 
-        # Ensure the output directory exists before saving the file
-        os.makedirs(self.output_path, exist_ok=True)
-        to_save.to_csv(os.path.join(self.output_path, "to_save.csv"), index=False)
+        # Use the folder name as the CSV file name
+        project_name = os.path.basename(project_path)  # Get the folder name
+        details_path = os.path.join(self.output_path, "details")
+        os.makedirs(details_path, exist_ok=True)
+        output_file = os.path.join(details_path, f"{project_name}.csv")
+
+        to_save.to_csv(
+            output_file, index=False
+        )  # Save results to the project-specific file
+        print(f"Results saved to: {output_file}")
 
         # Print the total smells found for the project
         print(f"Finished analysis for project: {project_path}")
-        print(
-            f"Total code smells found in project '{os.path.basename(project_path)}': {total_smells}\n"
-        )
+        print(f"Total code smells found in project '{project_name}': {total_smells}\n")
         return total_smells
 
-    def analyze_projects_sequential(self, base_path: str, resume: bool = False):
+    def analyze_projects_sequential(
+        self, project_dirs: list, base_path: str, resume: bool = False
+    ):
         """
         Sequentially analyzes multiple projects.
 
         Parameters:
+        - project_dirs (list): List of project directories to be analyzed.
         - base_path (str): Directory containing projects to be analyzed.
         - resume (bool): Whether to resume from the last analyzed project.
         """
@@ -111,7 +119,7 @@ class ProjectAnalyzer:
         start_time = time.time()
         total_smells = 0  # Initialize a counter for all projects
 
-        for dirname in os.listdir(base_path):
+        for dirname in project_dirs:
             if resume and dirname <= last_project:
                 continue
 
@@ -138,11 +146,14 @@ class ProjectAnalyzer:
         )
         print(f"Total code smells found in all projects: {total_smells}\n")
 
-    def analyze_projects_parallel(self, base_path: str, max_workers: int):
+    def analyze_projects_parallel(
+        self, project_dirs: list, base_path: str, max_workers: int
+    ):
         """
         Analyzes multiple projects in parallel.
 
         Parameters:
+        - project_dirs (list): List of project directories to be analyzed.
         - base_path (str): Directory containing projects to be analyzed.
         - max_workers (int): Maximum number of parallel threads.
         """
@@ -161,7 +172,7 @@ class ProjectAnalyzer:
                 print(f"Error analyzing project '{dirname}': {str(e)}\n")
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            for dirname in os.listdir(base_path):
+            for dirname in project_dirs:
                 executor.submit(analyze_and_count_smells, dirname)
 
         print(
@@ -186,9 +197,32 @@ class ProjectAnalyzer:
         - resume (bool): Whether to resume from the last analyzed project.
         - parallel (bool): Whether to enable parallel analysis.
         """
+        # Check if input path exists
+        if not os.path.exists(base_path):
+            print(f"Error: The directory '{base_path}' does not exist.")
+            return
+
+        # Get the project folders from the base path (skip non-directory files)
+        project_dirs = [
+            d
+            for d in os.listdir(base_path)
+            if os.path.isdir(os.path.join(base_path, d))
+        ]
+
+        # Ensure we have found at least one project folder
+        if not project_dirs:
+            print(f"Error: No project directories found in '{base_path}'")
+            return
+
         if parallel:
             print("Running in parallel mode...")
-            self.analyze_projects_parallel(base_path, max_workers)
+            self.analyze_projects_parallel(project_dirs, base_path, max_workers)
         else:
             print("Running in sequential mode...")
-            self.analyze_projects_sequential(base_path, resume)
+            self.analyze_projects_sequential(project_dirs, base_path, resume)
+
+        # After all projects have been analyzed, merge the results
+        details_path = os.path.join(self.output_path, "details")
+
+        # Merge the results of all projects into one CSV file
+        FileUtils.merge_results(details_path, self.output_path)
