@@ -16,25 +16,41 @@ class FileUtils:
         - output_dir (str): Directory where the merged results will be saved.
         """
         dataframes = []
+        print(f"Looking for CSV files in directory: {input_dir}")
+
+        # Check the input_dir itself for CSV files (not just subdirectories)
         for subdir, _, files in os.walk(input_dir):
+            print(f"Checking directory: {subdir}")
             for file in files:
                 if file.endswith(".csv"):  # Look for all CSV files
-                    df = pd.read_csv(os.path.join(subdir, file))
+                    file_path = os.path.join(subdir, file)
+                    print(f"Found CSV file: {file_path}")
+
+                    df = pd.read_csv(file_path)
                     if len(df) > 0:
                         dataframes.append(df)
+                    else:
+                        print(f"Skipping empty CSV: {file_path}")
 
+        # If we have CSV files, merge them
         if dataframes:
-            combined_df = pd.concat(dataframes)
+            print("Merging dataframes...")
+            combined_df = pd.concat(
+                dataframes, ignore_index=True
+            )  # Concatenate all dataframes
             combined_df = combined_df[
                 combined_df["filename"] != "filename"
-            ]  # Remove any invalid rows
+            ]  # Clean invalid rows
             combined_df = combined_df.reset_index(drop=True)
 
+            # Ensure the output directory exists
             os.makedirs(output_dir, exist_ok=True)
+
+            # Save the merged results to a CSV file
             combined_df.to_csv(os.path.join(output_dir, "overview.csv"), index=False)
             print(f"Results successfully merged and saved to {output_dir}/overview.csv")
         else:
-            print("No Smells Detected.")
+            print("No Smells Detected. No CSV files found or they were empty.")
 
     @staticmethod
     def clean_directory(root_path: str, subfolder_name: str = "output") -> str:

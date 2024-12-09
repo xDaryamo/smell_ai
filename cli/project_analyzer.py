@@ -202,6 +202,11 @@ class ProjectAnalyzer:
             print(f"Error: The directory '{base_path}' does not exist.")
             return
 
+        # Check if the input is a directory
+        if not os.path.isdir(base_path):
+            print(f"Error: The input path '{base_path}' is not a valid directory.")
+            return
+
         # Get the project folders from the base path (skip non-directory files)
         project_dirs = [
             d
@@ -209,11 +214,16 @@ class ProjectAnalyzer:
             if os.path.isdir(os.path.join(base_path, d))
         ]
 
+        # If there are no subdirectories (i.e., it's a single project), add the base directory itself
+        if not project_dirs:
+            project_dirs = [base_path]
+
         # Ensure we have found at least one project folder
         if not project_dirs:
             print(f"Error: No project directories found in '{base_path}'")
             return
 
+        # Proceed with analysis based on parallel or sequential execution
         if parallel:
             print("Running in parallel mode...")
             self.analyze_projects_parallel(project_dirs, base_path, max_workers)
