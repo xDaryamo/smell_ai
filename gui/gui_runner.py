@@ -2,7 +2,7 @@ import tkinter as tk
 from gui.code_smell_detector_gui import CodeSmellDetectorGUI
 
 
-class CodeSmellDetectorApp:
+class CodeSmileGUI:
     """
     Application controller for initializing and running the GUI.
     """
@@ -16,3 +16,8 @@ class CodeSmellDetectorApp:
         Runs the GUI application.
         """
         self.root.mainloop()
+
+
+if __name__ == "__main__":
+    app = CodeSmileGUI()
+    app.run()

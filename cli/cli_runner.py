@@ -5,7 +5,7 @@ from cli.file_utils import FileUtils
 from cli.project_analyzer import ProjectAnalyzer
 
 
-class AnalysisManager:
+class CodeSmileCLI:
     """Manages the overall analysis workflow."""
 
     def __init__(self, args):
@@ -109,7 +109,7 @@ def main():
 
     # Execute main logic
     print("Starting Code Smile analysis...")
-    manager = AnalysisManager(args)
+    manager = CodeSmileCLI(args)
     manager.execute()
 
 
