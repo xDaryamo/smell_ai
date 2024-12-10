@@ -7,3 +7,4 @@ matplotlib>=3.7.0
 openpyxl
 pytest
 coverage
+pytest-cov
