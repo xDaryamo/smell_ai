@@ -46,13 +46,13 @@ class DataFrameExtractor:
         Returns:
         - list[str]: A list of variable names identified as DataFrames.
         """
-        dataframe_vars = set()
+        dataframe_vars = []
 
         # Include function parameters
         if isinstance(fun_node, ast.FunctionDef):
             for param in getattr(fun_node.args, "args", []):
                 if isinstance(param, ast.arg):
-                    dataframe_vars.add(param.arg)
+                    dataframe_vars.append(param.arg)
 
         # Include variables assigned as DataFrames
         for node in ast.walk(fun_node):
@@ -68,7 +68,7 @@ class DataFrameExtractor:
                     ):
                         for target in node.targets:
                             if isinstance(target, ast.Name):
-                                dataframe_vars.add(target.id)
+                                dataframe_vars.append(target.id)
 
             # Derive new DataFrame variables from methods
             if isinstance(node, ast.Assign):
@@ -82,8 +82,25 @@ class DataFrameExtractor:
                     ):
                         for target in node.targets:
                             if isinstance(target, ast.Name):
-                                dataframe_vars.add(target.id)
-        return list(dataframe_vars)
+                                dataframe_vars.append(target.id)
+
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Name):
+                        # If it's an assignment to a variable, check if it is a DataFrame
+                        if isinstance(node.value, ast.Call) and isinstance(
+                            node.value.func, ast.Attribute
+                        ):
+                            if node.value.func.attr in self.df_methods:
+                                dataframe_vars.append(target.id)
+                        # Check for alias assignment
+                        elif (
+                            isinstance(node.value, ast.Name)
+                            and target.id != node.value.id
+                        ):
+                            # Handle aliasing of the DataFrame
+                            dataframe_vars.append(target.id)
+        return list(set(dataframe_vars))
 
     def track_dataframe_methods(
         self, fun_node: ast.AST, dataframe_vars: list[str]

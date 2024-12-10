@@ -2,7 +2,8 @@ import unittest
 import ast
 import pandas as pd
 from io import StringIO
-from code_extractor.dataframe_extractor import DataFrameExtractor
+from code_extractor import dataframe_extractor
+import textwrap
 
 
 class TestDataFrameExtractor(unittest.TestCase):
@@ -10,40 +11,48 @@ class TestDataFrameExtractor(unittest.TestCase):
     def setUp(self):
         """Set up test cases with a sample DataFrame method list and example code."""
         self.method_csv = StringIO("method\nhead\nmerge\n")
-        self.extractor = DataFrameExtractor()
+        self.extractor = dataframe_extractor.DataFrameExtractor()
         self.extractor.load_dataframe_dict(self.method_csv)
 
         # Sample code snippets for different scenarios
-        self.sample_code = """
-        import pandas as pd
+        self.sample_code = textwrap.dedent(
+            """
+            import pandas as pd
 
-        def test_function(df, other_df):
-            df = pd.DataFrame({'a': [1, 2, 3]})
-            other_df = df.head()
-            result = other_df.merge(df, on='a')
-            print(df['a'])
+            def test_function(df, other_df):
+                df = pd.DataFrame({'a': [1, 2, 3]})
+                other_df = df.head()
+                result = other_df.merge(df, on='a')
+                print(df['a'])
         """
+        )
 
         self.empty_function_code = "def empty_function(): pass"
-        self.nested_calls_code = """
-        import pandas as pd
-        def nested_function():
-            df = pd.DataFrame({'a': [1, 2, 3]}).head()
-            result = df.merge(df, on='a')
-            print(df['a'])
+        self.nested_calls_code = textwrap.dedent(
+            """
+            import pandas as pd
+            def nested_function():
+                df = pd.DataFrame({'a': [1, 2, 3]}).head()
+                result = df.merge(df, on='a')
+                print(df['a'])
         """
-        self.no_pandas_alias_code = """
-        import pandas
-        def no_alias_function():
-            df = pandas.DataFrame({'a': [1, 2, 3]})
+        )
+        self.no_pandas_alias_code = textwrap.dedent(
+            """
+            import pandas
+            def no_alias_function():
+                df = pandas.DataFrame({'a': [1, 2, 3]})
         """
-        self.complex_subscript_access_code = """
-        import pandas as pd
-        def complex_access_function():
-            df = pd.DataFrame({'a': [1, 2, 3]})
-            col = 'a'
-            print(df[col])
+        )
+        self.complex_subscript_access_code = textwrap.dedent(
+            """
+            import pandas as pd
+            def complex_access_function():
+                df = pd.DataFrame({'a': [1, 2, 3]})
+                col = 'a'
+                print(df[col])
         """
+        )
 
     def parse_function(self, code):
         """Helper method to parse code and extract the function node."""
@@ -179,12 +188,14 @@ class TestDataFrameExtractor(unittest.TestCase):
 
     def test_aliasing_dataframe_name(self):
         """Test when DataFrame is assigned to another variable."""
-        aliasing_code = """
-        import pandas as pd
-        def aliasing_function():
-            df1 = pd.DataFrame({'a': [1, 2, 3]})
-            df2 = df1
+        aliasing_code = textwrap.dedent(
+            """
+            import pandas as pd
+            def aliasing_function():
+                df1 = pd.DataFrame({'a': [1, 2, 3]})
+                df2 = df1
         """
+        )
         function_node = self.parse_function(aliasing_code)
         dataframe_vars = self.extractor.extract_dataframe_variables(
             function_node, alias="pd"
