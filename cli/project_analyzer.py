@@ -9,7 +9,10 @@ from cli.file_utils import FileUtils
 class ProjectAnalyzer:
     """Handles the analysis of Python projects."""
 
-    def __init__(self, output_path: str):
+    def __init__(
+        self,
+        output_path: str,
+    ):
         """
         Initializes the ProjectAnalyzer.
 
@@ -18,19 +21,6 @@ class ProjectAnalyzer:
         """
         self.output_path = output_path
         self.inspector = inspector.Inspector(output_path)
-
-    def setup_inspector(
-        self, dataframe_dict_path: str, model_dict_path: str, tensor_dict_path: str
-    ):
-        """
-        Sets up the Inspector with necessary dictionaries.
-
-        Parameters:
-        - dataframe_dict_path (str): Path to the DataFrame dictionary CSV.
-        - model_dict_path (str): Path to the model dictionary CSV.
-        - tensor_dict_path (str): Path to the tensor operations CSV.
-        """
-        self.inspector.setup(dataframe_dict_path, model_dict_path, tensor_dict_path)
 
     def analyze_project(self, project_path: str) -> int:
         """

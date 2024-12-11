@@ -29,12 +29,6 @@ class CodeSmileCLI:
         print(f"Resume execution: {self.args.resume}")
         print(f"Analyze multiple projects: {self.args.multiple}")
 
-        self.analyzer.setup_inspector(
-            "obj_dictionaries/dataframes.csv",
-            "obj_dictionaries/models.csv",
-            "obj_dictionaries/tensors.csv",
-        )
-
         if self.args.input is None or self.args.output is None:
             print("Error: Please specify both input and output folders.")
             exit(1)

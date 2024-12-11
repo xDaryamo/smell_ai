@@ -14,7 +14,13 @@ class Inspector:
     and applying detection rules using AST-based analysis.
     """
 
-    def __init__(self, output_path: str):
+    def __init__(
+        self,
+        output_path: str,
+        dataframe_dict_path: str = "obj_dictionaries/dataframes.csv",
+        model_dict_path: str = "obj_dictionaries/models.csv",
+        tensor_dict_path: str = "obj_dictionaries/tensors.csv",
+    ):
         """
         Initializes the Inspector with the output path for saving detected smells.
 
@@ -22,42 +28,7 @@ class Inspector:
         - output_path (str): Path where detected smells will be saved.
         """
         self.output_path = output_path
-
-        self.rule_checker = None
-        self.library_extractor = None
-        self.model_extractor = None
-        self.dataframe_extractor = None
-        self.variable_extractor = None
-
-    def setup(
-        self, dataframe_dict_path: str, model_dict_path: str, tensor_dict_path: str
-    ) -> None:
-        """
-        Sets up the necessary components for the Inspector.
-
-        Parameters:
-        - dataframe_dict_path (str): Path to the DataFrame dictionary CSV.
-        - model_dict_path (str): Path to the model dictionary CSV.
-        - tensor_dict_path (str): Path to the tensor operations CSV.
-        """
-        # Initialize the RuleChecker with smells and extractors
-        self.rule_checker = RuleChecker(self.output_path)
-        self.rule_checker.setup_smells()
-
-        self.variable_extractor = VariableExtractor()
-        self.library_extractor = LibraryExtractor()
-        self.model_extractor = ModelExtractor(
-            models_path=model_dict_path,
-            tensors_path=tensor_dict_path,
-        )
-        self.dataframe_extractor = DataFrameExtractor(
-            df_dict_path=dataframe_dict_path,
-        )
-
-        # Preload dictionaries to avoid runtime errors
-        self.model_extractor.load_model_dict()
-        self.model_extractor.load_tensor_operations_dict()
-        self.dataframe_extractor.load_dataframe_dict(dataframe_dict_path)
+        self._setup(dataframe_dict_path, model_dict_path, tensor_dict_path)
 
     def inspect(self, filename: str) -> pd.DataFrame:
         """
@@ -156,3 +127,32 @@ class Inspector:
             raise e
 
         return to_save
+
+    def _setup(
+        self, dataframe_dict_path: str, model_dict_path: str, tensor_dict_path: str
+    ) -> None:
+        """
+        Sets up the necessary components for the Inspector.
+
+        Parameters:
+        - dataframe_dict_path (str): Path to the DataFrame dictionary CSV.
+        - model_dict_path (str): Path to the model dictionary CSV.
+        - tensor_dict_path (str): Path to the tensor operations CSV.
+        """
+        # Initialize the RuleChecker with smells and extractors
+        self.rule_checker = RuleChecker(self.output_path)
+
+        self.variable_extractor = VariableExtractor()
+        self.library_extractor = LibraryExtractor()
+        self.model_extractor = ModelExtractor(
+            models_path=model_dict_path,
+            tensors_path=tensor_dict_path,
+        )
+        self.dataframe_extractor = DataFrameExtractor(
+            df_dict_path=dataframe_dict_path,
+        )
+
+        # Preload dictionaries to avoid runtime errors
+        self.model_extractor.load_model_dict()
+        self.model_extractor.load_tensor_operations_dict()
+        self.dataframe_extractor.load_dataframe_dict(dataframe_dict_path)
