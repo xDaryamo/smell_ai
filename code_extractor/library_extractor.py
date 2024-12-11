@@ -15,9 +15,11 @@ class LibraryExtractor:
         - tree (ast.AST): The AST of a Python module.
 
         Returns:
-        - list[dict[str, str]]: A list of dictionaries, where each dictionary contains:
-          - 'name': The name of the library/module.
-          - 'alias': The alias of the library/module (if present, otherwise None).
+        - list[dict[str, str]]: A list of dictionaries,
+          where each dictionary contains:
+            - 'name': The name of the library/module.
+            - 'alias': The alias of the library/module
+              (if present, otherwise None).
 
         Example:
         ----------
@@ -35,25 +37,35 @@ class LibraryExtractor:
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
                 for alias in node.names:
-                    libraries.append({"name": alias.name, "alias": alias.asname})
+                    libraries.append(
+                        {"name": alias.name, "alias": alias.asname}
+                    )
             elif isinstance(node, ast.ImportFrom):
                 module = node.module or ""  # Handle cases where module is None
                 for alias in node.names:
-                    full_name = f"{module}.{alias.name}" if module else alias.name
-                    libraries.append({"name": full_name, "alias": alias.asname})
+                    full_name = (
+                        f"{module}.{alias.name}" if module else alias.name
+                    )
+                    libraries.append(
+                        {"name": full_name, "alias": alias.asname}
+                    )
         return libraries
 
-    def get_library_aliases(self, libraries: list[dict[str, str]]) -> dict[str, str]:
+    def get_library_aliases(
+        self, libraries: list[dict[str, str]]
+    ) -> dict[str, str]:
         """
         Extracts a mapping of library/module names to their aliases.
 
         Parameters:
-        - libraries (list[dict[str, str]]): A list of dictionaries as returned by `extract_libraries`.
+        - libraries (list[dict[str, str]]): A list of dictionaries as
+          returned by `extract_libraries`.
 
         Returns:
         - dict[str, str]: A dictionary where:
           - Keys are the full names of the libraries.
-          - Values are their aliases (or the original name if no alias is used).
+          - Values are their aliases
+            (or the original name if no alias is used).
 
         Example:
         ----------
@@ -72,20 +84,27 @@ class LibraryExtractor:
         aliases = {}
         for lib in libraries:
             name = lib["name"]
-            alias = lib["alias"] if lib["alias"] else name  # Use name if alias is None
+            alias = (
+                lib["alias"] if lib["alias"] else name
+            )  # Use name if alias is None
             aliases[name] = alias
         return aliases
 
-    def get_library_of_node(self, node: ast.AST, aliases: dict[str, str]) -> str:
+    def get_library_of_node(
+        self, node: ast.AST, aliases: dict[str, str]
+    ) -> str:
         """
         Determines the library associated with a given AST node.
 
         Parameters:
-        - node (ast.AST): The AST node to analyze. Typically represents a function or method call.
-        - aliases (dict[str, str]): A mapping of library names to their aliases (as returned by `get_library_aliases`).
+        - node (ast.AST): The AST node to analyze.
+          Typically represents a function or method call.
+        - aliases (dict[str, str]): A mapping of library names
+          to their aliases (as returned by `get_library_aliases`).
 
         Returns:
-        - str: The library associated with the node, or "Unknown" if the library cannot be determined.
+        - str: The library associated with the node, or "Unknown"
+          if the library cannot be determined.
 
         Example:
         ----------
@@ -100,8 +119,10 @@ class LibraryExtractor:
             "pandas"
 
         Notes:
-        - This method inspects function calls (`ast.Call`) to determine if they belong to a library in `aliases`.
-        - For method calls (e.g., `pd.read_csv`), the method checks the base object (`pd`) to match it with a library.
+        - This method inspects function calls (`ast.Call`) to determine
+          if they belong to a library in `aliases`.
+        - For method calls (e.g., `pd.read_csv`), the method checks
+          the base object (`pd`) to match it with a library.
         - Returns "Unknown" if the node does not clearly belong to any library.
         """
         if isinstance(node, ast.Call):
@@ -116,6 +137,8 @@ class LibraryExtractor:
             ):  # Direct function calls without attributes
                 func_name = node.func.id
                 for library, alias in aliases.items():
-                    if alias == func_name:  # The function name matches a library alias
+                    if (
+                        alias == func_name
+                    ):  # The function name matches a library alias
                         return library
         return "Unknown"

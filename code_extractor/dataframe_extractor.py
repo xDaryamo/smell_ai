@@ -13,10 +13,12 @@ class DataFrameExtractor:
         Initializes the DataFrameExtractor.
 
         Parameters:
-        - df_dict_path (str): Optional path to the CSV file containing the DataFrame method definitions.
+        - df_dict_path (str): Optional path to the CSV file containing the
+          DataFrame method definitions.
 
         Instance Variables:
-        - self.df_methods (list[str]): A list of Pandas DataFrame methods loaded from the CSV file.
+        - self.df_methods (list[str]): A list of Pandas DataFrame methods
+          loaded from the CSV file.
         """
         self.df_methods = []
         if df_dict_path:
@@ -35,9 +37,12 @@ class DataFrameExtractor:
         df = pd.read_csv(path, dtype={"method": "string"})
         self.df_methods = df["method"].tolist()
 
-    def extract_dataframe_variables(self, fun_node: ast.AST, alias: str) -> list[str]:
+    def extract_dataframe_variables(
+        self, fun_node: ast.AST, alias: str
+    ) -> list[str]:
         """
-        Identifies variables initialized as Pandas DataFrames in a function or function parameters.
+        Identifies variables initialized as Pandas DataFrames in a function
+        or function parameters.
 
         Parameters:
         - fun_node (ast.AST): The AST node representing a Python function.
@@ -87,7 +92,8 @@ class DataFrameExtractor:
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name):
-                        # If it's an assignment to a variable, check if it is a DataFrame
+                        # If it's an assignment to a variable,
+                        # check if it is a DataFrame
                         if isinstance(node.value, ast.Call) and isinstance(
                             node.value.func, ast.Attribute
                         ):
@@ -113,15 +119,21 @@ class DataFrameExtractor:
         - dataframe_vars (list[str]): A list of DataFrame variable names.
 
         Returns:
-        - dict[str, list[str]]: A dictionary where keys are DataFrame variable names,
+        - dict[str, list[str]]: A dictionary
+          where keys are DataFrame variable names,
           and values are lists of method names called on those DataFrames.
         """
         methods_usage = {var: [] for var in dataframe_vars}
         for node in ast.walk(fun_node):
             if isinstance(node, ast.Call):  # Look for function/method calls
                 func = node.func
-                if isinstance(func, ast.Attribute) and isinstance(func.value, ast.Name):
-                    if func.value.id in dataframe_vars and func.attr in self.df_methods:
+                if isinstance(func, ast.Attribute) and isinstance(
+                    func.value, ast.Name
+                ):
+                    if (
+                        func.value.id in dataframe_vars
+                        and func.attr in self.df_methods
+                    ):
                         methods_usage[func.value.id].append(func.attr)
         return methods_usage
 
@@ -136,7 +148,8 @@ class DataFrameExtractor:
         - dataframe_vars (list[str]): A list of DataFrame variable names.
 
         Returns:
-        - dict[str, list[str]]: A dictionary where keys are DataFrame variable names,
+        - dict[str, list[str]]: A dictionary
+          where keys are DataFrame variable names,
           and values are lists of column names accessed on those DataFrames.
         """
         accesses = {var: [] for var in dataframe_vars}
@@ -144,7 +157,10 @@ class DataFrameExtractor:
             if isinstance(
                 node, ast.Subscript
             ):  # Look for subscript accesses (e.g., df['a'])
-                if isinstance(node.value, ast.Name) and node.value.id in dataframe_vars:
+                if (
+                    isinstance(node.value, ast.Name)
+                    and node.value.id in dataframe_vars
+                ):
                     if isinstance(
                         node.slice, ast.Constant
                     ):  # Ensure the key is a constant

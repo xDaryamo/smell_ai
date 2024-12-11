@@ -55,7 +55,8 @@ class ProjectAnalyzer:
                     total_smells += smell_count
                     if smell_count > 0:
                         print(
-                            f"Found {smell_count} code smells in file: " f"{filename}"
+                            f"Found {smell_count} code smells in file: "
+                            f"{filename}"
                         )
                     to_save = pd.concat([to_save, result], ignore_index=True)
                 except (SyntaxError, FileNotFoundError) as e:
@@ -67,7 +68,9 @@ class ProjectAnalyzer:
                     continue
 
         os.makedirs(self.output_path, exist_ok=True)
-        to_save.to_csv(os.path.join(self.output_path, "to_save.csv"), index=False)
+        to_save.to_csv(
+            os.path.join(self.output_path, "to_save.csv"), index=False
+        )
 
         print(f"Finished analysis for project: {project_path}")
         print(
@@ -77,7 +80,9 @@ class ProjectAnalyzer:
         )
         return total_smells
 
-    def analyze_projects_sequential(self, base_path: str, resume: bool = False):
+    def analyze_projects_sequential(
+        self, base_path: str, resume: bool = False
+    ):
         """
         Sequentially analyzes multiple projects.
 
