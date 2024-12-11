@@ -44,36 +44,36 @@ class ProjectAnalyzer:
             "additional_info",
         ]
         to_save = pd.DataFrame(columns=col)
-        total_smells = 0  # Initialize a counter for total smells
+        total_smells = 0
 
         for filename in filenames:
-            if "tests/" not in filename:  # Ignore test files
+            if "tests/" not in filename:
                 try:
                     result = self.inspector.inspect(filename)
 
-                    smell_count = len(result)  # Count smells in the current file
+                    smell_count = len(result)
                     total_smells += smell_count
                     if smell_count > 0:
-                        print(f"Found {smell_count} code smells in file: {filename}")
+                        print(
+                            f"Found {smell_count} code smells in file: " f"{filename}"
+                        )
                     to_save = pd.concat([to_save, result], ignore_index=True)
                 except (SyntaxError, FileNotFoundError) as e:
                     error_file = os.path.join(self.output_path, "error.txt")
-                    os.makedirs(
-                        self.output_path, exist_ok=True
-                    )  # Ensure output path exists
+                    os.makedirs(self.output_path, exist_ok=True)
                     with open(error_file, "a") as f:
                         f.write(f"Error in file {filename}: {str(e)}\n")
                     print(f"Error analyzing file: {filename} - {str(e)}")
                     continue
 
-        # Ensure the output directory exists before saving the file
         os.makedirs(self.output_path, exist_ok=True)
         to_save.to_csv(os.path.join(self.output_path, "to_save.csv"), index=False)
 
-        # Print the total smells found for the project
         print(f"Finished analysis for project: {project_path}")
         print(
-            f"Total code smells found in project '{os.path.basename(project_path)}': {total_smells}\n"
+            "Total code smells found in project "
+            f"'{os.path.basename(project_path)}': "
+            f"{total_smells}\n"
         )
         return total_smells
 
@@ -99,7 +99,7 @@ class ProjectAnalyzer:
                 last_project = lines[-1].strip() if lines else ""
 
         start_time = time.time()
-        total_smells = 0  # Initialize a counter for all projects
+        total_smells = 0
 
         for dirname in os.listdir(base_path):
             if resume and dirname <= last_project:
@@ -109,14 +109,13 @@ class ProjectAnalyzer:
 
             print(f"Analyzing project '{dirname}' sequentially...")
             try:
-                # Analyze the project and collect smells
                 project_smells = self.analyze_project(project_path)
                 total_smells += project_smells
                 print(
-                    f"Project '{dirname}' analyzed successfully. Code smells found: {project_smells}\n"
+                    f"Project '{dirname}' analyzed successfully. Code smells "
+                    f"found: {project_smells}\n"
                 )
 
-                # Log the completed project
                 with open(execution_log_path, "a") as log_file:
                     log_file.write(dirname + "\n")
 
@@ -124,7 +123,8 @@ class ProjectAnalyzer:
                 print(f"Error analyzing project '{dirname}': {str(e)}\n")
 
         print(
-            f"Sequential execution completed in {time.time() - start_time:.2f} seconds."
+            f"Sequential execution completed in {time.time() - start_time:.2f}"
+            " seconds."
         )
         print(f"Total code smells found in all projects: {total_smells}\n")
 
@@ -137,14 +137,13 @@ class ProjectAnalyzer:
         - max_workers (int): Maximum number of parallel threads.
         """
         start_time = time.time()
-        total_smells = 0  # Initialize a counter for all projects
+        total_smells = 0
 
         def analyze_and_count_smells(dirname: str):
             nonlocal total_smells
             project_path = os.path.join(base_path, dirname)
             print(f"Analyzing project '{dirname}' in parallel...")
             try:
-                # Analyze the project
                 project_smells = self.analyze_project(project_path)
                 total_smells += project_smells
             except Exception as e:
@@ -155,7 +154,8 @@ class ProjectAnalyzer:
                 executor.submit(analyze_and_count_smells, dirname)
 
         print(
-            f"Parallel execution completed in {time.time() - start_time:.2f} seconds."
+            f"Parallel execution completed in {time.time() - start_time:.2f} "
+            f"seconds."
         )
         print(f"Total code smells found in all projects: {total_smells}\n")
 
@@ -171,7 +171,6 @@ class ProjectAnalyzer:
 
         Parameters:
         - base_path (str): Directory containing projects to analyze.
-        - output_path (str): Directory to save the analysis results.
         - max_workers (int): Maximum number of threads for parallel execution.
         - resume (bool): Whether to resume from the last analyzed project.
         - parallel (bool): Whether to enable parallel analysis.
