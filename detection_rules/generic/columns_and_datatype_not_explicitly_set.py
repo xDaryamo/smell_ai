@@ -4,7 +4,8 @@ from detection_rules.smell import Smell
 
 class ColumnsAndDatatypeNotExplicitlySetSmell(Smell):
     """
-    Detects cases where Pandas' DataFrame or read_csv methods are used without explicitly specifying column names or datatypes.
+    Detects cases where Pandas' DataFrame or read_csv methods are used without
+    explicitly specifying column names or datatypes.
 
     Example of code smell:
         pd.DataFrame(data)  # Missing explicit 'dtype'
@@ -19,7 +20,8 @@ class ColumnsAndDatatypeNotExplicitlySetSmell(Smell):
         super().__init__(
             name="columns_and_datatype_not_explicitly_set",
             description=(
-                "Pandas' DataFrame or read_csv methods should explicitly set 'dtype' to avoid unexpected behavior."
+                "Pandas' DataFrame or read_csv methods should explicitly"
+                "set 'dtype' to avoid unexpected behavior."
             ),
         )
 
@@ -33,8 +35,6 @@ class ColumnsAndDatatypeNotExplicitlySetSmell(Smell):
         pandas_alias = extracted_data["libraries"].get("pandas")
         if not pandas_alias:
             return smells
-
-        dataframe_methods = extracted_data.get("dataframe_methods", [])
 
         # Traverse AST to find calls to DataFrame or read_csv
         for node in ast.walk(ast_node):
@@ -51,7 +51,10 @@ class ColumnsAndDatatypeNotExplicitlySetSmell(Smell):
                     smells.append(
                         self.format_smell(
                             line=node.lineno,
-                            additional_info=f"Missing explicit 'dtype' in {node.func.attr} call.",
+                            additional_info=(
+                                "Missing explicit 'dtype'"
+                                f"in {node.func.attr} call."
+                            ),
                         )
                     )
                 else:
@@ -65,7 +68,10 @@ class ColumnsAndDatatypeNotExplicitlySetSmell(Smell):
                         smells.append(
                             self.format_smell(
                                 line=node.lineno,
-                                additional_info=f"'dtype' not explicitly set in {node.func.attr} call.",
+                                additional_info=(
+                                    "'dtype' not explicitly set"
+                                    f"in {node.func.attr} call."
+                                ),
                             )
                         )
 

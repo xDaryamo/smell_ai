@@ -1,7 +1,5 @@
-import os
 import pandas as pd
 import ast
-from detection_rules import smell
 from detection_rules.api_specific import (
     chain_indexing_smell,
     dataframe_conversion_api_misused,
@@ -25,6 +23,11 @@ from detection_rules.generic import (
 
 
 class RuleChecker:
+    """
+    Applies detection rules to Python code using Abstract Syntax Tree (AST)
+    analysis.
+    """
+
     def __init__(self, output_path: str):
         """
         Initializes the RuleChecker.
@@ -48,7 +51,8 @@ class RuleChecker:
 
         Parameters:
         - ast_node (ast.AST): The AST node to analyze.
-        - extracted_data (dict): Pre-extracted data (e.g., libraries, variables, etc.).
+        - extracted_data (dict): Pre-extracted data
+          (e.g., libraries, variables, etc.).
         - filename (str): The name of the file being analyzed.
         - function_name (str): The name of the function node being analyzed.
         - df_output (pd.DataFrame): The DataFrame to store detected smells.
@@ -73,25 +77,34 @@ class RuleChecker:
 
     def _setup_smells(self) -> None:
         """
-        Sets up the smells for the RuleChecker by explicitly instantiating them.
+        Sets up the smells for the RuleChecker
+        by explicitly instantiating them.
         """
+        # fmt: off
         self.smells = [
             # API-Specific Smells
             chain_indexing_smell.ChainIndexingSmell(),
             dataframe_conversion_api_misused.DataFrameConversionAPIMisused(),
-            gradients_not_cleared_before_backward_propagation.GradientsNotClearedSmell(),
+            gradients_not_cleared_before_backward_propagation.
+            GradientsNotClearedSmell(),
             matrix_multiplication_api_misused.MatrixMultiplicationAPIMisused(),
             pytorch_call_method_misused.PyTorchCallMethodMisusedSmell(),
             tensor_array_not_used.TensorArrayNotUsedSmell(),
-            # # Generic Smells
+            # Generic Smells
             broadcasting_feature_not_used.BroadcastingFeatureNotUsedSmell(),
-            columns_and_datatype_not_explicitly_set.ColumnsAndDatatypeNotExplicitlySetSmell(),
-            deterministic_algorithm_option_not_used.DeterministicAlgorithmOptionSmell(),
-            empty_column_misinitialization.EmptyColumnMisinitializationSmell(),
-            hyperparameters_not_explicitly_set.HyperparametersNotExplicitlySetSmell(),
+            columns_and_datatype_not_explicitly_set.
+            ColumnsAndDatatypeNotExplicitlySetSmell(),
+            deterministic_algorithm_option_not_used.
+            DeterministicAlgorithmOptionSmell(),
+            empty_column_misinitialization.
+            EmptyColumnMisinitializationSmell(),
+            hyperparameters_not_explicitly_set.
+            HyperparametersNotExplicitlySetSmell(),
             in_place_apis_misused.InPlaceAPIsMisusedSmell(),
             memory_not_freed.MemoryNotFreedSmell(),
-            merge_api_parameter_not_explicitly_set.MergeAPIParameterNotExplicitlySetSmell(),
-            nan_equivalence_comparison_misused.NanEquivalenceComparisonMisusedSmell(),
+            merge_api_parameter_not_explicitly_set.
+            MergeAPIParameterNotExplicitlySetSmell(),
+            nan_equivalence_comparison_misused.
+            NanEquivalenceComparisonMisusedSmell(),
             unnecessary_iteration.UnnecessaryIterationSmell(),
         ]

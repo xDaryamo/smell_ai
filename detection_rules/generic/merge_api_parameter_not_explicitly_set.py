@@ -4,7 +4,8 @@ from detection_rules.smell import Smell
 
 class MergeAPIParameterNotExplicitlySetSmell(Smell):
     """
-    Detects cases where Pandas' `merge` API is called without explicitly setting important parameters.
+    Detects cases where Pandas' `merge` API is called
+    without explicitly setting important parameters.
 
     Example of code smell:
         df1.merge(df2)  # Missing 'how', 'on', or 'validate' parameters.
@@ -17,7 +18,8 @@ class MergeAPIParameterNotExplicitlySetSmell(Smell):
         super().__init__(
             name="merge_api_parameter_not_explicitly_set",
             description=(
-                "Calls to Pandas' `merge` API should explicitly set parameters like 'how', 'on', and 'validate' "
+                "Calls to Pandas' `merge` API should explicitly set "
+                "parameters like 'how', 'on', and 'validate' "
                 "to avoid unexpected behavior."
             ),
         )
@@ -45,7 +47,8 @@ class MergeAPIParameterNotExplicitlySetSmell(Smell):
                 # Resolve the base object calling `merge`
                 base_obj = node.func.value
 
-                # Check if `merge` is called on a DataFrame variable or Pandas alias
+                # Check if `merge` is called on a DataFrame
+                # variable or Pandas alias
                 is_dataframe_call = (
                     isinstance(base_obj, ast.Name)
                     and base_obj.id in dataframe_variables
@@ -64,7 +67,10 @@ class MergeAPIParameterNotExplicitlySetSmell(Smell):
                         smells.append(
                             self.format_smell(
                                 line=node.lineno,
-                                additional_info="Missing explicit parameters in `merge` (e.g., 'how', 'on', 'validate').",
+                                additional_info=(
+                                    "Missing explicit parameters in `merge` "
+                                    "(e.g., 'how', 'on', 'validate')."
+                                ),
                             )
                         )
                     else:
@@ -72,7 +78,8 @@ class MergeAPIParameterNotExplicitlySetSmell(Smell):
                         valid_keywords = [
                             kw.arg
                             for kw in node.keywords
-                            if isinstance(kw, ast.keyword) and kw.arg is not None
+                            if isinstance(kw, ast.keyword)
+                            and kw.arg is not None
                         ]
                         required_args = {"how", "on", "validate"}
                         if not required_args.issubset(set(valid_keywords)):
@@ -80,7 +87,9 @@ class MergeAPIParameterNotExplicitlySetSmell(Smell):
                                 self.format_smell(
                                     line=node.lineno,
                                     additional_info=(
-                                        "Incomplete parameters in `merge`. Consider specifying 'how', 'on', and 'validate'."
+                                        "Incomplete parameters in `merge`. "
+                                        "Consider specifying 'how', 'on', "
+                                        " and 'validate'."
                                     ),
                                 )
                             )

@@ -1,41 +1,46 @@
-# Collect all projects repositories of NICHE dataset
-# Please consider to use debug mode with debug_filter_repo function to avoid downloading a lot of data
-# The debug mode is used to test the code and the experiment setup
-
 import os
 import pandas as pd
 
 
 class ProjectRepositoryCloner:
+    """
+    Manages the cloning and filtering of repositories based on a dataset
+    containing metadata such as stars, commits, and lines of code.
+    """
+
     def __init__(
         self,
         base_path: str = "../input/projects/",
         repo_data_path: str = "../input/dataset/NICHE.csv",
     ):
         """
-        Initializes the ProjectRepositoryCloner with the base path for projects and the repository data CSV path.
+        Initializes the ProjectRepositoryCloner with paths for projects and
+        repository metadata.
 
         Parameters:
         - base_path (str): Base directory where repositories will be cloned.
-        - repo_data_path (str): Path to the CSV file containing repository metadata.
+        - repo_data_path (str): Path to the CSV file containing repository
+          metadata.
         """
         self.base_path = base_path
         self.repo_data_path = repo_data_path
 
     def get_repo(self, repo_url: str):
         """
-        Clones the GitHub repository specified by `repo_url` into the local directory.
+        Clones the GitHub repository specified by `repo_url` into the local
+        directory.
 
         Parameters:
-        - repo_url (str): The GitHub repository URL (e.g., 'username/repository_name').
+        - repo_url (str): The GitHub repository URL
+          (e.g., 'username/repository_name').
 
         Returns:
         - None
         """
         folder_url = repo_url.replace("/", "")
         build_path = os.path.join(self.base_path, folder_url)
-
         build_path = os.path.abspath(build_path)
+
         if not os.path.exists(build_path):
             os.mkdir(build_path)
         os.system(f"git clone https://github.com/{repo_url} {build_path}")
@@ -61,13 +66,13 @@ class ProjectRepositoryCloner:
 
     def debug_filter_repo(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Filters the repositories for debugging purposes (low size to avoid downloading a lot of data).
+        Filters the repositories for debugging purposes.
 
         Parameters:
         - df (pd.DataFrame): The DataFrame containing repository metadata.
 
         Returns:
-        - pd.DataFrame: The filtered DataFrame with smaller repositories for debugging.
+        - pd.DataFrame: A filtered DataFrame with smaller repositories.
         """
         df = df[df["Lines of Code"] < 10000]
         df = df.head(10)  # Only take the first 10 projects for debugging
@@ -75,7 +80,8 @@ class ProjectRepositoryCloner:
 
     def get_debug_projects(self):
         """
-        Retrieves a small set of repositories (for debugging purposes), filters them, and clones them locally.
+        Retrieves a small set of repositories for debugging purposes, filters
+        them, and clones them locally.
 
         Returns:
         - None

@@ -10,13 +10,15 @@ class MatrixMultiplicationAPIMisused(Smell):
         np.dot([[1, 2], [3, 4]], [[5, 6], [7, 8]])  # Deprecated usage
 
     Preferred alternative:
-        np.matmul([[1, 2], [3, 4]], [[5, 6], [7, 8]])  # Explicit and recommended
+        # Explicit and recommended
+        np.matmul([[1, 2], [3, 4]], [[5, 6], [7, 8]])
     """
 
     def __init__(self):
         super().__init__(
             name="matrix_multiplication_api_misused",
-            description="Using `dot()` for matrix multiplication is discouraged. Use `np.matmul` instead.",
+            description="Using `dot()` for matrix multiplication"
+            " is discouraged. Use `np.matmul` instead.",
         )
 
     def detect(
@@ -33,7 +35,9 @@ class MatrixMultiplicationAPIMisused(Smell):
         lines = extracted_data.get("lines", {})
 
         for node in ast.walk(ast_node):
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            if isinstance(node, ast.Call) and isinstance(
+                node.func, ast.Attribute
+            ):
                 # Check if `dot` is called using the NumPy alias
                 if (
                     node.func.attr == "dot"
@@ -42,13 +46,17 @@ class MatrixMultiplicationAPIMisused(Smell):
                 ):
                     # Check if the `dot()` call arguments involve matrices
                     if self._is_matrix_multiplication(node):
-                        code_snippet = lines.get(node.lineno, "<Code not available>")
+                        code_snippet = lines.get(
+                            node.lineno, "<Code not available>"
+                        )
                         smells.append(
                             self.format_smell(
                                 line=node.lineno,
                                 additional_info=(
-                                    f"Detected misuse of `dot()` for matrix multiplication. "
-                                    f"Consider using `np.matmul` instead. Code: {code_snippet}"
+                                    f"Detected misuse of `dot()`"
+                                    " for matrix multiplication. "
+                                    f"Consider using `np.matmul` instead. "
+                                    f"Code: {code_snippet}"
                                 ),
                             )
                         )

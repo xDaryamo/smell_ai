@@ -4,10 +4,12 @@ from detection_rules.smell import Smell
 
 class DeterministicAlgorithmOptionSmell(Smell):
     """
-    Detects the use of `torch.use_deterministic_algorithms(True)` in PyTorch, which may cause performance issues.
+    Detects the use of `torch.use_deterministic_algorithms(True)` in PyTorch,
+    which may cause performance issues.
 
     Example of code smell:
-        torch.use_deterministic_algorithms(True)  # Potential performance bottleneck
+        torch.use_deterministic_algorithms(True)
+        # Potential performance bottleneck
 
     Preferred alternative:
         Avoid using this option unless determinism is strictly required.
@@ -17,8 +19,10 @@ class DeterministicAlgorithmOptionSmell(Smell):
         super().__init__(
             name="deterministic_algorithm_option_not_used",
             description=(
-                "Using `torch.use_deterministic_algorithms(True)` can cause performance issues. "
-                "Avoid using this option unless determinism is strictly required."
+                "Using `torch.use_deterministic_algorithms(True)` "
+                "can cause performance issues. "
+                "Avoid using this option unless"
+                "determinism is strictly required."
             ),
         )
 
@@ -51,7 +55,8 @@ class DeterministicAlgorithmOptionSmell(Smell):
                             self.format_smell(
                                 line=node.lineno,
                                 additional_info=(
-                                    f"Using `{func_name}(True)` detected. Avoid for performance."
+                                    f"Using `{func_name}(True)` detected."
+                                    "Avoid for performance."
                                 ),
                             )
                         )
@@ -60,14 +65,16 @@ class DeterministicAlgorithmOptionSmell(Smell):
 
     def _get_full_function_name(self, func: ast.AST, libraries: dict) -> str:
         """
-        Extracts the full name of a function or method from an AST node, handling library aliases.
+        Extracts the full name of a function or method from an AST node,
+        handling library aliases.
 
         Parameters:
         - func: The AST node representing the function or method.
         - libraries: Dictionary of library aliases from extracted_data.
 
         Returns:
-        - str: The full name of the function (e.g., "torch.use_deterministic_algorithms").
+        - str: The full name of the function
+          (e.g., "torch.use_deterministic_algorithms").
         """
         names = []
         while isinstance(func, ast.Attribute):

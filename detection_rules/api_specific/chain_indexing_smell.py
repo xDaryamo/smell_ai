@@ -44,7 +44,8 @@ class ChainIndexingSmell(Smell):
                 smells.append(
                     self.format_smell(
                         line=node.lineno,
-                        additional_info=f"Chained indexing detected in variable '{node.value.value.id}'.",
+                        additional_info="Chained indexing detected in"
+                        f"variable '{node.value.value.id}'.",
                     )
                 )
 

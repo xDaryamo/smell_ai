@@ -4,15 +4,18 @@ from detection_rules.smell import Smell
 
 class TensorArrayNotUsedSmell(Smell):
     """
-    Detects the misuse of `tf.constant()` in loops instead of `tf.TensorArray` in TensorFlow.
+    Detects the misuse of `tf.constant()` in loops
+    instead of `tf.TensorArray` in TensorFlow.
     """
 
     def __init__(self):
         super().__init__(
             name="tensor_array_not_used",
             description=(
-                "If `tf.constant()` is used to initialize an array and modified in a loop, it may cause errors. "
-                "Consider using `tf.TensorArray` for dynamically growing arrays."
+                "If `tf.constant()` is used to initialize an array and"
+                " modified in a loop, it may cause errors. "
+                "Consider using `tf.TensorArray`"
+                "for dynamically growing arrays."
             ),
         )
 
@@ -30,7 +33,9 @@ class TensorArrayNotUsedSmell(Smell):
         tensor_constants = set()
         # First Pass: Detect `tf.constant` assignments and track the variable
         for node in ast.walk(ast_node):
-            if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
+            if isinstance(node, ast.Assign) and isinstance(
+                node.value, ast.Call
+            ):
                 if (
                     hasattr(node.value.func, "attr")
                     and node.value.func.attr == "constant"
@@ -43,7 +48,9 @@ class TensorArrayNotUsedSmell(Smell):
 
         # Second Pass: Check if the tracked tensor is modified inside a loop
         for node in ast.walk(ast_node):
-            if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call):
+            if isinstance(node, ast.Assign) and isinstance(
+                node.value, ast.Call
+            ):
                 # Detect `tf.concat` calls
                 if (
                     hasattr(node.value.func, "attr")
@@ -57,9 +64,12 @@ class TensorArrayNotUsedSmell(Smell):
                         node.value
                     )
 
-                    # Filter out the constants that are being modified by `tf.concat`
+                    # Filter out the constants that
+                    # are being modified by `tf.concat`
                     modified_tensors = [
-                        var for var in concat_arguments if var in tensor_constants
+                        var
+                        for var in concat_arguments
+                        if var in tensor_constants
                     ]
 
                     # Smell is only valid if inside a loop
@@ -68,7 +78,8 @@ class TensorArrayNotUsedSmell(Smell):
                             self.format_smell(
                                 line=node.lineno,
                                 additional_info=(
-                                    "Using `tf.TensorArray` is better for dynamically growing arrays."
+                                    "Using `tf.TensorArray` is better"
+                                    " for dynamically growing arrays."
                                 ),
                             )
                         )
@@ -78,7 +89,8 @@ class TensorArrayNotUsedSmell(Smell):
     def _extract_tensor_names_from_concat(self, node: ast.Call) -> list[str]:
         """
         Extracts tensor names from the arguments of a `tf.concat` call.
-        This function handles nested structures like lists and other function calls.
+        This function handles nested structures
+        like lists and other function calls.
         """
         tensor_names = []
         for arg in node.args:
@@ -90,13 +102,17 @@ class TensorArrayNotUsedSmell(Smell):
                     if isinstance(item, ast.Name):
                         tensor_names.append(item.id)
                     elif isinstance(item, ast.Call):
-                        # Handle function calls (e.g., tensor in function calls inside the list)
-                        tensor_names.append(self._extract_tensor_name_from_call(item))
+                        # Handle function calls
+                        # (e.g., tensor in function calls inside the list)
+                        tensor_names.append(
+                            self._extract_tensor_name_from_call(item)
+                        )
         return tensor_names
 
     def _extract_tensor_name_from_call(self, node: ast.Call) -> str:
         """
-        Extracts tensor names from function calls in the arguments (e.g., `tf.some_function(x)`).
+        Extracts tensor names from function calls
+        in the arguments (e.g., `tf.some_function(x)`).
         """
         if isinstance(node.func, ast.Name):
             return node.func.id
@@ -106,7 +122,9 @@ class TensorArrayNotUsedSmell(Smell):
         current = node
         while current:
             parent = self._find_parent_node(current, root_node)
-            if isinstance(parent, (ast.For, ast.While)):  # Ensure loop is recognized
+            if isinstance(
+                parent, (ast.For, ast.While)
+            ):  # Ensure loop is recognized
 
                 return True
             current = parent

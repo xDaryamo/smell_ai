@@ -4,7 +4,8 @@ from detection_rules.smell import Smell
 
 class GradientsNotClearedSmell(Smell):
     """
-    Detects cases where gradients are not cleared before backward propagation in PyTorch.
+    Detects cases where gradients are not cleared
+    before backward propagation in PyTorch.
 
     Example of code smell:
         optimizer.backward()  # Missing zero_grad() before backward()
@@ -17,7 +18,10 @@ class GradientsNotClearedSmell(Smell):
     def __init__(self):
         super().__init__(
             name="gradients_not_cleared_before_backward_propagation",
-            description="Gradients must be cleared using `zero_grad()` before calling `backward()`.",
+            description=(
+                "radients must be cleared using `zero_grad()`"
+                " before calling `backward()`."
+            ),
         )
 
     def detect(
@@ -33,9 +37,13 @@ class GradientsNotClearedSmell(Smell):
 
         lines = extracted_data.get("lines", {})
 
+        variables = extracted_data["variables"]
+
         # Traverse the AST to detect improper usage of gradients
         for node in ast.walk(ast_node):
-            if isinstance(node, (ast.For, ast.While)):  # Look for loops (for/while)
+            if isinstance(
+                node, (ast.For, ast.While)
+            ):  # Look for loops (for/while)
                 zero_grad_called = False
 
                 for subnode in ast.walk(node):
@@ -46,7 +54,7 @@ class GradientsNotClearedSmell(Smell):
                         if (
                             subnode.func.attr == "zero_grad"
                             and isinstance(subnode.func.value, ast.Name)
-                            and subnode.func.value.id in extracted_data["variables"]
+                            and subnode.func.value.id in variables
                         ):
                             zero_grad_called = True
 
@@ -54,7 +62,8 @@ class GradientsNotClearedSmell(Smell):
                         if (
                             subnode.func.attr == "backward"
                             and isinstance(subnode.func.value, ast.Name)
-                            and subnode.func.value.id in extracted_data["variables"]
+                            and subnode.func.value.id
+                            in extracted_data["variables"]
                             and not zero_grad_called
                         ):
                             # Extract the offending line for additional context
@@ -65,7 +74,8 @@ class GradientsNotClearedSmell(Smell):
                                 self.format_smell(
                                     line=subnode.lineno,
                                     additional_info=(
-                                        f"`zero_grad()` not called before `backward()` in loop. "
+                                        f"`zero_grad()` not called before"
+                                        " `backward()` in loop. "
                                         f"Code: {code_snippet}"
                                     ),
                                 )

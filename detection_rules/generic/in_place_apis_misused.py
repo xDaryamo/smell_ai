@@ -4,7 +4,8 @@ from detection_rules.smell import Smell
 
 class InPlaceAPIsMisusedSmell(Smell):
     """
-    Detects cases where Pandas in-place APIs are used incorrectly, potentially causing confusion about memory usage.
+    Detects cases where Pandas in-place APIs are used incorrectly,
+    potentially causing confusion about memory usage.
 
     Example of code smell:
         df.drop(columns=["column_name"], inplace=False)  # Potential misuse
@@ -12,15 +13,18 @@ class InPlaceAPIsMisusedSmell(Smell):
     Preferred alternative:
         Use either:
         - df = df.drop(columns=["column_name"])  # Assign result to a variable
-        - df.drop(columns=["column_name"], inplace=True)  # Explicitly use in-place operation
+        - df.drop(columns=["column_name"], inplace=True)
+          # Explicitly use in-place operation
     """
 
     def __init__(self):
         super().__init__(
             name="in_place_apis_misused",
             description=(
-                "Check whether the result of the operation is assigned to a variable or the in-place parameter is set. "
-                "Some developers mistakenly assume in-place operations always save memory."
+                "Check whether the result of the operation is assigned to "
+                "a variable or the in-place parameter is set. "
+                "Some developers mistakenly assume in-place "
+                "operations always save memory."
             ),
         )
 
@@ -60,20 +64,29 @@ class InPlaceAPIsMisusedSmell(Smell):
                         self.format_smell(
                             line=node.lineno,
                             additional_info=(
-                                f"Explicitly setting `inplace=False` for `{node.func.attr}` "
-                                "may cause confusion. Consider assigning the result to a variable or explicitly using `inplace=True`."
+                                f"Explicitly setting `inplace=False`"
+                                f"for `{node.func.attr}`"
+                                "may cause confusion. Consider assigning the "
+                                "result to a variable or explicitly using "
+                                "`inplace=True`."
                             ),
                         )
                     )
 
-                # Flag cases where "inplace" is not set and the result is not assigned
-                if inplace_flag is None and not self._is_assignment(node, ast_node):
+                # Flag cases where "inplace" is
+                # not set and the result is not assigned
+                if inplace_flag is None and not self._is_assignment(
+                    node, ast_node
+                ):
                     smells.append(
                         self.format_smell(
                             line=node.lineno,
                             additional_info=(
-                                f"The result of the `{node.func.attr}` method is not assigned to a variable, "
-                                "and the `inplace` parameter is not explicitly set. Consider assigning the result or setting `inplace=True`."
+                                f"The result of the `{node.func.attr}` method "
+                                "is not assigned to a variable, "
+                                "and the `inplace` parameter is not "
+                                "explicitly set. Consider assigning "
+                                "the result or setting `inplace=True`."
                             ),
                         )
                     )

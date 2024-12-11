@@ -4,7 +4,8 @@ from detection_rules.smell import Smell
 
 class BroadcastingFeatureNotUsedSmell(Smell):
     """
-    Detects cases where TensorFlow's broadcasting feature is not used, and tiling is applied unnecessarily.
+    Detects cases where TensorFlow's broadcasting feature is not used,
+    and tiling is applied unnecessarily.
 
     Example of code smell:
         tensor_a = tf.constant([[1], [2], [3]])
@@ -22,8 +23,10 @@ class BroadcastingFeatureNotUsedSmell(Smell):
         super().__init__(
             name="Broadcasting_Feature_Not_Used",
             description=(
-                "Using broadcasting in TensorFlow is preferred over tiling arrays unnecessarily. "
-                "Broadcasting allows arithmetic between arrays of different shapes, saving memory and computation time."
+                "Using broadcasting in TensorFlow is preferred over "
+                "tiling arrays unnecessarily. "
+                "Broadcasting allows arithmetic between arrays of "
+                "different shapes, saving memory and computation time."
             ),
         )
 
@@ -45,12 +48,15 @@ class BroadcastingFeatureNotUsedSmell(Smell):
 
         return smells
 
-    def _tensor_check_tiling(self, fun_node: ast.AST, tensorflow_alias: str) -> dict:
+    def _tensor_check_tiling(
+        self, fun_node: ast.AST, tensorflow_alias: str
+    ) -> dict:
         """
         Identifies tensor variables that have undergone tiling operations.
 
         :param fun_node: The AST node representing the function.
-        :param tensorflow_alias: Alias used for TensorFlow in the code (e.g., "tf").
+        :param tensorflow_alias: Alias used for
+               TensorFlow in the code (e.g., "tf").
         :return: Dictionary mapping tiled variable names to their AST nodes.
         """
         tiled_variables = {}
@@ -60,7 +66,8 @@ class BroadcastingFeatureNotUsedSmell(Smell):
                 and isinstance(node.value, ast.Call)
                 and isinstance(node.value.func, ast.Attribute)
                 and node.value.func.attr == "tile"
-                and getattr(node.value.func.value, "id", None) == tensorflow_alias
+                and getattr(node.value.func.value, "id", None)
+                == tensorflow_alias
             ):
                 if isinstance(node.targets[0], ast.Name):
                     tiled_variables[node.targets[0].id] = node
@@ -73,22 +80,37 @@ class BroadcastingFeatureNotUsedSmell(Smell):
         Checks whether arithmetic operations involve tiled variables.
 
         :param fun_node: The AST node representing the function.
-        :param tiled_variables: Dictionary mapping tiled variable names to their AST nodes.
+        :param tiled_variables: Dictionary mapping tiled variable
+               names to their AST nodes.
         :return: List of detected broadcasting smells.
         """
         smells = []
         for node in ast.walk(fun_node):
-            if isinstance(node, ast.BinOp):  # Arithmetic operation (e.g., +, -, *, /)
+            if isinstance(
+                node, ast.BinOp
+            ):  # Arithmetic operation (e.g., +, -, *, /)
                 if (
-                    isinstance(node.left, ast.Name) and node.left.id in tiled_variables
+                    isinstance(node.left, ast.Name)
+                    and node.left.id in tiled_variables
                 ) or (
                     isinstance(node.right, ast.Name)
                     and node.right.id in tiled_variables
                 ):
+
+                    variable_name = (
+                        node.left.id
+                        if isinstance(node.left, ast.Name)
+                        else node.right.id
+                    )
                     smells.append(
                         self.format_smell(
                             line=node.lineno,
-                            additional_info=f"Variable '{node.left.id if isinstance(node.left, ast.Name) else node.right.id}' involves unnecessary tiling. Consider using broadcasting instead.",
+                            additional_info=(
+                                f"Variable '{variable_name}' involves "
+                                "unnecessary tiling. "
+                                "Consider using broadcasting instead."
+                            ),
                         )
                     )
+
         return smells

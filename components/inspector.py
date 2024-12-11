@@ -22,17 +22,22 @@ class Inspector:
         tensor_dict_path: str = "obj_dictionaries/tensors.csv",
     ):
         """
-        Initializes the Inspector with the output path for saving detected smells.
+        Initializes the Inspector with the output path for
+        saving detected smells.
 
         Parameters:
         - output_path (str): Path where detected smells will be saved.
+        - dataframe_dict_path (str): Path to the DataFrame dictionary CSV.
+        - model_dict_path (str): Path to the model dictionary CSV.
+        - tensor_dict_path (str): Path to the tensor operations CSV.
         """
         self.output_path = output_path
         self._setup(dataframe_dict_path, model_dict_path, tensor_dict_path)
 
     def inspect(self, filename: str) -> pd.DataFrame:
         """
-        Inspects a file for code smells by parsing it into an AST and applying rules.
+        Inspects a file for code smells by parsing it into an AST and applying
+        rules.
 
         Parameters:
         - filename (str): The name of the file to analyze.
@@ -64,14 +69,16 @@ class Inspector:
                 self.library_extractor.extract_libraries(tree)
             )
 
-            # Step 2: Analyze Functions and Extract Variables & DataFrame Variables
+            # Step 2: Analyze Functions and Extract Variables
             variables_by_function = {}
             dataframe_variables_by_function = {}
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
                     function_name = node.name
                     variables_by_function[function_name] = (
-                        self.variable_extractor.extract_variable_definitions(node)
+                        self.variable_extractor.extract_variable_definitions(
+                            node
+                        )
                     )
                     dataframe_variables_by_function[function_name] = (
                         self.dataframe_extractor.extract_dataframe_variables(
@@ -87,23 +94,28 @@ class Inspector:
             # Step 4: Rule Check on Each Function
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    # Prepare extracted data specific to the function
                     try:
                         function_data = {
                             "libraries": libraries,
                             "variables": variables_by_function[node.name],
                             "lines": {
-                                node.lineno: lines[node.lineno - 1]
-                                for node in ast.walk(tree)
-                                if hasattr(node, "lineno")
+                                n.lineno: lines[n.lineno - 1]
+                                for n in ast.walk(tree)
+                                if hasattr(n, "lineno")
                             },
                             "dataframe_methods": dataframe_methods,
-                            "dataframe_variables": dataframe_variables_by_function[
-                                node.name
-                            ],
-                            "tensor_operations": tensor_operations.get("operation", []),
-                            "models": {model: models[model] for model in models.keys()},
-                            "model_methods": self.model_extractor.load_model_methods(),
+                            "dataframe_variables": (
+                                dataframe_variables_by_function[node.name]
+                            ),
+                            "tensor_operations": tensor_operations.get(
+                                "operation", []
+                            ),
+                            "models": {
+                                model: models[model] for model in models.keys()
+                            },
+                            "model_methods": (
+                                self.model_extractor.load_model_methods()
+                            ),
                         }
 
                         # Pass data to the Rule Checker
@@ -112,7 +124,8 @@ class Inspector:
                         )
                     except Exception as e:
                         print(
-                            f"Error processing function '{node.name}' in file '{filename}': {e}"
+                            f"Error processing function '{node.name}' in file "
+                            f"'{filename}': {e}"
                         )
                         raise e
 
@@ -129,7 +142,10 @@ class Inspector:
         return to_save
 
     def _setup(
-        self, dataframe_dict_path: str, model_dict_path: str, tensor_dict_path: str
+        self,
+        dataframe_dict_path: str,
+        model_dict_path: str,
+        tensor_dict_path: str,
     ) -> None:
         """
         Sets up the necessary components for the Inspector.

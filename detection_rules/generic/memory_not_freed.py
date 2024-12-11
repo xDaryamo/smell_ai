@@ -4,7 +4,8 @@ from detection_rules.smell import Smell
 
 class MemoryNotFreedSmell(Smell):
     """
-    Detects cases where memory is not freed in TensorFlow, such as not calling tf.keras.backend.clear_session()
+    Detects cases where memory is not freed in TensorFlow,
+    such as not calling tf.keras.backend.clear_session()
     inside loops where models are defined.
 
     Example of code smell:
@@ -22,8 +23,10 @@ class MemoryNotFreedSmell(Smell):
         super().__init__(
             name="memory_not_freed",
             description=(
-                "Memory not freed after model definition in loops may lead to memory leakage. "
-                "Consider using tf.keras.backend.clear_session() to free memory explicitly."
+                "Memory not freed after model definition "
+                "in loops may lead to memory leakage. "
+                "Consider using tf.keras.backend.clear_session() "
+                "to free memory explicitly."
             ),
         )
 
@@ -54,7 +57,9 @@ class MemoryNotFreedSmell(Smell):
             )
 
             # Check if memory is freed with clear_session
-            memory_freed = self._is_memory_freed_in_loop(loop_node, tensorflow_alias)
+            memory_freed = self._is_memory_freed_in_loop(
+                loop_node, tensorflow_alias
+            )
 
             # If model is defined but memory is not freed, report it
             if model_defined and not memory_freed:
@@ -70,16 +75,23 @@ class MemoryNotFreedSmell(Smell):
         return smells
 
     def _is_model_defined_in_loop(
-        self, loop_node: ast.AST, tensorflow_alias: str, model_methods: list[str]
+        self,
+        loop_node: ast.AST,
+        tensorflow_alias: str,
+        model_methods: list[str],
     ) -> bool:
         """
-        Check if any model is being defined inside a loop using any of the model methods.
+        Check if any model is being defined inside a loop using any of the
+        model methods.
         """
         for node in ast.walk(loop_node):
             if isinstance(node, ast.Call):
-                # Iterate over all possible model methods (e.g., Sequential, Model, etc.)
+                # Iterate over all possible model methods
+                # (e.g., Sequential, Model, etc.)
                 for method in model_methods:
-                    if self._is_nested_call(node, tensorflow_alias, ["keras", method]):
+                    if self._is_nested_call(
+                        node, tensorflow_alias, ["keras", method]
+                    ):
                         return True
         return False
 
@@ -87,24 +99,31 @@ class MemoryNotFreedSmell(Smell):
         self, loop_node: ast.AST, tensorflow_alias: str
     ) -> bool:
         """
-        Check if memory is cleared using tf.keras.backend.clear_session() inside a loop.
+        Check if memory is cleared using tf.keras.backend.clear_session()
+        inside a loop.
         """
         for node in ast.walk(loop_node):
             if isinstance(node, ast.Call):
                 if self._is_nested_call(
-                    node, tensorflow_alias, ["keras", "backend", "clear_session"]
+                    node,
+                    tensorflow_alias,
+                    ["keras", "backend", "clear_session"],
                 ):
                     return True
         return False
 
-    def _is_nested_call(self, node: ast.Call, base: str, attributes: list[str]) -> bool:
+    def _is_nested_call(
+        self, node: ast.Call, base: str, attributes: list[str]
+    ) -> bool:
         """
-        Checks if the call matches a nested attribute chain (e.g., tf.keras.Sequential()).
+        Checks if the call matches a nested attribute chain
+        (e.g., tf.keras.Sequential()).
 
         Parameters:
         - node: The AST node to check.
         - base: The base alias (e.g., "tf").
-        - attributes: List of attributes to match in order (e.g., ["keras", "Sequential"]).
+        - attributes: List of attributes to match in order
+          (e.g., ["keras", "Sequential"]).
 
         Returns:
         - True if the call matches the nested attribute chain, False otherwise.

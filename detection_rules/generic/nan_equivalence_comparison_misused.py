@@ -4,7 +4,8 @@ from detection_rules.smell import Smell
 
 class NanEquivalenceComparisonMisusedSmell(Smell):
     """
-    Detects cases where NumPy's NaN values are compared directly using equivalence operators,
+    Detects cases where NumPy's NaN values are compared
+    directly using equivalence operators,
     which is incorrect as NaN is not equivalent to itself.
 
     Example of code smell:
@@ -44,14 +45,17 @@ class NanEquivalenceComparisonMisusedSmell(Smell):
                         self.format_smell(
                             line=node.lineno,
                             additional_info=(
-                                "Direct equivalence comparison with NaN detected. Use np.isnan() instead."
+                                "Direct equivalence comparison with NaN "
+                                "detected. Use np.isnan() instead."
                             ),
                         )
                     )
 
         return smells
 
-    def _has_nan_comparison(self, node: ast.Compare, library_name: str) -> bool:
+    def _has_nan_comparison(
+        self, node: ast.Compare, library_name: str
+    ) -> bool:
         """
         Checks if NaN is used in equivalence or non-equivalence comparisons.
 
@@ -86,7 +90,10 @@ class NanEquivalenceComparisonMisusedSmell(Smell):
         """
         # Handle cases like np.nan
         if isinstance(node, ast.Attribute) and node.attr == "nan":
-            if isinstance(node.value, ast.Name) and node.value.id == library_name:
+            if (
+                isinstance(node.value, ast.Name)
+                and node.value.id == library_name
+            ):
                 return True
 
         # Handle direct imports like "from numpy import nan"

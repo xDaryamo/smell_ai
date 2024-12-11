@@ -15,7 +15,8 @@ class TextBoxRedirect(io.StringIO):
         self.textbox.config(state="normal")
         self.textbox.insert(tk.END, text)
         self.textbox.config(state="disabled")
-        self.textbox.see(tk.END)  # Automatically scroll to the end of the output
+        self.textbox.see(tk.END)
+        # Automatically scroll to the end of the output
 
     def flush(self):
         pass  # Overridden to comply with `io.StringIO`

@@ -2,7 +2,6 @@ import os
 import sys
 import tkinter as tk
 from tkinter import filedialog
-from cli.file_utils import FileUtils
 from cli.project_analyzer import ProjectAnalyzer
 from gui.textbox_redirect import TextBoxRedirect
 
@@ -29,7 +28,9 @@ class CodeSmellDetectorGUI:
         self.input_label = tk.Label(self.master, text="Input Path:")
         self.input_label.grid(row=0, column=0, sticky="w")
 
-        self.input_path = tk.Label(self.master, text="No path selected", anchor="w")
+        self.input_path = tk.Label(
+            self.master, text="No path selected", anchor="w"
+        )
         self.input_path.grid(row=0, column=1, sticky="w")
 
         self.input_button = tk.Button(
@@ -44,7 +45,9 @@ class CodeSmellDetectorGUI:
         self.output_label = tk.Label(self.master, text="Output Path:")
         self.output_label.grid(row=1, column=0, sticky="w")
 
-        self.output_path = tk.Label(self.master, text="No path selected", anchor="w")
+        self.output_path = tk.Label(
+            self.master, text="No path selected", anchor="w"
+        )
         self.output_path.grid(row=1, column=1, sticky="w")
 
         self.output_button = tk.Button(
@@ -56,7 +59,9 @@ class CodeSmellDetectorGUI:
         self.output_button.grid(row=1, column=2, padx=5)
 
         # Walker Selection
-        self.walker_label = tk.Label(self.master, text="Select number of walkers:")
+        self.walker_label = tk.Label(
+            self.master, text="Select number of walkers:"
+        )
         self.walker_label.grid(row=2, column=0, sticky="w")
 
         self.walker_picker = tk.Spinbox(self.master, from_=1, to=10, width=5)
@@ -77,8 +82,12 @@ class CodeSmellDetectorGUI:
         self.resume_check.grid(row=3, column=1, sticky="w")
 
         # Output Textbox
-        self.output_textbox = tk.Text(self.master, height=8, width=50, state="disabled")
-        self.output_textbox.grid(row=4, column=0, columnspan=3, pady=10, sticky="nsew")
+        self.output_textbox = tk.Text(
+            self.master, height=8, width=50, state="disabled"
+        )
+        self.output_textbox.grid(
+            row=4, column=0, columnspan=3, pady=10, sticky="nsew"
+        )
         self.output_textbox.bind("<Key>", self.disable_key_press)
 
         # Run and Exit Buttons
@@ -136,7 +145,10 @@ class CodeSmellDetectorGUI:
         is_resume = self.resume_var.get()
 
         # Validate paths
-        if input_path == "No path selected" or output_path == "No path selected":
+        if (
+            input_path == "No path selected"
+            or output_path == "No path selected"
+        ):
             print("Error: Please select valid input and output paths.")
             return
 

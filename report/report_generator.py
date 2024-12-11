@@ -6,12 +6,15 @@ import sys
 
 
 class ReportGenerator:
-    def __init__(self, input_file: str = "overview_output.csv", output_path: str = "."):
+    def __init__(
+        self, input_file: str = "overview_output.csv", output_path: str = "."
+    ):
         """
         Initializes the ReportGenerator with input and output file paths.
 
         Parameters:
-        - input_file (str): The path to the input CSV file containing the overview data.
+        - input_file (str): The path to the input CSV file containing
+          the overview data.
         - output_path (str): The directory where the reports will be saved.
         """
         self.input_file = input_file
@@ -22,7 +25,8 @@ class ReportGenerator:
         Loads the data from the input file, supporting multiple formats.
 
         Parameters:
-        - file_format (str): The format of the input file ('csv', 'json', 'excel').
+        - file_format (str): The format of the input file
+          ('csv', 'json', 'excel').
 
         Returns:
         - pd.DataFrame: The DataFrame containing the loaded data.
@@ -41,13 +45,16 @@ class ReportGenerator:
         df = self._load_data()
         df = df[["smell_name", "filename"]]
         report = (
-            df.groupby("smell_name").count().rename(columns={"filename": "occurrences"})
+            df.groupby("smell_name")
+            .count()
+            .rename(columns={"filename": "occurrences"})
         )
         report.to_csv(os.path.join(self.output_path, "general_overview.csv"))
         print("General smell report saved to 'general_overview.csv'.")
 
     def project_report(self):
-        """Generates a project-specific report treating all files as part of a single project if applicable."""
+        """Generates a project-specific report treating all files as part of
+        a single project if applicable."""
         df = self._load_data()
 
         common_root = os.path.commonpath(df["filename"].tolist())
@@ -71,7 +78,9 @@ class ReportGenerator:
                 project_names.append(project_name)
             df["project_name"] = project_names
 
-        report = df.groupby("project_name").size().reset_index(name="total_smells")
+        report = (
+            df.groupby("project_name").size().reset_index(name="total_smells")
+        )
 
         output_file = os.path.join(self.output_path, "project_overview.csv")
         report.to_csv(output_file, index=False)
@@ -83,7 +92,8 @@ class ReportGenerator:
         Generates a summary report with:
         - General overview of code smells.
         - Per-project summary of total smells.
-        - Detailed sheets for each project specifying each smell and its occurrences.
+        - Detailed sheets for each project specifying
+        each smell and its occurrences.
         """
         df = self._load_data()
 
@@ -108,13 +118,18 @@ class ReportGenerator:
         )
 
         with pd.ExcelWriter(
-            os.path.join(self.output_path, "summary_report.xlsx"), engine="openpyxl"
+            os.path.join(self.output_path, "summary_report.xlsx"),
+            engine="openpyxl",
         ) as writer:
             # Write the general overview
-            general_report.to_excel(writer, sheet_name="General Overview", index=True)
+            general_report.to_excel(
+                writer, sheet_name="General Overview", index=True
+            )
 
             # Write the per-project summary
-            project_summary.to_excel(writer, sheet_name="Project Overview", index=False)
+            project_summary.to_excel(
+                writer, sheet_name="Project Overview", index=False
+            )
 
             # Write a detailed sheet for each project
             for project_name, project_df in df.groupby("project_name"):
@@ -138,7 +153,9 @@ class ReportGenerator:
         df = self._load_data()
         df = df[["smell_name", "filename"]]
         report = (
-            df.groupby("smell_name").count().rename(columns={"filename": "occurrences"})
+            df.groupby("smell_name")
+            .count()
+            .rename(columns={"filename": "occurrences"})
         )
 
         report.plot(kind="bar", legend=False)
@@ -154,7 +171,9 @@ class ReportGenerator:
         """Cleans up old reports in the output directory."""
         for file in os.listdir(self.output_path):
             if (
-                file.endswith(".csv") or file.endswith(".xlsx") or file.endswith(".png")
+                file.endswith(".csv")
+                or file.endswith(".xlsx")
+                or file.endswith(".png")
             ) and file != "overview.csv":
                 os.remove(os.path.join(self.output_path, file))
         print("Old reports cleaned up from the output directory.")

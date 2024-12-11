@@ -16,7 +16,8 @@ class PyTorchCallMethodMisusedSmell(Smell):
     def __init__(self):
         super().__init__(
             name="pytorch_call_method_misused",
-            description="Direct calls to `forward` in PyTorch models are discouraged. Use the model instance directly.",
+            description="Direct calls to `forward` in PyTorch"
+            "models are discouraged. Use the model instance directly.",
         )
 
     def detect(
@@ -45,7 +46,8 @@ class PyTorchCallMethodMisusedSmell(Smell):
                         self.format_smell(
                             line=node.lineno,
                             additional_info=(
-                                f"Direct call to `{node.func.value.id}.forward()` detected. "
+                                f"Direct call to `"
+                                f"{node.func.value.id}.forward()` detected. "
                                 f"Use the model instance directly instead."
                             ),
                         )

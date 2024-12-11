@@ -1,23 +1,23 @@
 import unittest
 import ast
-from detection_rules.api_specific.chain_indexing_smell import (
-    ChainIndexingSmell,
+from detection_rules.api_specific.dataframe_conversion_api_misused import (
+    DataFrameConversionAPIMisused,
 )
 
 
-class TestChainIndexingSmell(unittest.TestCase):
+class TestDataFrameConversionAPIMisused(unittest.TestCase):
+
     def setUp(self):
         """
-        Setup method to initialize the ChainIndexingSmell
-          instance and common data.
+        Setup method to initialize the DataFrameConversionAPIMisused instance.
         """
-        self.smell_detector = ChainIndexingSmell()
+        self.detector = DataFrameConversionAPIMisused()
 
     def test_detect_no_smell(self):
         """
-        Test the detect method when no chained indexing is present.
+        Test the detect method when no misuse
+        of the `values` attribute is present.
         """
-        # Code with no chained indexing
         code = (
             "import pandas as pd\n"
             "def no_smell():\n"
@@ -30,33 +30,44 @@ class TestChainIndexingSmell(unittest.TestCase):
             "dataframe_variables": ["df"],
         }
 
-        result = self.smell_detector.detect(tree, extracted_data)
+        result = self.detector.detect(tree, extracted_data)
         self.assertEqual(len(result), 0)  # No smells should be detected
 
     def test_detect_with_smell(self):
         """
-        Test the detect method when chained indexing is present.
+        Test the detect method when gradients are \
+        not cleared before backward propagation.
         """
-        # Code with chained indexing
         code = (
-            "import pandas as pd\n"
-            "def chained_indexing():\n"
-            "    df = pd.DataFrame({'a': [1, 2, 3]})\n"
-            "    value = df['a'][0]\n"
+            "import torch\n"
+            "def train():\n"
+            "    optimizer = torch.optim.SGD([], lr=0.01)\n"
+            "    for epoch in range(10):\n"
+            "        loss = torch.tensor(0.0, requires_grad=True)\n"
+            "        loss.backward()\n"
         )
         tree = ast.parse(code)
+
+        for node in ast.walk(tree):
+            print(ast.dump(node))
+
         extracted_data = {
-            "libraries": {"pandas": "pd"},
-            "dataframe_variables": ["df"],
+            "libraries": {"torch": "torch"},
+            "variables": ["optimizer"],
+            "lines": {
+                4: "for epoch in range(10):",
+                5: "loss = torch.tensor(0.0, requires_grad=True)",
+                6: "loss.backward()",
+            },
         }
 
         result = self.smell_detector.detect(tree, extracted_data)
         self.assertEqual(len(result), 1)  # One smell should be detected
-        self.assertEqual(result[0]["name"], "Chain_Indexing")
         self.assertIn(
-            "Chained indexing detected", result[0]["additional_info"]
+            "`zero_grad()` not called before `backward()`",
+            result[0]["additional_info"],
         )
-        self.assertEqual(result[0]["line"], 4)  # Line where the smell occurs
+        self.assertEqual(result[0]["line"], 6)  # Line where the smell occurs
 
     def test_detect_without_pandas_library(self):
         """
@@ -73,19 +84,20 @@ class TestChainIndexingSmell(unittest.TestCase):
             "dataframe_variables": [],
         }
 
-        result = self.smell_detector.detect(tree, extracted_data)
+        result = self.detector.detect(tree, extracted_data)
         self.assertEqual(len(result), 0)  # No smells should be detected
 
     def test_detect_with_multiple_smells(self):
         """
-        Test the detect method when multiple chained indexings are present.
+        Test the detect method when multiple
+        misuses of the `values` attribute are present.
         """
         code = (
             "import pandas as pd\n"
-            "def multiple_chained_indexing():\n"
+            "def api_misused():\n"
             "    df = pd.DataFrame({'a': [1, 2, 3]})\n"
-            "    value1 = df['a'][0]\n"
-            "    value2 = df['a'][1]\n"
+            "    value1 = df.values\n"
+            "    value2 = df.values\n"
         )
         tree = ast.parse(code)
         extracted_data = {
@@ -93,7 +105,7 @@ class TestChainIndexingSmell(unittest.TestCase):
             "dataframe_variables": ["df"],
         }
 
-        result = self.smell_detector.detect(tree, extracted_data)
+        result = self.detector.detect(tree, extracted_data)
         self.assertEqual(len(result), 2)  # Two smells should be detected
         self.assertEqual(result[0]["line"], 4)  # Line of the first smell
         self.assertEqual(result[1]["line"], 5)  # Line of the second smell

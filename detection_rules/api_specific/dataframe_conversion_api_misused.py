@@ -16,7 +16,10 @@ class DataFrameConversionAPIMisused(Smell):
     def __init__(self):
         super().__init__(
             name="dataframe_conversion_api_misused",
-            description="Using the `values` attribute in Pandas is deprecated. Use NumPy or explicit methods instead.",
+            description=(
+                "Using the `values` attribute in Pandas is deprecated. "
+                "Use NumPy or explicit methods instead."
+            ),
         )
 
     def detect(
@@ -47,9 +50,14 @@ class DataFrameConversionAPIMisused(Smell):
                     self.format_smell(
                         line=node.lineno,
                         additional_info=(
-                            f"Misuse of the 'values' attribute detected in variable '{node.value.id}'. "
-                            "Please consider using NumPy or explicit methods instead of `values` for DataFrame conversion. "
-                            "The function 'values' is deprecated and its return type is unclear. "
+                            f"Misuse of the 'values' attribute"
+                            "detected in variable "
+                            f"'{node.value.id}'. Please consider"
+                            "using NumPy or explicit "
+                            "methods instead of `values`"
+                            " for DataFrame conversion. The "
+                            "function 'values' is deprecated and its"
+                            " return type is unclear. "
                             f"Code: {code_snippet}"
                         ),
                     )

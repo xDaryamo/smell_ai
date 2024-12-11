@@ -5,7 +5,8 @@ from detection_rules.smell import Smell
 class UnnecessaryIterationSmell(Smell):
     """
     Detects unnecessary iterations or inefficient operations on Pandas objects,
-    such as using `iterrows()`, `itertuples()`, `apply()`, or `applymap()` in loops.
+    such as using `iterrows()`, `itertuples()`, `apply()`
+    , or `applymap()` in loops.
 
     Example of code smell:
         for index, row in df.iterrows():  # Inefficient
@@ -22,8 +23,10 @@ class UnnecessaryIterationSmell(Smell):
         super().__init__(
             name="unnecessary_iteration",
             description=(
-                "Iterating through Pandas objects or using inefficient operations like `apply` is generally slow. "
-                "Use built-in vectorized methods (e.g., join, groupby) instead of loops."
+                "Iterating through Pandas objects or using "
+                "inefficient operations like `apply` is generally slow. "
+                "Use built-in vectorized methods (e.g., join, groupby) "
+                "instead of loops. "
             ),
         )
 
@@ -38,13 +41,16 @@ class UnnecessaryIterationSmell(Smell):
         if not pandas_alias:
             return smells
 
-        dataframe_variables = set(extracted_data.get("dataframe_variables", []))
+        dataframe_variables = set(
+            extracted_data.get("dataframe_variables", [])
+        )
         inefficient_methods = {"iterrows", "itertuples", "apply", "applymap"}
 
         loop_nodes = [
             node
             for node in ast.walk(ast_node)
-            if isinstance(node, (ast.For, ast.While))  # Include both `for` and `while`
+            if isinstance(node, (ast.For, ast.While))
+            # Include both `for` and `while`
         ]
 
         for loop_node in loop_nodes:
@@ -63,7 +69,8 @@ class UnnecessaryIterationSmell(Smell):
                         )
                     )
 
-            # Check the loop body for inefficient operations (applies to both `For` and `While`)
+            # Check the loop body for inefficient operations
+            # (applies to both `For` and `While`)
             if self._has_inefficient_operations(
                 loop_node, dataframe_variables, inefficient_methods
             ):
@@ -79,15 +86,20 @@ class UnnecessaryIterationSmell(Smell):
 
         return smells
 
-    def _is_dataframe(self, node: ast.AST, dataframe_variables: set[str]) -> bool:
+    def _is_dataframe(
+        self, node: ast.AST, dataframe_variables: set[str]
+    ) -> bool:
         """
-        Checks if the given node represents a DataFrame variable or a subscript (e.g., df["a"]).
+        Checks if the given node represents a DataFrame
+        variable or a subscript (e.g., df["a"]).
         """
         if isinstance(node, ast.Name) and node.id in dataframe_variables:
             return True
 
         # Handle subscript (e.g., df["a"])
-        if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Name):
+        if isinstance(node, ast.Subscript) and isinstance(
+            node.value, ast.Name
+        ):
             if node.value.id in dataframe_variables:
                 return True
 
@@ -100,7 +112,8 @@ class UnnecessaryIterationSmell(Smell):
         inefficient_methods: set[str],
     ) -> bool:
         """
-        Checks if a `for` loop iterates over an inefficient method (e.g., `iterrows`).
+        Checks if a `for` loop iterates over an
+        inefficient method (e.g., `iterrows`).
         """
         if (
             isinstance(node.iter, ast.Call)
@@ -118,14 +131,17 @@ class UnnecessaryIterationSmell(Smell):
         inefficient_methods: set[str],
     ) -> bool:
         """
-        Checks if the loop body contains inefficient operations on DataFrame objects.
+        Checks if the loop body contains inefficient
+         operations on DataFrame objects.
         """
         for body_node in ast.walk(loop_node):
             if isinstance(body_node, ast.Call):
                 if (
                     isinstance(body_node.func, ast.Attribute)
                     and body_node.func.attr in inefficient_methods
-                    and self._is_dataframe(body_node.func.value, dataframe_variables)
+                    and self._is_dataframe(
+                        body_node.func.value, dataframe_variables
+                    )
                 ):
                     return True
         return False

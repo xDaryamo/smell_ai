@@ -26,39 +26,48 @@ class Smell(ABC):
         """
         Abstract method to detect code smells.
 
-        This method must be implemented by subclasses and defines how the smell is detected
+        This method must be implemented by subclasses and defines
+        how the smell is detected
         based on the given AST node and the extracted data.
 
         Parameters:
-        - ast_node (ast.AST): The AST node being analyzed (typically the root node of a file or function).
-        - extracted_data (dict[str, any]): A dictionary containing preprocessed data extracted from the code.
+        - ast_node (ast.AST): The AST node being analyzed
+          (typically the root node of a file or function).
+        - extracted_data (dict[str, any]): A dictionary
+          containing preprocessed data extracted from the code.
 
         Structure of `extracted_data`:
         ------------------------------
         - `libraries` (dict[str, str]): Maps library names to their aliases
             (e.g., {"pandas": "pd", "numpy": "np", "tensorflow": "tf"}).
-        - `variables` (dict[str, ast.Assign]): Maps variable names to their AST assignment nodes.
+        - `variables` (dict[str, ast.Assign]): Maps variable
+            names to their AST assignment nodes.
             Example:
             {
                 "df": <Assign AST node>,
                 "model": <Assign AST node>
             }
-        - `lines` (dict[int, str]): Maps line numbers to the corresponding source code.
+        - `lines` (dict[int, str]): Maps line numbers to
+           the corresponding source code.
             Example:
             {
                 1: "import pandas as pd",
                 2: "df = pd.DataFrame({'a': [1, 2, 3]})"
             }
-        - `dataframe_methods` (list[str]): List of Pandas methods identified in the code
+        - `dataframe_methods` (list[str]): List of Pandas
+           methods identified in the code
             (e.g., ["drop", "rename", "merge"]).
-        - `dataframe_variables` (list[str]): List of variable names identified as Pandas DataFrames.
+        - `dataframe_variables` (list[str]): List of variable
+           names identified as Pandas DataFrames.
             Example:
             [
                 "df", "data"
             ]
-        - `tensor_operations` (list[str]): List of tensor operations found in the code
+        - `tensor_operations` (list[str]): List of
+            tensor operations found in the code
             (e.g., ["dot", "matmul", "transpose"]).
-        - `models` (dict[str, dict]): Maps model names to their libraries and associated methods.
+        - `models` (dict[str, dict]): Maps model names to
+             their libraries and associated methods.
             Example:
             {
                 "model": {
@@ -66,7 +75,8 @@ class Smell(ABC):
                     "methods": ["fit", "evaluate"]
                 }
             }
-        - `model_methods` (dict[str, list[str]]): Maps library names to their model-related methods.
+        - `model_methods` (dict[str, list[str]]): Maps library
+           names to their model-related methods.
             Example:
             {
                 "tensorflow": ["fit", "evaluate", "predict"],
@@ -74,21 +84,26 @@ class Smell(ABC):
             }
 
         Returns:
-        - list[dict[str, any]]: A list of dictionaries, where each dictionary contains
+        - list[dict[str, any]]: A list of dictionaries,
+          where each dictionary contains
           information about a detected smell.
         """
         pass
 
-    def format_smell(self, line: int, additional_info: str = "") -> dict[str, any]:
+    def format_smell(
+        self, line: int, additional_info: str = ""
+    ) -> dict[str, any]:
         """
         Formats a detected smell into a standardized dictionary.
 
         Parameters:
         - line (int): The line number where the smell was detected.
-        - additional_info (str): Additional context or details about the smell (optional).
+        - additional_info (str): Additional context
+          or details about the smell (optional).
 
         Returns:
-        - dict[str, any]: A dictionary containing information about the detected smell.
+        - dict[str, any]: A dictionary containing
+          information about the detected smell.
         Example:
         ----------
         {

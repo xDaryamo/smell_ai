@@ -4,7 +4,8 @@ from detection_rules.smell import Smell
 
 class HyperparametersNotExplicitlySetSmell(Smell):
     """
-    Detects cases where hyperparameters are not explicitly set when defining models.
+    Detects cases where hyperparameters are not
+    explicitly set when defining models.
 
     Example of code smell:
         model = Model()  # No hyperparameters set
@@ -17,7 +18,8 @@ class HyperparametersNotExplicitlySetSmell(Smell):
         super().__init__(
             name="hyperparameters_not_explicitly_set",
             description=(
-                "Hyperparameters should be explicitly set when defining models to ensure clarity and reproducibility."
+                "Hyperparameters should be explicitly set when defining "
+                "models to ensure clarity and reproducibility."
             ),
         )
 
@@ -50,8 +52,10 @@ class HyperparametersNotExplicitlySetSmell(Smell):
                             self.format_smell(
                                 line=node.lineno,
                                 additional_info=(
-                                    f"Hyperparameters not explicitly set for model '{func_name}'. "
-                                    "Consider defining key hyperparameters for clarity."
+                                    f"Hyperparameters not explicitly "
+                                    f"set for model '{func_name}'. "
+                                    "Consider defining key "
+                                    "hyperparameters for clarity."
                                 ),
                             )
                         )
@@ -60,14 +64,16 @@ class HyperparametersNotExplicitlySetSmell(Smell):
 
     def _get_full_function_name(self, func: ast.AST, libraries: dict) -> str:
         """
-        Extracts the full name of a function or method from an AST node, handling library aliases.
+        Extracts the full name of a function or method from
+        an AST node, handling library aliases.
 
         Parameters:
         - func: The AST node representing the function or method.
         - libraries: Dictionary of library aliases from extracted_data.
 
         Returns:
-        - str: The full name of the function (e.g., "sklearn.ensemble.RandomForestClassifier").
+        - str: The full name of the function
+          (e.g., "sklearn.ensemble.RandomForestClassifier").
         """
         names = []
         while isinstance(func, ast.Attribute):

@@ -1,6 +1,5 @@
 import unittest
 import ast
-import pandas as pd
 from io import StringIO
 from code_extractor import dataframe_extractor
 import textwrap
@@ -9,7 +8,8 @@ import textwrap
 class TestDataFrameExtractor(unittest.TestCase):
 
     def setUp(self):
-        """Set up test cases with a sample DataFrame method list and example code."""
+        """Set up test cases with a sample DataFrame method
+        list and example code."""
         self.method_csv = StringIO("method\nhead\nmerge\n")
         self.extractor = dataframe_extractor.DataFrameExtractor()
         self.extractor.load_dataframe_dict(self.method_csv)
@@ -58,7 +58,9 @@ class TestDataFrameExtractor(unittest.TestCase):
         """Helper method to parse code and extract the function node."""
         tree = ast.parse(code)
         return next(
-            node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef)
         )
 
     def test_load_dataframe_dict(self):
@@ -71,7 +73,9 @@ class TestDataFrameExtractor(unittest.TestCase):
         dataframe_vars = self.extractor.extract_dataframe_variables(
             function_node, alias="pd"
         )
-        self.assertListEqual(sorted(dataframe_vars), ["df", "other_df", "result"])
+        self.assertListEqual(
+            sorted(dataframe_vars), ["df", "other_df", "result"]
+        )
 
     def test_track_dataframe_methods(self):
         """Test tracking of DataFrame methods."""
@@ -100,7 +104,9 @@ class TestDataFrameExtractor(unittest.TestCase):
         accesses = self.extractor.track_dataframe_accesses(
             function_node, dataframe_vars
         )
-        self.assertDictEqual(accesses, {"df": ["a"], "other_df": [], "result": []})
+        self.assertDictEqual(
+            accesses, {"df": ["a"], "other_df": [], "result": []}
+        )
 
     def test_empty_function(self):
         """Test with an empty function node."""
@@ -179,7 +185,9 @@ class TestDataFrameExtractor(unittest.TestCase):
         tree = ast.parse(large_code)
 
         for function_node in [
-            node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.FunctionDef)
         ]:
             dataframe_vars = self.extractor.extract_dataframe_variables(
                 function_node, alias="pd"
