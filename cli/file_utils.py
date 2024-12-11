@@ -12,7 +12,8 @@ class FileUtils:
         Merges analysis results from multiple projects into a single CSV.
 
         Parameters:
-        - input_dir (str): Directory containing analysis results (project_name.csv files).
+        - input_dir (str): Directory containing analysis results
+          (project_name.csv files).
         - output_dir (str): Directory where the merged results will be saved.
         """
         dataframes = []
@@ -47,8 +48,13 @@ class FileUtils:
             os.makedirs(output_dir, exist_ok=True)
 
             # Save the merged results to a CSV file
-            combined_df.to_csv(os.path.join(output_dir, "overview.csv"), index=False)
-            print(f"Results successfully merged and saved to {output_dir}/overview.csv")
+            combined_df.to_csv(
+                os.path.join(output_dir, "overview.csv"), index=False
+            )
+            print(
+                "Results successfully merged and saved to "
+                f"{output_dir}/overview.csv"
+            )
         else:
             print("No Smells Detected. No CSV files found or they were empty.")
 

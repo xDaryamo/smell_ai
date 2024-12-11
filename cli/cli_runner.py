@@ -57,7 +57,9 @@ class CodeSmileCLI:
                 )
         else:
             total_smells = self.analyzer.analyze_project(self.args.input)
-            print(f"Analysis completed. Total code smells found: {total_smells}")
+            print(
+                f"Analysis completed. Total code smells found: {total_smells}"
+            )
 
         FileUtils.merge_results(
             self.analyzer.output_path,
@@ -68,7 +70,8 @@ class CodeSmileCLI:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Code Smile: AI-specific code smells detector for Python projects."
+        description="Code Smile: AI-specific code smells detector for Python "
+        "projects."
     )
     parser.add_argument(
         "--input", type=str, help="Path to the input folder", required=True

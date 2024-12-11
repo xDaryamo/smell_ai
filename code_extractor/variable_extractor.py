@@ -3,40 +3,51 @@ import ast
 
 class VariableExtractor:
     """
-    A utility class for extracting variable-related information from Python code
+    A utility class for extracting variable-related
+    information from Python code
     represented as an Abstract Syntax Tree (AST).
     """
 
-    def extract_variable_definitions(self, fun_node: ast.AST) -> dict[str, ast.Assign]:
+    def extract_variable_definitions(
+        self, fun_node: ast.AST
+    ) -> dict[str, ast.Assign]:
         """
-        Extracts variable definitions and their associated AST nodes from a function node.
+        Extracts variable definitions and their associated AST
+        nodes from a function node.
 
         Parameters:
         - fun_node (ast.AST): The AST node representing a Python function.
 
         Returns:
-        - dict[str, ast.Assign]: A dictionary where keys are variable names and values
+        - dict[str, ast.Assign]: A dictionary where keys
+            are variable names and values
           are the corresponding AST nodes for their definitions.
         """
         definitions = {}
         for node in ast.walk(fun_node):
             if isinstance(node, ast.Assign):  # Look for assignment statements
                 for target in node.targets:  # Variables being assigned to
-                    if isinstance(target, ast.Name):  # Ensure it's a simple variable
+                    if isinstance(
+                        target, ast.Name
+                    ):  # Ensure it's a simple variable
                         definitions[target.id] = (
                             node  # Map variable name to its AST node
                         )
         return definitions
 
-    def track_variable_usage(self, fun_node: ast.AST) -> dict[str, list[ast.Name]]:
+    def track_variable_usage(
+        self, fun_node: ast.AST
+    ) -> dict[str, list[ast.Name]]:
         """
-        Tracks the usage of variables in a function node and associates them with AST nodes.
+        Tracks the usage of variables in a function node and
+        associates them with AST nodes.
 
         Parameters:
         - fun_node (ast.AST): The AST node representing a Python function.
 
         Returns:
-        - dict[str, list[ast.Name]]: A dictionary where keys are variable names and values
+        - dict[str, list[ast.Name]]: A dictionary where keys
+          are variable names and values
         are lists of AST nodes representing their usage.
 
         Example:
@@ -58,6 +69,8 @@ class VariableExtractor:
             if isinstance(node, ast.Name):  # Look for variable references
                 var_name = node.id
                 if var_name not in usage:
-                    usage[var_name] = []  # Initialize the list if not already present
+                    usage[var_name] = (
+                        []
+                    )  # Initialize the list if not already present
                 usage[var_name].append(node)  # Store the AST node itself
         return usage
