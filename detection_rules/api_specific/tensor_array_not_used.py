@@ -17,7 +17,7 @@ class TensorArrayNotUsedSmell(Smell):
         )
 
     def detect(
-        self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
+        self, ast_node: ast.AST, extracted_data: dict[str, any]
     ) -> list[dict[str, any]]:
         smells = []
 

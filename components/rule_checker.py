@@ -83,7 +83,7 @@ class RuleChecker:
         """
 
         for smell in self.smells:
-            detected_smells = smell.detect(ast_node, extracted_data, filename)
+            detected_smells = smell.detect(ast_node, extracted_data)
             for detected_smell in detected_smells:
                 df_output.loc[len(df_output)] = {
                     "filename": filename,

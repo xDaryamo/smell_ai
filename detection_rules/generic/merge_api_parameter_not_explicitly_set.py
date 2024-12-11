@@ -23,19 +23,9 @@ class MergeAPIParameterNotExplicitlySetSmell(Smell):
         )
 
     def detect(
-        self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
+        self, ast_node: ast.AST, extracted_data: dict[str, any]
     ) -> list[dict[str, any]]:
-        """
-        Detects calls to Pandas' `merge` API without explicit parameters.
 
-        Parameters:
-        - ast_node: The root AST node being analyzed.
-        - extracted_data: Preprocessed data from the code, including libraries and variables.
-        - filename: The name of the file being analyzed.
-
-        Returns:
-        - list[dict[str, any]]: A list of detected smells.
-        """
         smells = []
 
         # Retrieve library aliases and DataFrame variables

@@ -25,19 +25,9 @@ class InPlaceAPIsMisusedSmell(Smell):
         )
 
     def detect(
-        self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
+        self, ast_node: ast.AST, extracted_data: dict[str, any]
     ) -> list[dict[str, any]]:
-        """
-        Detects the misuse of in-place APIs in Pandas.
 
-        Parameters:
-        - ast_node: The root AST node of the file being analyzed.
-        - extracted_data: A dictionary containing preprocessed information from the code.
-        - filename: The name of the file being analyzed.
-
-        Returns:
-        - list[dict[str, any]]: A list of detected smells, each represented as a dictionary.
-        """
         smells = []
 
         # Check for Pandas library

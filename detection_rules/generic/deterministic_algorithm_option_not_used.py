@@ -23,19 +23,9 @@ class DeterministicAlgorithmOptionSmell(Smell):
         )
 
     def detect(
-        self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
+        self, ast_node: ast.AST, extracted_data: dict[str, any]
     ) -> list[dict[str, any]]:
-        """
-        Detects occurrences of `torch.use_deterministic_algorithms(True)`.
 
-        Parameters:
-        - ast_node: The root AST node being analyzed.
-        - extracted_data: Preprocessed data from the code, including libraries and variables.
-        - filename: The name of the file being analyzed.
-
-        Returns:
-        - list[dict[str, any]]: A list of detected smells.
-        """
         smells = []
 
         # Retrieve libraries and alias mapping

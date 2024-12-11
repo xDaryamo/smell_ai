@@ -21,7 +21,7 @@ class Smell(ABC):
 
     @abstractmethod
     def detect(
-        self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
+        self, ast_node: ast.AST, extracted_data: dict[str, any]
     ) -> list[dict[str, any]]:
         """
         Abstract method to detect code smells.
@@ -72,9 +72,6 @@ class Smell(ABC):
                 "tensorflow": ["fit", "evaluate", "predict"],
                 "sklearn": ["fit", "score"]
             }
-
-        Parameters:
-        - filename (str): The name of the file being analyzed.
 
         Returns:
         - list[dict[str, any]]: A list of dictionaries, where each dictionary contains

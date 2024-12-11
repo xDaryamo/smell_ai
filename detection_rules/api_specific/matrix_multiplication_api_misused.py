@@ -20,19 +20,9 @@ class MatrixMultiplicationAPIMisused(Smell):
         )
 
     def detect(
-        self, ast_node: ast.AST, extracted_data: dict[str, any], filename: str
+        self, ast_node: ast.AST, extracted_data: dict[str, any]
     ) -> list[dict[str, any]]:
-        """
-        Detects occurrences where `dot()` is used for matrix multiplication.
 
-        Parameters:
-        - ast_node (ast.AST): The root AST node of the file being analyzed.
-        - extracted_data (dict[str, any]): A dictionary containing preprocessed information from the code.
-        - filename (str): The name of the file being analyzed.
-
-        Returns:
-        - list[dict[str, any]]: A list of detected smells, each represented as a dictionary.
-        """
         smells = []
 
         # Ensure NumPy library is used
