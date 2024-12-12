@@ -76,19 +76,12 @@ class BroadcastingFeatureNotUsedSmell(Smell):
     def _check_broadcasting(
         self, fun_node: ast.AST, tiled_variables: dict
     ) -> list[dict]:
-        """
-        Checks whether arithmetic operations involve tiled variables.
-
-        :param fun_node: The AST node representing the function.
-        :param tiled_variables: Dictionary mapping tiled variable
-               names to their AST nodes.
-        :return: List of detected broadcasting smells.
-        """
         smells = []
         for node in ast.walk(fun_node):
             if isinstance(
                 node, ast.BinOp
             ):  # Arithmetic operation (e.g., +, -, *, /)
+                # Check for tiled variables
                 if (
                     isinstance(node.left, ast.Name)
                     and node.left.id in tiled_variables
@@ -96,7 +89,6 @@ class BroadcastingFeatureNotUsedSmell(Smell):
                     isinstance(node.right, ast.Name)
                     and node.right.id in tiled_variables
                 ):
-
                     variable_name = (
                         node.left.id
                         if isinstance(node.left, ast.Name)
@@ -112,5 +104,31 @@ class BroadcastingFeatureNotUsedSmell(Smell):
                             ),
                         )
                     )
-
+                # Check for inline tf.tile calls
+                elif (
+                    isinstance(node.left, ast.Call)
+                    and self._is_tile_call(node.left)
+                ) or (
+                    isinstance(node.right, ast.Call)
+                    and self._is_tile_call(node.right)
+                ):
+                    smells.append(
+                        self.format_smell(
+                            line=node.lineno,
+                            additional_info=(
+                                "Inline use of `tf.tile` detected. "
+                                "Consider using broadcasting instead."
+                            ),
+                        )
+                    )
         return smells
+
+    def _is_tile_call(self, node: ast.Call) -> bool:
+        """
+        Check if the given AST node represents a call to `tf.tile`.
+        """
+        return (
+            isinstance(node.func, ast.Attribute)
+            and node.func.attr == "tile"
+            and getattr(node.func.value, "id", None) == "tf"
+        )
