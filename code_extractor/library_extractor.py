@@ -83,7 +83,7 @@ class LibraryExtractor:
         """
         aliases = {}
         for lib in libraries:
-            name = lib["name"]
+            name = lib["name"].split(".")[0]
             alias = (
                 lib["alias"] if lib["alias"] else name
             )  # Use name if alias is None

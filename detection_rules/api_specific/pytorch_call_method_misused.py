@@ -23,33 +23,48 @@ class PyTorchCallMethodMisusedSmell(Smell):
     def detect(
         self, ast_node: ast.AST, extracted_data: dict[str, any]
     ) -> list[dict[str, any]]:
-
         smells = []
 
-        # Ensure PyTorch library is used
-        torch_alias = extracted_data["libraries"].get("torch")
-        if not torch_alias:
+        # Find all aliases associated with torch or its submodules
+        torch_aliases = extracted_data["libraries"].get("torch")
+
+        if not torch_aliases:
             return smells
 
         for node in ast.walk(ast_node):
+
             if (
                 isinstance(node, ast.Call)
                 and isinstance(node.func, ast.Attribute)
                 and node.func.attr == "forward"
             ):
-                # Detect direct calls to `forward()` on `self` or other objects
-                if (
-                    isinstance(node.func.value, ast.Name)
-                    and node.func.value.id in extracted_data["variables"]
-                ):
+                # Check if `forward` is called on an object tied to `self`
+                base_name = self._get_base_name(node.func.value)
+                if base_name == "self":
                     smells.append(
                         self.format_smell(
                             line=node.lineno,
                             additional_info=(
-                                f"Direct call to `"
-                                f"{node.func.value.id}.forward()` detected. "
-                                f"Use the model instance directly instead."
+                                f"Direct call to `{ast.dump(node.func)}`"
+                                "detected. Use the model instance "
+                                "directly instead."
                             ),
                         )
                     )
         return smells
+
+    def _get_base_name(self, node):
+        """
+        Recursively finds the base name for an `ast.Attribute` node.
+
+        Parameters:
+        - node (ast.AST): The node to analyze.
+
+        Returns:
+        - str: The base name if found, otherwise None.
+        """
+        if isinstance(node, ast.Name):
+            return node.id
+        elif isinstance(node, ast.Attribute):
+            return self._get_base_name(node.value)
+        return None
