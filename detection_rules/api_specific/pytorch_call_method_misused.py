@@ -16,8 +16,10 @@ class PyTorchCallMethodMisusedSmell(Smell):
     def __init__(self):
         super().__init__(
             name="pytorch_call_method_misused",
-            description="Direct calls to `forward` in PyTorch"
-            "models are discouraged. Use the model instance directly.",
+            description=(
+                "Direct calls to `forward` in PyTorch models are discouraged. "
+                "Use the model instance directly instead."
+            ),
         )
 
     def detect(
@@ -25,27 +27,39 @@ class PyTorchCallMethodMisusedSmell(Smell):
     ) -> list[dict[str, any]]:
         smells = []
 
-        # Find all aliases associated with torch or its submodules
+        # Find all aliases associated with PyTorch
         torch_aliases = extracted_data["libraries"].get("torch")
-
         if not torch_aliases:
             return smells
 
-        for node in ast.walk(ast_node):
+        variable_names = set(extracted_data["variables"].keys())
 
+        for node in ast.walk(ast_node):
             if (
                 isinstance(node, ast.Call)
                 and isinstance(node.func, ast.Attribute)
                 and node.func.attr == "forward"
             ):
-                # Check if `forward` is called on an object tied to `self`
                 base_name = self._get_base_name(node.func.value)
+
+                # Case 1: Call on `self`
                 if base_name == "self":
                     smells.append(
                         self.format_smell(
                             line=node.lineno,
                             additional_info=(
-                                f"Direct call to `{ast.dump(node.func)}`"
+                                "Direct call to `self.forward()` detected. "
+                                "Use the model instance directly instead."
+                            ),
+                        )
+                    )
+                # Case 2: Call on a variable associated with PyTorch models
+                elif base_name in variable_names:
+                    smells.append(
+                        self.format_smell(
+                            line=node.lineno,
+                            additional_info=(
+                                f"Direct call to `{base_name}.forward()` "
                                 "detected. Use the model instance "
                                 "directly instead."
                             ),
