@@ -41,6 +41,10 @@ class CodeSmileCLI:
 
         # Run analysis
         if self.args.multiple:
+
+            if self.args.parallel and (self.args.max_workers <= 0):
+                raise ValueError("max_workers must be greater than 0.")
+
             if self.args.parallel:
                 self.analyzer.analyze_projects_parallel(
                     self.args.input, self.args.max_workers
@@ -51,9 +55,7 @@ class CodeSmileCLI:
                 )
         else:
             total_smells = self.analyzer.analyze_project(self.args.input)
-            print(
-                f"Analysis completed. Total code smells found: {total_smells}"
-            )
+            print(f"Analysis completed. Total code smells found: {total_smells}")
 
         FileUtils.merge_results(
             self.analyzer.output_path,

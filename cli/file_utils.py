@@ -48,12 +48,9 @@ class FileUtils:
             os.makedirs(output_dir, exist_ok=True)
 
             # Save the merged results to a CSV file
-            combined_df.to_csv(
-                os.path.join(output_dir, "overview.csv"), index=False
-            )
+            combined_df.to_csv(os.path.join(output_dir, "overview.csv"), index=False)
             print(
-                "Results successfully merged"
-                f"and saved to {output_dir}/overview.csv"
+                "Results successfully merged" f"and saved to {output_dir}/overview.csv"
             )
         else:
             print("No Smells Detected. No CSV files found or they were empty.")
@@ -84,8 +81,12 @@ class FileUtils:
                 except Exception as e:
                     print(f"Failed to delete {file_path}. Reason: {e}")
         else:
-            # Create the 'output' folder if it doesn't exist
-            os.makedirs(output_path)
+            try:
+                # Create the 'output' folder if it doesn't exist
+                os.makedirs(output_path)
+            except OSError as e:
+                print(f"Error: Could not create output folder: {output_path}")
+                raise SystemExit from e
 
         return output_path
 
