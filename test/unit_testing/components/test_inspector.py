@@ -33,7 +33,9 @@ class TestInspector(unittest.TestCase):
         mock_library_extractor = MagicMock()
 
         # Setup mock return values for the extractors
-        mock_library_extractor.get_library_aliases.return_value = {"pandas": "pd"}
+        mock_library_extractor.get_library_aliases.return_value = {
+            "pandas": "pd"
+        }
         mock_variable_extractor.extract_variable_definitions.return_value = [
             "var1",
             "var2",
@@ -46,13 +48,29 @@ class TestInspector(unittest.TestCase):
         mock_model_extractor.tensor_operations_dict = {
             "operation": ["tensor_op1", "tensor_op2"]
         }
-        mock_model_extractor.load_model_methods.return_value = {"method1": "details"}
+        mock_model_extractor.load_model_methods.return_value = {
+            "method1": "details"
+        }
 
         # Mock the rule_check to return a real DataFrame
         mock_rule_checker.rule_check.return_value = pd.DataFrame(
             data=[
-                ["mock_file.py", "my_function", "smell1", 10, "description1", "info1"],
-                ["mock_file.py", "my_function", "smell2", 15, "description2", "info2"],
+                [
+                    "mock_file.py",
+                    "my_function",
+                    "smell1",
+                    10,
+                    "description1",
+                    "info1",
+                ],
+                [
+                    "mock_file.py",
+                    "my_function",
+                    "smell2",
+                    15,
+                    "description2",
+                    "info2",
+                ],
             ],
             columns=[
                 "filename",
@@ -80,13 +98,19 @@ def my_function():
                 ast.FunctionDef(
                     name="my_function",
                     args=ast.arguments(
-                        args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None
+                        args=[],
+                        vararg=None,
+                        kwonlyargs=[],
+                        kw_defaults=[],
+                        kwarg=None,
                     ),
                     body=[
                         ast.Assign(
                             targets=[ast.Name(id="df", ctx=ast.Store())],
                             value=ast.Call(
-                                func=ast.Name(id="pd.DataFrame", ctx=ast.Load()),
+                                func=ast.Name(
+                                    id="pd.DataFrame", ctx=ast.Load()
+                                ),
                                 args=[],
                                 keywords=[],
                             ),
@@ -131,5 +155,6 @@ def my_function():
         ]
         self.assertListEqual(list(result.columns), expected_columns)
 
-        # Ensure the DataFrame is not empty (for example, checking if rule_check was called)
+        # Ensure the DataFrame is not empty
+        # (for example, checking if rule_check was called)
         self.assertGreater(len(result), 0)
