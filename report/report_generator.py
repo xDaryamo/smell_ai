@@ -53,31 +53,24 @@ class ReportGenerator:
         print("General smell report saved to 'general_overview.csv'.")
 
     def project_report(self):
-        """Generates a project-specific report treating all files as part of
-        a single project if applicable."""
+        """Generates a project-specific report treating files as
+        part of separate projects based on their paths."""
         df = self._load_data()
 
-        common_root = os.path.commonpath(df["filename"].tolist())
+        # Normalize paths and extract the project name
+        project_names = []
+        for filepath in df["filename"]:
+            normalized_path = os.path.normpath(
+                filepath
+            )  # Normalize path for cross-platform compatibility
+            project_name = os.path.basename(os.path.dirname(normalized_path))
+            if not project_name:  # Handle root-level files
+                project_name = "root"
+            project_names.append(project_name)
 
-        # Check if all files belong to a single project (same root directory)
-        is_single_project = all(
-            filepath.startswith(common_root) for filepath in df["filename"]
-        )
+        df["project_name"] = project_names
 
-        if is_single_project:
-            project_name = os.path.basename(
-                common_root
-            )  # Use the root folder name as the project name
-            df["project_name"] = project_name
-        else:
-
-            project_names = []
-            for filepath in df["filename"]:
-                relative_path = os.path.relpath(filepath, common_root)
-                project_name = relative_path.split(os.sep)[0]
-                project_names.append(project_name)
-            df["project_name"] = project_names
-
+        # Generate the report
         report = (
             df.groupby("project_name").size().reset_index(name="total_smells")
         )
@@ -165,7 +158,6 @@ class ReportGenerator:
         plt.tight_layout()
         plt.savefig(os.path.join(self.output_path, "smell_report_chart.png"))
         print("Bar chart saved to 'smell_report_chart.png'.")
-        plt.show()
 
     def cleanup_old_reports(self):
         """Cleans up old reports in the output directory."""
