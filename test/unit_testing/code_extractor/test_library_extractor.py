@@ -46,7 +46,7 @@ import numpy
             {"name": "numpy.array", "alias": None},
         ]
         aliases = self.extractor.get_library_aliases(libraries)
-        expected_aliases = {"pandas": "pd", "numpy": "numpy"}
+        expected_aliases = {"pandas": "pd", "numpy.array": "numpy.array"}
         self.assertDictEqual(aliases, expected_aliases)
 
     def test_get_library_of_node_method_call(self):

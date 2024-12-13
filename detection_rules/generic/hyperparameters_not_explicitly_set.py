@@ -33,6 +33,9 @@ class HyperparametersNotExplicitlySetSmell(Smell):
         model_methods = extracted_data.get("model_methods", [])
         libraries = extracted_data.get("libraries", {})
 
+        if not libraries:
+            return smells
+
         # Normalize model method names (remove '()' if present)
         normalized_model_methods = [
             method.replace("()", "") for method in model_methods

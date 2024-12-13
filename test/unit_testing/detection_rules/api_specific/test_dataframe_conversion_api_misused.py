@@ -35,39 +35,28 @@ class TestDataFrameConversionAPIMisused(unittest.TestCase):
 
     def test_detect_with_smell(self):
         """
-        Test the detect method when gradients are \
-        not cleared before backward propagation.
+        Test the detect method when a single misuse of
+        the `values` attribute is present.
         """
         code = (
-            "import torch\n"
-            "def train():\n"
-            "    optimizer = torch.optim.SGD([], lr=0.01)\n"
-            "    for epoch in range(10):\n"
-            "        loss = torch.tensor(0.0, requires_grad=True)\n"
-            "        loss.backward()\n"
+            "import pandas as pd\n"
+            "def convert_dataframe():\n"
+            "    df = pd.DataFrame({'a': [1, 2, 3]})\n"
+            "    value = df.values\n"
         )
         tree = ast.parse(code)
-
-        for node in ast.walk(tree):
-            print(ast.dump(node))
-
         extracted_data = {
-            "libraries": {"torch": "torch"},
-            "variables": ["optimizer"],
-            "lines": {
-                4: "for epoch in range(10):",
-                5: "loss = torch.tensor(0.0, requires_grad=True)",
-                6: "loss.backward()",
-            },
+            "libraries": {"pandas": "pd"},
+            "dataframe_variables": ["df"],
         }
 
-        result = self.smell_detector.detect(tree, extracted_data)
+        result = self.detector.detect(tree, extracted_data)
         self.assertEqual(len(result), 1)  # One smell should be detected
+        self.assertEqual(result[0]["line"], 4)  # Line of the smell
         self.assertIn(
-            "`zero_grad()` not called before `backward()`",
+            "Misuse of the 'values' attributedetected in variable",
             result[0]["additional_info"],
         )
-        self.assertEqual(result[0]["line"], 6)  # Line where the smell occurs
 
     def test_detect_without_pandas_library(self):
         """
@@ -109,6 +98,14 @@ class TestDataFrameConversionAPIMisused(unittest.TestCase):
         self.assertEqual(len(result), 2)  # Two smells should be detected
         self.assertEqual(result[0]["line"], 4)  # Line of the first smell
         self.assertEqual(result[1]["line"], 5)  # Line of the second smell
+        self.assertIn(
+            "Misuse of the 'values' attributedetected in variable",
+            result[0]["additional_info"],
+        )
+        self.assertIn(
+            "Misuse of the 'values' attributedetected in variable",
+            result[1]["additional_info"],
+        )
 
 
 if __name__ == "__main__":

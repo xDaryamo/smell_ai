@@ -50,7 +50,6 @@ class UnnecessaryIterationSmell(Smell):
             node
             for node in ast.walk(ast_node)
             if isinstance(node, (ast.For, ast.While))
-            # Include both `for` and `while`
         ]
 
         for loop_node in loop_nodes:
@@ -68,15 +67,18 @@ class UnnecessaryIterationSmell(Smell):
                             ),
                         )
                     )
+                    # Skip further checks for this
+                    # loop since it's already detected
+                    continue
 
             # Check the loop body for inefficient operations
-            # (applies to both `For` and `While`)
-            if self._has_inefficient_operations(
+            inefficient_operation = self._has_inefficient_operations(
                 loop_node, dataframe_variables, inefficient_methods
-            ):
+            )
+            if inefficient_operation:
                 smells.append(
                     self.format_smell(
-                        line=loop_node.lineno,
+                        line=inefficient_operation.lineno,
                         additional_info=(
                             "Inefficient operation detected inside the loop. "
                             "Consider using vectorized operations instead."
@@ -129,10 +131,19 @@ class UnnecessaryIterationSmell(Smell):
         loop_node: ast.AST,
         dataframe_variables: set[str],
         inefficient_methods: set[str],
-    ) -> bool:
+    ) -> ast.Call | None:
         """
-        Checks if the loop body contains inefficient
-         operations on DataFrame objects.
+        Checks if the loop body contains
+        inefficient operations on DataFrame objects
+        and returns the node of the first inefficient operation found.
+
+        Parameters:
+        - loop_node: The AST node representing the loop (For or While).
+        - dataframe_variables: Set of known DataFrame variable names.
+        - inefficient_methods: Set of methods considered inefficient.
+
+        Returns:
+        - ast.Call: The node of the first inefficient operation found, or None.
         """
         for body_node in ast.walk(loop_node):
             if isinstance(body_node, ast.Call):
@@ -143,5 +154,5 @@ class UnnecessaryIterationSmell(Smell):
                         body_node.func.value, dataframe_variables
                     )
                 ):
-                    return True
-        return False
+                    return body_node  # Return the inefficient operation node
+        return None
