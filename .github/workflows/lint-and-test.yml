@@ -3,6 +3,7 @@ name: Lint and Test with Coverage
 on:
   push:
     branches:
+      - main
       - feature/oop-refactor
   pull_request:
 
