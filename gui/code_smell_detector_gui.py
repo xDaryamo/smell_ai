@@ -1,5 +1,6 @@
 import os
 import sys
+import threading
 import tkinter as tk
 from tkinter import filedialog
 from components.project_analyzer import ProjectAnalyzer
@@ -28,9 +29,7 @@ class CodeSmellDetectorGUI:
         self.input_label = tk.Label(self.master, text="Input Path:")
         self.input_label.grid(row=0, column=0, sticky="w")
 
-        self.input_path = tk.Label(
-            self.master, text="No path selected", anchor="w"
-        )
+        self.input_path = tk.Label(self.master, text="No path selected", anchor="w")
         self.input_path.grid(row=0, column=1, sticky="w")
 
         self.input_button = tk.Button(
@@ -45,9 +44,7 @@ class CodeSmellDetectorGUI:
         self.output_label = tk.Label(self.master, text="Output Path:")
         self.output_label.grid(row=1, column=0, sticky="w")
 
-        self.output_path = tk.Label(
-            self.master, text="No path selected", anchor="w"
-        )
+        self.output_path = tk.Label(self.master, text="No path selected", anchor="w")
         self.output_path.grid(row=1, column=1, sticky="w")
 
         self.output_button = tk.Button(
@@ -59,9 +56,7 @@ class CodeSmellDetectorGUI:
         self.output_button.grid(row=1, column=2, padx=5)
 
         # Walker Selection
-        self.walker_label = tk.Label(
-            self.master, text="Select number of walkers:"
-        )
+        self.walker_label = tk.Label(self.master, text="Select number of walkers:")
         self.walker_label.grid(row=2, column=0, sticky="w")
 
         self.walker_picker = tk.Spinbox(self.master, from_=1, to=10, width=5)
@@ -81,13 +76,16 @@ class CodeSmellDetectorGUI:
         )
         self.resume_check.grid(row=3, column=1, sticky="w")
 
+        # Multiple Checkbox
+        self.multiple_var = tk.BooleanVar()
+        self.multiple_check = tk.Checkbutton(
+            self.master, text="Multiple", variable=self.multiple_var
+        )
+        self.multiple_check.grid(row=3, column=2, sticky="w")
+
         # Output Textbox
-        self.output_textbox = tk.Text(
-            self.master, height=8, width=50, state="disabled"
-        )
-        self.output_textbox.grid(
-            row=4, column=0, columnspan=3, pady=10, sticky="nsew"
-        )
+        self.output_textbox = tk.Text(self.master, height=8, width=50, state="disabled")
+        self.output_textbox.grid(row=4, column=0, columnspan=3, pady=10, sticky="nsew")
         self.output_textbox.bind("<Key>", self.disable_key_press)
 
         # Run and Exit Buttons
@@ -136,42 +134,73 @@ class CodeSmellDetectorGUI:
 
     def run_program(self):
         """
-        Executes the analysis program with selected parameters.
+        Executes the analysis program with selected parameters in a separate thread.
         """
+        # Validate paths
         input_path = self.input_path.cget("text")
         output_path = self.output_path.cget("text")
-        num_walkers = int(self.walker_picker.get())
-        is_parallel = self.parallel_var.get()
-        is_resume = self.resume_var.get()
 
-        # Validate paths
-        if (
-            input_path == "No path selected"
-            or output_path == "No path selected"
-        ):
+        if input_path == "No path selected" or output_path == "No path selected":
             print("Error: Please select valid input and output paths.")
             return
 
-        print(f"Input Path: {input_path}")
-        print(f"Output Path: {output_path}")
-        print(f"Number of Walkers: {num_walkers}")
-        print(f"Parallel Execution: {is_parallel}")
-        print(f"Resume Execution: {is_resume}")
+        # Gather parameters
+        num_walkers = int(self.walker_picker.get())
+        is_parallel = self.parallel_var.get()
+        is_resume = self.resume_var.get()
+        is_multiple = self.multiple_var.get()
 
-        self.project_analyzer = ProjectAnalyzer(output_path)
+        # Start analysis in a new thread
+        analysis_thread = threading.Thread(
+            target=self.run_analysis,
+            args=(
+                input_path,
+                output_path,
+                num_walkers,
+                is_parallel,
+                is_resume,
+                is_multiple,
+            ),
+            daemon=True,
+        )
+        analysis_thread.start()
 
+    def run_analysis(
+        self, input_path, output_path, num_walkers, is_parallel, is_resume, is_multiple
+    ):
+        """
+        Performs the actual analysis. This runs on a separate thread.
+        """
         try:
-            # Check if the input is a single project or multiple projects
-            if os.path.isdir(input_path):
-                print("Analyzing project(s)...")
-                self.project_analyzer.projects_analysis(
-                    base_path=input_path,
-                    max_workers=num_walkers,
-                    resume=is_resume,
-                    parallel=is_parallel,
-                )
+            print(f"Input Path: {input_path}")
+            print(f"Output Path: {output_path}")
+            print(f"Number of Walkers: {num_walkers}")
+            print(f"Parallel Execution: {is_parallel}")
+            print(f"Resume Execution: {is_resume}")
+            print(f"Analyze multiple projects: {is_multiple}")
 
+            self.project_analyzer = ProjectAnalyzer(output_path)
+
+            if not is_resume:
+                self.project_analyzer.clean_output_directory()
+
+            if is_multiple:
+                print("Analyzing project(s)...")
+
+                if is_parallel:
+                    self.project_analyzer.analyze_projects_parallel(
+                        base_path=input_path,
+                        max_workers=num_walkers,
+                    )
+                else:
+                    self.project_analyzer.analyze_projects_sequential(
+                        base_path=input_path, resume=is_resume
+                    )
+
+                self.project_analyzer.merge_all_results()
             else:
-                print("Error: Input path must be a directory.")
+                total_smells = self.project_analyzer.analyze_project(input_path)
+                print(f"Analysis completed. Total code smells found: {total_smells}")
+
         except Exception as e:
             print(f"An error occurred during analysis: {e}")
