@@ -1,16 +1,16 @@
 import argparse
-import os
 import sys
-from cli.file_utils import FileUtils
-from cli.project_analyzer import ProjectAnalyzer
+from components.project_analyzer import ProjectAnalyzer
 
 
 class CodeSmileCLI:
-    """Manages the overall analysis workflow."""
+    """
+    Manages the overall analysis workflow.
+    """
 
     def __init__(self, args):
         """
-        Initializes the AnalysisManager with CLI arguments.
+        Initializes the CLI with parsed arguments.
 
         Parameters:
         - args: Parsed CLI arguments.
@@ -35,9 +35,7 @@ class CodeSmileCLI:
 
         # Clean or create the output folder
         if not self.args.resume:
-            self.analyzer.output_path = FileUtils.clean_directory(
-                self.args.output, "output"
-            )
+            self.analyzer.clean_output_directory()
 
         # Run analysis
         if self.args.multiple:
@@ -55,17 +53,17 @@ class CodeSmileCLI:
                 f"Analysis completed. Total code smells found: {total_smells}"
             )
 
-        FileUtils.merge_results(
-            self.analyzer.output_path,
-            os.path.join(self.analyzer.output_path, "overview"),
-        )
+        # Merge results for multiple projects
+        if self.args.multiple:
+            self.analyzer.merge_all_results()
+
         print("Analysis results saved successfully.")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Code Smile: AI-specific code smells detector for Python "
-        "projects."
+        description="Code Smile: AI-specific "
+        "code smells detector for Python projects."
     )
     parser.add_argument(
         "--input", type=str, help="Path to the input folder", required=True
