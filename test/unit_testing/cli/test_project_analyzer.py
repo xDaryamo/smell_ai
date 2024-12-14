@@ -1,3 +1,5 @@
+import os
+import shutil
 import unittest
 from unittest.mock import MagicMock, patch
 import pandas as pd
@@ -5,12 +7,22 @@ from components.project_analyzer import ProjectAnalyzer
 
 
 class TestProjectAnalyzer(unittest.TestCase):
+
+    def tearDown(self):
+        # Check if output path is defined and exists
+
+        if os.path.exists("test/unit_testing/cli/mock_output_path"):
+            try:
+                shutil.rmtree("test/unit_testing/cli/mock_output_path")
+            except Exception as e:
+                print(
+                    f"Failed to delete test/unit_testing/cli/mock_output. Reason: {e}"
+                )
+
     @patch("os.listdir")
     @patch("cli.file_utils.FileUtils.get_python_files")
     @patch("components.inspector.Inspector.inspect")
-    def test_analyze_project(
-        self, mock_inspect, mock_get_python_files, mock_listdir
-    ):
+    def test_analyze_project(self, mock_inspect, mock_get_python_files, mock_listdir):
         # Setup mocks
         mock_get_python_files.return_value = ["file1.py", "file2.py"]
         mock_inspect.side_effect = [
@@ -36,7 +48,9 @@ class TestProjectAnalyzer(unittest.TestCase):
             ),
         ]
 
-        project_analyzer = ProjectAnalyzer(output_path="mock_output_path")
+        project_analyzer = ProjectAnalyzer(
+            output_path="test/unit_testing/cli/mock_output_path"
+        )
         total_smells = project_analyzer.analyze_project("mock_project_path")
 
         # Assertions
@@ -77,21 +91,17 @@ class TestProjectAnalyzer(unittest.TestCase):
             ),
         ]
 
-        project_analyzer = ProjectAnalyzer(output_path="mock_output_path")
+        project_analyzer = ProjectAnalyzer(
+            output_path="test/unit_testing/cli/mock_output_path"
+        )
 
         with patch("builtins.print") as mock_print:
-            project_analyzer.analyze_projects_sequential(
-                "mock_base_path", resume=False
-            )
+            project_analyzer.analyze_projects_sequential("mock_base_path", resume=False)
 
         # Assertions
         mock_listdir.assert_called_once_with("mock_base_path")
-        mock_print.assert_any_call(
-            "Analyzing project 'project1' sequentially..."
-        )
-        mock_print.assert_any_call(
-            "Analyzing project 'project2' sequentially..."
-        )
+        mock_print.assert_any_call("Analyzing project 'project1' sequentially...")
+        mock_print.assert_any_call("Analyzing project 'project2' sequentially...")
         mock_print.assert_any_call(unittest.mock.ANY)
 
     @patch("os.listdir")
@@ -117,7 +127,9 @@ class TestProjectAnalyzer(unittest.TestCase):
         mock_future = MagicMock()  # Mock the returned future object
         mock_submit.return_value = mock_future
 
-        project_analyzer = ProjectAnalyzer(output_path="mock_output_path")
+        project_analyzer = ProjectAnalyzer(
+            output_path="test/unit_testing/cli/mock_output_path"
+        )
 
         with patch("builtins.print") as mock_print:
             project_analyzer.analyze_projects_parallel(
@@ -176,7 +188,9 @@ class TestProjectAnalyzer(unittest.TestCase):
             ),
         ]
 
-        project_analyzer = ProjectAnalyzer(output_path="mock_output_path")
+        project_analyzer = ProjectAnalyzer(
+            output_path="test/unit_testing/cli/mock_output_path"
+        )
 
         with patch("builtins.print") as mock_print:
             project_analyzer.projects_analysis(
@@ -207,7 +221,9 @@ class TestProjectAnalyzer(unittest.TestCase):
             }
         )
 
-        project_analyzer = ProjectAnalyzer(output_path="mock_output_path")
+        project_analyzer = ProjectAnalyzer(
+            output_path="test/unit_testing/cli/mock_output_path"
+        )
 
         with patch("builtins.print") as mock_print:
             project_analyzer.projects_analysis(
