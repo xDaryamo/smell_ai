@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 import pandas as pd
-from cli.project_analyzer import ProjectAnalyzer
+from components.project_analyzer import ProjectAnalyzer
 
 
 class TestProjectAnalyzer(unittest.TestCase):
