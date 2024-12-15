@@ -22,6 +22,9 @@ class ProjectAnalyzer:
         """
         self.base_output_path = output_path
         self.output_path = os.path.join(output_path, "output")
+
+        FileUtils.clean_directory(self.base_output_path, "output")
+
         self.inspector = Inspector(self.output_path)
 
     def clean_output_directory(self):
@@ -33,14 +36,12 @@ class ProjectAnalyzer:
     def _save_results(self, df: pd.DataFrame, filename: str):
         """
         Saves the DataFrame to a CSV file in the output root folder.
-
-        Parameters:
-        - df (pd.DataFrame): DataFrame containing analysis results.
-        - filename (str): Name of the file to save.
         """
         if df.empty:
             print(f"No results to save for {filename}")
             return
+
+        os.makedirs(self.output_path, exist_ok=True)
 
         file_path = os.path.join(self.output_path, filename)
         df.to_csv(file_path, index=False)

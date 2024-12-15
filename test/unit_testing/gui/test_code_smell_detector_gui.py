@@ -26,7 +26,9 @@ def test_choose_input_path(gui, mocker):
     Test the `choose_input_path` method to ensure the input path label is updated.
     """
 
-    mocker.patch("tkinter.filedialog.askdirectory", return_value="/mock/input/path")
+    mocker.patch(
+        "tkinter.filedialog.askdirectory", return_value="/mock/input/path"
+    )
 
     gui.choose_input_path()
 
@@ -37,7 +39,9 @@ def test_choose_output_path(gui, mocker):
     """
     Test the `choose_output_path` method to ensure the output path label is updated.
     """
-    mocker.patch("tkinter.filedialog.askdirectory", return_value="/mock/output/path")
+    mocker.patch(
+        "tkinter.filedialog.askdirectory", return_value="/mock/output/path"
+    )
 
     gui.choose_output_path()
 

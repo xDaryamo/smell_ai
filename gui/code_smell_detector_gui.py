@@ -1,4 +1,3 @@
-import os
 import sys
 import threading
 import tkinter as tk
@@ -29,7 +28,9 @@ class CodeSmellDetectorGUI:
         self.input_label = tk.Label(self.master, text="Input Path:")
         self.input_label.grid(row=0, column=0, sticky="w")
 
-        self.input_path = tk.Label(self.master, text="No path selected", anchor="w")
+        self.input_path = tk.Label(
+            self.master, text="No path selected", anchor="w"
+        )
         self.input_path.grid(row=0, column=1, sticky="w")
 
         self.input_button = tk.Button(
@@ -44,7 +45,9 @@ class CodeSmellDetectorGUI:
         self.output_label = tk.Label(self.master, text="Output Path:")
         self.output_label.grid(row=1, column=0, sticky="w")
 
-        self.output_path = tk.Label(self.master, text="No path selected", anchor="w")
+        self.output_path = tk.Label(
+            self.master, text="No path selected", anchor="w"
+        )
         self.output_path.grid(row=1, column=1, sticky="w")
 
         self.output_button = tk.Button(
@@ -56,7 +59,9 @@ class CodeSmellDetectorGUI:
         self.output_button.grid(row=1, column=2, padx=5)
 
         # Walker Selection
-        self.walker_label = tk.Label(self.master, text="Select number of walkers:")
+        self.walker_label = tk.Label(
+            self.master, text="Select number of walkers:"
+        )
         self.walker_label.grid(row=2, column=0, sticky="w")
 
         self.walker_picker = tk.Spinbox(self.master, from_=1, to=10, width=5)
@@ -84,8 +89,12 @@ class CodeSmellDetectorGUI:
         self.multiple_check.grid(row=3, column=2, sticky="w")
 
         # Output Textbox
-        self.output_textbox = tk.Text(self.master, height=8, width=50, state="disabled")
-        self.output_textbox.grid(row=4, column=0, columnspan=3, pady=10, sticky="nsew")
+        self.output_textbox = tk.Text(
+            self.master, height=8, width=50, state="disabled"
+        )
+        self.output_textbox.grid(
+            row=4, column=0, columnspan=3, pady=10, sticky="nsew"
+        )
         self.output_textbox.bind("<Key>", self.disable_key_press)
 
         # Run and Exit Buttons
@@ -134,13 +143,17 @@ class CodeSmellDetectorGUI:
 
     def run_program(self):
         """
-        Executes the analysis program with selected parameters in a separate thread.
+        Executes the analysis program with
+        selected parameters in a separate thread.
         """
         # Validate paths
         input_path = self.input_path.cget("text")
         output_path = self.output_path.cget("text")
 
-        if input_path == "No path selected" or output_path == "No path selected":
+        if (
+            input_path == "No path selected"
+            or output_path == "No path selected"
+        ):
             print("Error: Please select valid input and output paths.")
             return
 
@@ -166,7 +179,13 @@ class CodeSmellDetectorGUI:
         analysis_thread.start()
 
     def run_analysis(
-        self, input_path, output_path, num_walkers, is_parallel, is_resume, is_multiple
+        self,
+        input_path,
+        output_path,
+        num_walkers,
+        is_parallel,
+        is_resume,
+        is_multiple,
     ):
         """
         Performs the actual analysis. This runs on a separate thread.
@@ -199,8 +218,13 @@ class CodeSmellDetectorGUI:
 
                 self.project_analyzer.merge_all_results()
             else:
-                total_smells = self.project_analyzer.analyze_project(input_path)
-                print(f"Analysis completed. Total code smells found: {total_smells}")
+                total_smells = self.project_analyzer.analyze_project(
+                    input_path
+                )
+                print(
+                    f"Analysis completed. "
+                    f"Total code smells found: {total_smells}"
+                )
 
         except Exception as e:
             print(f"An error occurred during analysis: {e}")
