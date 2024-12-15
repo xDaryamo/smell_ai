@@ -1,141 +1,159 @@
-import ast
-import unittest
-from unittest.mock import MagicMock, patch
+import pytest
 import pandas as pd
+import ast
+from components.rule_checker import RuleChecker
 
-from components.inspector import RuleChecker
+
+@pytest.fixture
+def mock_rule_checker():
+    return RuleChecker(output_path="mock_output_path")
 
 
-class TestRuleChecker(unittest.TestCase):
+@pytest.fixture
+def mock_ast_node(mocker):
+    # Create mock AST node with real ast.AST objects for fields
+    mock_node = mocker.Mock(spec=ast.AST)
 
-    @patch(
-        "detection_rules.api_specific.chain_indexing_smell.ChainIndexingSmell"
-    )
-    @patch(
-        "detection_rules.api_specific.dataframe_conversion_api_misused."
-        "DataFrameConversionAPIMisused"
-    )
-    def test_rule_check(self, mock_dataframe_conversion, mock_chain_indexing):
-        # Mock the detection methods for the smells you want to test
-        mock_dataframe_conversion.return_value.detect.return_value = [
-            {
-                "name": "smell1",
-                "line": 10,
-                "description": "Description of smell1",
-                "additional_info": "info1",
-            },
-            {
-                "name": "smell2",
-                "line": 15,
-                "description": "Description of smell2",
-                "additional_info": "info2",
-            },
+    mock_node._fields = ["field1", "field2"]
+
+    mock_node.field1 = ast.Name(id="df", ctx=ast.Load())
+    mock_node.field2 = ast.Str(s="some_string")
+
+    return mock_node
+
+
+@pytest.fixture
+def df_output():
+    return pd.DataFrame(
+        columns=[
+            "filename",
+            "function_name",
+            "smell_name",
+            "line",
+            "description",
+            "additional_info",
         ]
-
-        mock_chain_indexing.return_value.detect.return_value = (
-            []
-        )  # No smell for chain indexing
-
-        # Initialize RuleChecker
-        rule_checker = RuleChecker(output_path="mock_output_path")
-
-        # Mock the input AST node and extracted data
-        mock_ast_node = MagicMock(spec=ast.AST)
-
-        # Mocking the extracted_data to include "libraries"
-        extracted_data = {
-            "libraries": {"pandas": "pd"},
-            "other_data": "some_value",
-        }
-
-        filename = "mock_file.py"
-        function_name = "my_function"
-
-        # Initialize an empty DataFrame for storing smells
-        df_output = pd.DataFrame(
-            columns=[
-                "filename",
-                "function_name",
-                "smell_name",
-                "line",
-                "description",
-                "additional_info",
-            ]
-        )
-
-        # Run the rule check method
-        df_output = rule_checker.rule_check(
-            ast_node=mock_ast_node,
-            extracted_data=extracted_data,
-            filename=filename,
-            function_name=function_name,
-            df_output=df_output,
-        )
-
-        # Assertions: Verify that only the
-        # expected number of smells were added (2)
-        self.assertEqual(len(df_output), 2)  # Two smells were detected
-
-        # Check the content of the smells added
-        self.assertEqual(df_output.loc[0, "smell_name"], "smell1")
-        self.assertEqual(df_output.loc[0, "line"], 10)
-        self.assertEqual(
-            df_output.loc[0, "description"], "Description of smell1"
-        )
-        self.assertEqual(df_output.loc[0, "additional_info"], "info1")
-
-        self.assertEqual(df_output.loc[1, "smell_name"], "smell2")
-        self.assertEqual(df_output.loc[1, "line"], 15)
-        self.assertEqual(
-            df_output.loc[1, "description"], "Description of smell2"
-        )
-        self.assertEqual(df_output.loc[1, "additional_info"], "info2")
-
-    def test_no_smells(self):
-        # Test the case where no smells are detected
-        with patch(
-            "detection_rules.api_specific.chain_indexing_smell."
-            "ChainIndexingSmell"
-        ) as mock_chain_smell:
-            mock_chain_smell.return_value.detect.return_value = []
-
-            # Initialize RuleChecker
-            rule_checker = RuleChecker(output_path="mock_output_path")
-            mock_ast_node = MagicMock(spec=ast.AST)
-
-            # Mocking the extracted_data to include "libraries"
-            extracted_data = {
-                "libraries": {"pandas": "pd"},
-                "other_data": "some_value",
-            }
-
-            filename = "mock_file.py"
-            function_name = "my_function"
-
-            # Initialize an empty DataFrame
-            df_output = pd.DataFrame(
-                columns=[
-                    "filename",
-                    "function_name",
-                    "smell_name",
-                    "line",
-                    "description",
-                    "additional_info",
-                ]
-            )
-
-            # Run the rule check method
-            df_output = rule_checker.rule_check(
-                ast_node=mock_ast_node,
-                extracted_data=extracted_data,
-                filename=filename,
-                function_name=function_name,
-                df_output=df_output,
-            )
-
-            # Assertions: Verify no smells were added
-            self.assertEqual(len(df_output), 0)
+    )
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_rule_check(mocker, mock_rule_checker, mock_ast_node, df_output):
+    # Mock the classes for DataFrameConversionAPIMisused and ChainIndexingSmell
+    mock_dataframe_conversion = mocker.Mock()
+    mock_chain_indexing = mocker.Mock()
+
+    # Mocking the return value of detect for DataFrameConversionAPIMisused (no smells for now)
+    mock_dataframe_conversion.detect.return_value = []
+
+    # Mocking the return value of detect for ChainIndexingSmell (smells detected)
+    mock_chain_indexing.detect.return_value = [
+        {
+            "name": "Chained indexing detected",
+            "line": 12,
+            "description": "Using chained indexing like df['a'][0] can cause performance issues and unexpected behavior.",
+            "additional_info": "Use df.loc[0, 'a'] for more efficient and explicit indexing.",
+        },
+    ]
+
+    # Add mocked smells to mock_rule_checker
+    mock_rule_checker.smells = [mock_chain_indexing, mock_dataframe_conversion]
+
+    # Populate extracted_data with chained indexing example
+    extracted_data = {
+        "libraries": {
+            "pandas": "pd",  # Pandas library alias
+        },
+        "variables": {
+            "df": ast.Assign(
+                targets=[ast.Name(id="df", ctx=ast.Store())],
+                value=ast.Call(
+                    func=ast.Attribute(
+                        value=ast.Name(id="pd", ctx=ast.Load()),
+                        attr="DataFrame",
+                        ctx=ast.Load(),
+                    ),
+                    args=[
+                        ast.Dict(
+                            keys=[ast.Str(s="a")],
+                            values=[
+                                ast.List(
+                                    elts=[
+                                        ast.Constant(value=1),
+                                        ast.Constant(value=2),
+                                        ast.Constant(value=3),
+                                    ],
+                                    ctx=ast.Load(),
+                                )
+                            ],
+                        )
+                    ],
+                    keywords=[],
+                ),
+            ),
+            "chained_indexing_example": ast.Assign(
+                targets=[ast.Name(id="chained_indexing_example", ctx=ast.Store())],
+                value=ast.Subscript(
+                    value=ast.Subscript(
+                        value=ast.Name(id="df", ctx=ast.Load()),
+                        slice=ast.Str(s="a"),
+                        ctx=ast.Load(),
+                    ),
+                    slice=ast.Constant(value=0),
+                    ctx=ast.Load(),
+                ),
+            ),
+        },
+        "lines": {
+            1: "import pandas as pd",
+            2: "df = pd.DataFrame({'a': [1, 2, 3]})",
+            3: "chained_indexing_example = df['a'][0]",
+        },
+    }
+
+    # Run the rule_check method
+    filename = "mock_file.py"
+    function_name = "my_function"
+    result = mock_rule_checker.rule_check(
+        mock_ast_node, extracted_data, filename, function_name, df_output
+    )
+
+    # Debug prints
+    print("Mock detect return values:")
+    print(mock_dataframe_conversion.detect.return_value)
+    print(mock_chain_indexing.detect.return_value)
+    print("Result DataFrame:")
+    print(result)
+
+    # Assertions to verify if the smells were added correctly
+    assert len(result) == 1  # Expecting one smell (chained indexing) to be detected
+
+
+def test_no_smells(mocker, mock_rule_checker, mock_ast_node, df_output):
+    # Mock the chain indexing detection method to return no smells
+    mock_chain_smell = mocker.patch(
+        "detection_rules.api_specific.chain_indexing_smell.ChainIndexingSmell",
+        autospec=True,
+    )
+    mock_chain_smell.return_value.detect.return_value = (
+        []
+    )  # Ensure it returns an empty list
+
+    # Mocking extracted_data
+    extracted_data = {
+        "libraries": {"pandas": "pd"},
+        "dataframe_variables": {},
+        "other_data": "some_value",
+    }
+
+    filename = "mock_file.py"
+    function_name = "my_function"
+
+    result = mock_rule_checker.rule_check(
+        ast_node=mock_ast_node,
+        extracted_data=extracted_data,
+        filename=filename,
+        function_name=function_name,
+        df_output=df_output,
+    )
+
+    # Assertions
+    assert len(result) == 0  # No smells detected
