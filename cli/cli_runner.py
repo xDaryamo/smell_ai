@@ -18,31 +18,37 @@ class CodeSmileCLI:
         self.args = args
         self.analyzer = ProjectAnalyzer(args.output)
 
+    def validate_args(self):
+        """
+        Validates the command-line arguments before proceeding with the analysis.
+        """
+        if self.args.input is None:
+            print("Error: Please specify both input and output folders.")
+            exit(1)
+
+        # Validate max_workers for parallel execution
+        if self.args.parallel and self.args.max_workers <= 0:
+            raise ValueError("max_workers must be greater than 0.")
+
     def execute(self):
         """
         Executes the analysis workflow based on CLI arguments.
         """
+        # Validate arguments first
+        self.validate_args()
+
         print("Starting analysis with the following configuration:")
         print(f"Input folder: {self.args.input}")
         print(f"Output folder: {self.args.output}")
         print(f"Parallel execution: {self.args.parallel}")
         print(f"Resume execution: {self.args.resume}")
+        print(f"Max Workers: {self.args.max_workers}")
         print(f"Analyze multiple projects: {self.args.multiple}")
 
-        if self.args.input is None or self.args.output is None:
-            print("Error: Please specify both input and output folders.")
-            exit(1)
-
-        # Clean or create the output folder
         if not self.args.resume:
             self.analyzer.clean_output_directory()
 
-        # Run analysis
         if self.args.multiple:
-
-            if self.args.parallel and (self.args.max_workers <= 0):
-                raise ValueError("max_workers must be greater than 0.")
-
             if self.args.parallel:
                 self.analyzer.analyze_projects_parallel(
                     self.args.input, self.args.max_workers
@@ -55,7 +61,6 @@ class CodeSmileCLI:
             total_smells = self.analyzer.analyze_project(self.args.input)
             print(f"Analysis completed. Total code smells found: {total_smells}")
 
-        # Merge results for multiple projects
         if self.args.multiple:
             self.analyzer.merge_all_results()
 

@@ -1,197 +1,189 @@
-import unittest
-from unittest.mock import patch, MagicMock
+import pandas as pd
+import pytest
+from unittest.mock import mock_open, patch, MagicMock
 import os
 import shutil
-import pandas as pd
-from io import StringIO
-
-# Assuming FileUtils is in the module `your_module`
-from cli.file_utils import FileUtils
+from utils.file_utils import FileUtils
 
 
-class TestFileUtils(unittest.TestCase):
-
-    def tearDown(self):
-        # Check if output path is defined and exists
-
-        if os.path.exists("test/unit_testing/cli/mock_output"):
-            try:
-                shutil.rmtree("test/unit_testing/cli/mock_output")
-            except Exception as e:
-                print(
-                    f"Failed to delete test/unit_testing/cli/mock_output. Reason: {e}"
-                )
-
-    @patch("os.makedirs")
-    @patch("os.path.exists")
-    @patch("os.listdir")
-    @patch("pandas.read_csv")
-    @patch("pandas.DataFrame.to_csv")
-    def test_merge_results(
-        self, mock_to_csv, mock_read_csv, mock_listdir, mock_exists, mock_makedirs
-    ):
-        # Mock setup
-        mock_exists.return_value = True
-        mock_listdir.return_value = ["file1.csv", "file2.csv"]
-
-        # Mock the behavior of read_csv to return dataframes
-        mock_read_csv.side_effect = [
-            pd.DataFrame({"filename": ["file1"], "data": [1]}),
-            pd.DataFrame({"filename": ["file2"], "data": [2]}),
-        ]
-
-        mock_to_csv.return_value = None
-
-        # Call the function
-        input_dir = "mock_input"
-        output_dir = "test/unit_testing/cli/mock_output"
-        FileUtils.merge_results(input_dir, output_dir)
-
-        # Assert that correct calls were made
-        mock_makedirs.assert_called_once_with(output_dir, exist_ok=True)
-        mock_to_csv.assert_called_once_with(
-            os.path.join(output_dir, "overview.csv"), index=False
-        )
-
-    @patch("os.makedirs")
-    @patch("os.path.exists")
-    @patch("os.listdir")
-    @patch("pandas.read_csv")
-    @patch("pandas.DataFrame.to_csv")
-    def test_merge_results_no_csv(
-        self, mock_to_csv, mock_read_csv, mock_listdir, mock_exists, mock_makedirs
-    ):
-        # Mock setup: no CSV files
-        mock_exists.return_value = True
-        mock_listdir.return_value = ["file1.txt", "file2.txt"]
-
-        mock_read_csv.side_effect = []
-
-        # Call the function
-        input_dir = "mock_input"
-        output_dir = "test/unit_testing/cli/mock_output"
-        FileUtils.merge_results(input_dir, output_dir)
-
-        # Assert no calls to to_csv as there are no valid CSVs
-        mock_to_csv.assert_not_called()
-
-    @patch("os.makedirs")
-    @patch("os.walk")
-    @patch("pandas.read_csv")
-    @patch("pandas.DataFrame.to_csv")
-    def test_merge_results(self, mock_to_csv, mock_read_csv, mock_walk, mock_makedirs):
-        # Mock the os.walk behavior to simulate CSV files in the input directory
-        mock_walk.return_value = [
-            ("mock_input", [], ["file1.csv", "file2.csv"]),
-        ]
-
-        # Mock pandas.read_csv to return DataFrames for the CSV files
-        mock_read_csv.side_effect = [
-            pd.DataFrame({"filename": ["file1"], "data": [1]}),
-            pd.DataFrame({"filename": ["file2"], "data": [2]}),
-        ]
-
-        input_dir = "mock_input"
-        output_dir = "test/unit_testing/cli/mock_output"
-
-        # Call the method under test
-        FileUtils.merge_results(input_dir, output_dir)
-
-        # Assert that os.makedirs was called to ensure the output directory exists
-        mock_makedirs.assert_called_once_with(output_dir, exist_ok=True)
-
-        # Assert that pandas.DataFrame.to_csv was called to save the merged file
-        mock_to_csv.assert_called_once_with(
-            os.path.join(output_dir, "overview.csv"), index=False
-        )
-
-    @patch("os.makedirs")
-    @patch("os.path.exists")
-    @patch("os.listdir")
-    def test_clean_directory_create_folder(
-        self, mock_listdir, mock_exists, mock_makedirs
-    ):
-        # Mock setup: directory does not exist
-        mock_exists.return_value = False
-
-        # Call the function
-        root_path = "test/unit_testing/cli/mock_root"
-        result = FileUtils.clean_directory(root_path)
-
-        # Assert that the directory was created
-        mock_makedirs.assert_called_once_with(os.path.join(root_path, "output"))
-        self.assertEqual(result, os.path.join(root_path, "output"))
-
-    @patch("os.walk")
-    def test_get_python_files(self, mock_walk):
-        # Mock the os.walk behavior
-        mock_walk.return_value = [
-            ("mock_path", ["venv", "lib"], ["file1.py", "file2.py", "file3.txt"])
-        ]
-
-        path = "test/unit_testing/cli/mock_path"
-        result = FileUtils.get_python_files(path)
-
-        self.assertEqual(
-            result,
-            [
-                os.path.abspath(os.path.join("mock_path", "file1.py")),
-                os.path.abspath(os.path.join("mock_path", "file2.py")),
-            ],
-        )
-
-    @patch("os.walk")
-    def test_get_python_files_with_venv(self, mock_walk):
-        # Mock the os.walk behavior
-        mock_walk.return_value = [
-            ("mock_path", ["venv", "lib"], ["file1.py", "file2.py", "file3.txt"])
-        ]
-
-        path = "mock_path"
-        result = FileUtils.get_python_files(path)
-
-        expected = [
-            os.path.abspath(os.path.join("mock_path", "file1.py")),
-            os.path.abspath(os.path.join("mock_path", "file2.py")),
-        ]
-        self.assertEqual(result, expected)
-
-    @patch("os.path.exists")
-    @patch("os.listdir")
-    def test_get_python_files_no_files(self, mock_exists, mock_listdir):
-        # Mock setup: no Python files
-        mock_exists.return_value = True
-        mock_listdir.return_value = ["file1.txt", "file2.txt"]
-
-        # Call the function
-        path = "mock_path"
-        result = FileUtils.get_python_files(path)
-
-        # Assert that the result is an empty list
-        self.assertEqual(result, [])
-
-    @patch("os.walk")
-    @patch("pandas.read_csv")
-    @patch("pandas.DataFrame.to_csv")
-    def test_merge_results_empty_dataframes(
-        self, mock_to_csv, mock_read_csv, mock_walk
-    ):
-        mock_walk.return_value = [("mock_input", [], ["file1.csv", "file2.csv"])]
-        mock_read_csv.side_effect = [
-            pd.DataFrame(),  # Empty DataFrame
-            pd.DataFrame({"filename": ["file2"], "data": [2]}),
-        ]
-
-        input_dir = "mock_input"
-        output_dir = "test/unit_testing/cli/mock_output"
-
-        FileUtils.merge_results(input_dir, output_dir)
-
-        # Ensure empty CSV is skipped
-        mock_to_csv.assert_called_once_with(
-            os.path.join(output_dir, "overview.csv"), index=False
-        )
+@pytest.fixture
+def mock_file_system():
+    with patch("os.path.exists") as mock_exists, patch(
+        "os.makedirs"
+    ) as mock_makedirs, patch("os.listdir") as mock_listdir, patch(
+        "shutil.rmtree"
+    ) as mock_rmtree, patch(
+        "os.unlink"
+    ) as mock_unlink:
+        yield mock_exists, mock_makedirs, mock_listdir, mock_rmtree, mock_unlink
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.fixture
+def mock_walk():
+    with patch("os.walk") as mock_walk:
+        yield mock_walk
+
+
+@pytest.fixture
+def mock_merge():
+    with patch("os.makedirs") as mock_makedirs, patch("os.walk") as mock_walk, patch(
+        "pandas.read_csv"
+    ) as mock_read_csv, patch("pandas.DataFrame.to_csv") as mock_to_csv:
+        yield mock_makedirs, mock_walk, mock_read_csv, mock_to_csv
+
+
+def test_clean_directory(mock_file_system):
+    mock_exists, mock_makedirs, mock_listdir, mock_rmtree, mock_unlink = (
+        mock_file_system
+    )
+
+    # Case 1: Directory exists and has files
+    mock_exists.return_value = True
+    mock_listdir.return_value = ["file1.txt", "file2.txt"]
+
+    root_path = "mock/root"
+    subfolder_name = "output"
+
+    # Call the method
+    cleaned_path = FileUtils.clean_directory(root_path, subfolder_name)
+
+    # Assert os.makedirs was not called
+    mock_makedirs.assert_not_called()
+
+    # Assert the method returns the correct path
+    assert cleaned_path == os.path.join(root_path, subfolder_name)
+
+    # Case 2: Directory does not exist
+    mock_exists.return_value = False
+    mock_listdir.return_value = []
+
+    # Call the method again
+    cleaned_path = FileUtils.clean_directory(root_path, subfolder_name)
+
+    # Assert os.makedirs was called to create the directory
+    mock_makedirs.assert_called_with(os.path.join(root_path, subfolder_name))
+    assert cleaned_path == os.path.join(root_path, subfolder_name)
+
+
+def test_get_python_files(mock_walk):
+    # Mock os.walk to simulate directory structure
+    mock_walk.return_value = [
+        ("root", ["subdir1", "subdir2"], ["file1.py", "file2.txt"]),
+        ("root/subdir1", [], ["file3.py"]),
+        ("root/subdir2", [], ["file4.py"]),
+    ]
+
+    path = "root"
+
+    # Call the method
+    python_files = FileUtils.get_python_files(path)
+
+    # Calculate the expected absolute paths dynamically
+    expected_files = [
+        os.path.abspath(os.path.join("root", "file1.py")),
+        os.path.abspath(os.path.join("root/subdir1", "file3.py")),
+        os.path.abspath(os.path.join("root/subdir2", "file4.py")),
+    ]
+
+    # Assert that only Python files are returned with absolute paths
+    assert len(python_files) == 3
+    assert expected_files[0] in python_files
+    assert expected_files[1] in python_files
+    assert expected_files[2] in python_files
+    assert (
+        os.path.abspath(os.path.join("root", "file2.txt")) not in python_files
+    )  # Non-Python file
+
+
+def test_merge_results(mock_merge):
+    mock_makedirs, mock_walk, mock_read_csv, mock_to_csv = mock_merge
+
+    # Mock os.walk to simulate the directory structure and files
+    mock_walk.return_value = [("mock_input", [], ["file1.csv", "file2.csv"])]
+
+    # Mock pandas read_csv for the two files
+    mock_read_csv.side_effect = [
+        pd.DataFrame({"filename": ["file1"], "data": [1]}),  # Not empty
+        pd.DataFrame({"filename": ["file2"], "data": [2]}),  # Not empty
+    ]
+
+    # Mock to_csv (no actual file writing will occur)
+    mock_to_csv.return_value = None
+
+    input_dir = "mock_input"
+    output_dir = "mock_output"
+
+    # Call the method
+    FileUtils.merge_results(input_dir, output_dir)
+
+    # Assert that makedirs was called for the output directory
+    mock_makedirs.assert_called_once_with(output_dir, exist_ok=True)
+
+    # Assert that to_csv was called to save the merged result to the correct file
+    mock_to_csv.assert_called_once_with(
+        os.path.join(output_dir, "overview.csv"), index=False
+    )
+
+
+def test_initialize_log():
+    log_path = "mock_log.txt"
+
+    with patch("builtins.open", mock_open()) as mock_file:
+        FileUtils.initialize_log(log_path)
+
+        # Assert that the log file is opened in write mode
+        mock_file.assert_called_once_with(log_path, "w")
+        # Assert that the content written to the log is empty
+        mock_file().write.assert_called_once_with("")
+
+
+def test_append_to_log():
+    log_path = "mock_log.txt"
+    project_name = "project1"
+
+    with patch("builtins.open", mock_open()) as mock_file:
+        FileUtils.append_to_log(log_path, project_name)
+
+        # Assert that the log file is opened in append mode
+        mock_file.assert_called_once_with(log_path, "a")
+        # Assert that the correct project name was written to the log
+        mock_file().write.assert_called_once_with("project1\n")
+
+
+def test_get_last_logged_project():
+    log_path = "mock_log.txt"
+
+    # Case 1: Log file exists and has content
+    with patch("builtins.open", mock_open(read_data="project1\nproject2\n")):
+        last_project = FileUtils.get_last_logged_project(log_path)
+        assert last_project == "project2"
+
+    # Case 2: Log file is empty
+    with patch("builtins.open", mock_open(read_data="")):
+        last_project = FileUtils.get_last_logged_project(log_path)
+        assert last_project == ""
+
+    # Case 3: Log file does not exist
+    with patch("builtins.open", side_effect=FileNotFoundError):
+        last_project = FileUtils.get_last_logged_project(log_path)
+        assert last_project == ""
+
+
+def test_synchronized_append_to_log():
+    log_path = "mock_log.txt"
+    project_name = "project1"
+
+    # Create a mock lock
+    mock_lock = MagicMock()
+
+    with patch("builtins.open", mock_open()) as mock_file:
+        FileUtils.synchronized_append_to_log(log_path, project_name, mock_lock)
+
+        # Assert that the lock was acquired and released
+        mock_lock.__enter__.assert_called_once()
+        mock_lock.__exit__.assert_called_once()
+
+        # Assert that the log file is opened in append mode
+        mock_file.assert_called_once_with(log_path, "a")
+        # Assert that the project name was written to the log
+        mock_file().write.assert_called_once_with("project1\n")
