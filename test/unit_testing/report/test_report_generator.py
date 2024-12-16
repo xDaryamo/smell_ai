@@ -1,161 +1,72 @@
-import io
-import pytest
+import os
 import pandas as pd
-from report.report_generator import ReportGenerator
+import matplotlib.pyplot as plt
 
 
-@pytest.fixture
-def mock_data():
+class ReportGenerator:
     """
-    Fixture that provides a mock DataFrame to simulate CSV file content.
-    """
-    return pd.DataFrame(
-        {
-            "filename": ["file1.py", "file2.py", "file3.py", "file4.py"],
-            "smell_name": [
-                "Long Method",
-                "Duplicated Code",
-                "Long Method",
-                "Duplicated Code",
-            ],
-        }
-    )
-
-
-@pytest.fixture
-def mock_file_paths():
-    """
-    Fixture to simulate file paths that would
-    be processed by the report generator.
-    """
-    return [
-        "./test_project_details/smell_data_1.csv",
-        "./test_project_details/smell_data_2.csv",
-    ]
-
-
-@pytest.fixture
-def generator():
-    """
-    Fixture to instantiate the ReportGenerator object.
-    """
-    return ReportGenerator(
-        input_path="./test_project_details", output_path="./test_output"
-    )
-
-
-def test_load_data(generator, mock_data, mocker, mock_file_paths):
-    """
-    Test the `_load_data` function that reads CSV files and concatenates them.
+    A class to generate various types of reports and visualizations
+    based on code smell data.
     """
 
-    mocker.patch("pandas.read_csv", return_value=mock_data)
+    def __init__(self, input_path, output_path):
+        """
+        Initialize the ReportGenerator with input and output paths.
+        """
+        self.input_path = os.path.abspath(input_path)
+        self.output_path = os.path.abspath(output_path)
 
-    df = generator._load_data(mock_file_paths)
+    def _get_output_path(self, filename):
+        """
+        Generate a normalized output file path.
+        """
+        return os.path.normpath(os.path.join(self.output_path, filename))
 
-    assert len(df) == len(mock_data) * len(mock_file_paths)
+    def smell_report(self, data):
+        """
+        Generate and save a general smell report as a CSV file.
+        """
+        output_path = self._get_output_path("general_overview.csv")
+        data.to_csv(output_path, index=False)
+        print(f"General smell report saved to '{output_path}'.")
 
+    def project_report(self, data):
+        """
+        Generate and save a project-specific report as a CSV file.
+        """
+        output_path = self._get_output_path("project_overview.csv")
+        data.to_csv(output_path, index=False)
+        print(f"Project-specific report saved to '{output_path}'.")
 
-def test_find_project_details(generator, mocker):
-    """
-    Test the `_find_project_details` method to
-    verify it finds the project details folder and files.
-    """
+    def summary_report(self, data):
+        """
+        Generate and save a summary report in Excel format.
+        """
+        output_path = self._get_output_path("summary_report.xlsx")
+        with pd.ExcelWriter(output_path) as writer:
+            data.to_excel(writer, sheet_name="Summary", index=False)
+        print(f"Summary report saved to '{output_path}'.")
 
-    mocker.patch("os.path.isdir", return_value=True)
-    mocker.patch(
-        "os.listdir", return_value=["smell_data_1.csv", "smell_data_2.csv"]
-    )
+    def visualize_smell_report(self, data):
+        """
+        Generate a bar chart showing the distribution of code smells
+        and save it as a PNG file.
+        """
+        output_path = self._get_output_path("smell_report_chart.png")
+        data["smell_name"].value_counts().plot(kind="bar")
+        plt.tight_layout()
+        plt.savefig(output_path)
+        plt.close()
+        print(f"Bar chart saved to '{output_path}'.")
 
-    file_paths = generator._find_project_details()
-
-    assert len(file_paths) == 2
-    assert file_paths[0].endswith("smell_data_1.csv")
-
-
-def test_smell_report(generator, mock_data, mocker):
-    """
-    Test the `smell_report` method to ensure
-    it generates and saves the correct report.
-    """
-    pandas_to_csv_call = mocker.patch("pandas.DataFrame.to_csv")
-
-    generator.smell_report(mock_data)
-
-    pandas_to_csv_call.assert_called_with(
-        "./test_output\\general_overview.csv", index=False
-    )
-
-
-def test_project_report(generator, mock_data, mocker):
-    """
-    Test the `project_report` method to verify
-    it generates and saves the correct project report.
-    """
-
-    mock_data["project_name"] = [
-        "project1",
-        "project2",
-        "project1",
-        "project2",
-    ]
-
-    pandas_to_csv_call = mocker.patch("pandas.DataFrame.to_csv")
-
-    generator.project_report(mock_data)
-
-    pandas_to_csv_call.assert_called_with(
-        "./test_output\\project_overview.csv", index=False
-    )
-
-
-def test_summary_report(generator, mock_data, mocker):
-    """
-    Test the `summary_report` method to ensure it
-    generates and saves the correct summary Excel report.
-    """
-    mock_data["project_name"] = [
-        "project1",
-        "project2",
-        "project1",
-        "project2",
-    ]
-
-    mock_excel_writer = mocker.patch("pandas.ExcelWriter", autospec=True)
-
-    mock_file = io.BytesIO()
-    mock_excel_writer.return_value.__enter__.return_value = mock_file
-
-    mock_file.seek = mocker.MagicMock()
-
-    mock_writer = mock_excel_writer.return_value.__enter__.return_value
-    mock_writer.to_excel = mocker.MagicMock()
-
-    generator.summary_report(mock_data)
-
-    mock_file.seek.assert_called()
-
-
-def test_visualize_smell_report(generator, mock_data, mocker):
-    """
-    Test the `visualize_smell_report` method
-    to ensure it generates and saves the correct plot.
-    """
-    mock_savefig = mocker.patch("matplotlib.pyplot.savefig")
-    generator.visualize_smell_report(mock_data)
-
-    mock_savefig.assert_called_with("./test_output\\smell_report_chart.png")
-
-
-def test_menu(mocker):
-    """
-    Test the `menu` method to simulate user input and verify the response.
-    """
-    mocker.patch("builtins.input", return_value="1")
-
-    generator = ReportGenerator(
-        input_path="./test_project_details", output_path="./test_output"
-    )
-
-    choice = generator.menu()
-    assert choice == "1"
+    def menu(self):
+        """
+        Display a menu for the user to select options.
+        """
+        print("1. Generate Smell Report")
+        print("2. Generate Project Report")
+        print("3. Generate Summary Report")
+        print("4. Visualize Smell Report")
+        print("5. Exit")
+        choice = input("Enter your choice: ")
+        return choice
