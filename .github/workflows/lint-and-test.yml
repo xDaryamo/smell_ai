@@ -39,7 +39,8 @@ jobs:
 
       # Run linting
       - name: Run flake8
-        run: flake8 .
+        run: flake8 --exclude input/projects/example,test/system_testing .
+
 
       # Run tests with pytest and collect coverage
       - name: Run tests and collect coverage

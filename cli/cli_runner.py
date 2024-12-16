@@ -20,7 +20,8 @@ class CodeSmileCLI:
 
     def validate_args(self):
         """
-        Validates the command-line arguments before proceeding with the analysis.
+        Validates the command-line arguments
+        before proceeding with the analysis.
         """
         if self.args.input is None:
             print("Error: Please specify both input and output folders.")
@@ -59,7 +60,9 @@ class CodeSmileCLI:
                 )
         else:
             total_smells = self.analyzer.analyze_project(self.args.input)
-            print(f"Analysis completed. Total code smells found: {total_smells}")
+            print(
+                f"Analysis completed. Total code smells found: {total_smells}"
+            )
 
         if self.args.multiple:
             self.analyzer.merge_all_results()
