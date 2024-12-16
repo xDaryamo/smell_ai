@@ -3,3 +3,11 @@ numpy~=1.24.2
 PyGithub
 tensorflow~=2.12.0
 torch~=2.0.0
+matplotlib>=3.7.0
+openpyxl
+flake8
+coverage
+pytest
+pytest-cov
+pytest-mock
+
