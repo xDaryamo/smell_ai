@@ -41,11 +41,10 @@ jobs:
       - name: Run flake8
         run: flake8 --exclude input/projects/example,test/system_testing .
 
-
       # Run tests with pytest and collect coverage
       - name: Run tests and collect coverage
         run: |
-          pytest --xvfb --cov=. --cov-report xml --cov-report term
+          pytest --cov=. --cov-report xml --cov-report term
 
       # Upload coverage report to Codecov
       - name: Upload coverage to Codecov
