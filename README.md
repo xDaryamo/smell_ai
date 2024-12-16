@@ -2,6 +2,7 @@
 
 [![codecov](https://codecov.io/gh/xDaryamo/smell_ai/graph/badge.svg?token=KM7EH5L3XC)](https://codecov.io/gh/xDaryamo/smell_ai)
 
+
 CodeSmile is a static analysis tool designed to identify and detect machine learning-specific code smells in your codebase. By utilizing Abstract Syntax Tree (AST) parsing techniques, CodeSmile can pinpoint potential issues and provide insights for improving the quality, maintainability, and performance of your machine learning projects.
 
 ## Features
