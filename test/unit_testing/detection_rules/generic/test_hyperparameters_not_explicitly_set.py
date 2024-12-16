@@ -20,7 +20,8 @@ def test_detect_no_smell(smell_detector):
     code = (
         "import sklearn.ensemble as se\n"
         "def main():\n"
-        "    model = se.RandomForestClassifier(n_estimators=100, max_depth=5)\n"
+        "    model = se.RandomForestClassifier"
+        "(n_estimators=100, max_depth=5)\n"
     )
     tree = ast.parse(code)
     extracted_data = {
@@ -58,7 +59,13 @@ def test_detect_without_library(smell_detector):
     """
     Test the detect method when the library is not imported.
     """
-    code = "\n" "\n" "def main():\n" "\n" "    model1 = RandomForestClassifier()\n"
+    code = (
+        "\n"
+        "\n"
+        "def main():\n"
+        "\n"
+        "    model1 = RandomForestClassifier()\n"
+    )
     tree = ast.parse(code)
     extracted_data = {
         "libraries": {},
@@ -71,7 +78,8 @@ def test_detect_without_library(smell_detector):
 
 def test_detect_with_multiple_smells(smell_detector):
     """
-    Test the detect method when multiple models are defined without hyperparameters.
+    Test the detect method when multiple
+    models are defined without hyperparameters.
     """
     code = (
         "import sklearn.ensemble as se\n"

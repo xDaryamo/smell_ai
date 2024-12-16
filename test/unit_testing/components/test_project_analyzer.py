@@ -1,6 +1,5 @@
 import os
 import shutil
-import threading
 import pytest
 import pandas as pd
 from unittest.mock import ANY, MagicMock, patch
@@ -27,14 +26,18 @@ def project_analyzer(mock_output_path):
 def mock_file_related_methods(monkeypatch):
     """
     Fixture to mock the file-related methods.
-    This fixture reduces repetition for mocking methods like os.path, FileUtils, etc.
+    This fixture reduces repetition
+    for mocking methods like os.path, FileUtils, etc.
     """
     monkeypatch.setattr("os.path.isdir", lambda path: True)
     monkeypatch.setattr("os.listdir", lambda path: ["project1", "project2"])
     monkeypatch.setattr(
-        "utils.file_utils.FileUtils.get_python_files", lambda path: ["file1.py"]
+        "utils.file_utils.FileUtils.get_python_files",
+        lambda path: ["file1.py"],
     )
-    monkeypatch.setattr("utils.file_utils.FileUtils.initialize_log", lambda path: None)
+    monkeypatch.setattr(
+        "utils.file_utils.FileUtils.initialize_log", lambda path: None
+    )
     monkeypatch.setattr(
         "utils.file_utils.FileUtils.synchronized_append_to_log",
         lambda path, project, lock: None,
@@ -49,10 +52,16 @@ def test_analyze_project(
     """
 
     output_dir = tmp_path / "output"
+
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True)
+
     monkeypatch.setattr(
         "components.project_analyzer.ProjectAnalyzer._save_results",
-        lambda self, df, path: df.to_csv(output_dir / "overview.csv", index=False),
+        lambda self, df, path: df.to_csv(
+            output_dir / "overview.csv", index=False
+        ),
     )
 
     # Mock inspection results for two files
@@ -80,7 +89,9 @@ def test_analyze_project(
     ]
 
     # Mock inspect method to return the inspection results
-    project_analyzer.inspector.inspect = MagicMock(side_effect=mock_inspection_results)
+    project_analyzer.inspector.inspect = MagicMock(
+        side_effect=mock_inspection_results
+    )
 
     # Mock the get_python_files method to return both files
     monkeypatch.setattr(
@@ -111,11 +122,15 @@ def test_analyze_projects_sequential(
     """
 
     output_dir = tmp_path / "output"
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True)
 
     monkeypatch.setattr(
         "components.project_analyzer.ProjectAnalyzer._save_results",
-        lambda self, df, path: df.to_csv(output_dir / "overview.csv", index=False),
+        lambda self, df, path: df.to_csv(
+            output_dir / "overview.csv", index=False
+        ),
     )
 
     # Mock the inspector's inspect method
@@ -127,7 +142,9 @@ def test_analyze_projects_sequential(
             "line": [10],
         }
     )
-    project_analyzer.inspector.inspect = MagicMock(return_value=mock_inspection_results)
+    project_analyzer.inspector.inspect = MagicMock(
+        return_value=mock_inspection_results
+    )
 
     # Call the method
     project_analyzer.analyze_projects_sequential(
@@ -165,14 +182,18 @@ def test_merge_all_results(monkeypatch, project_analyzer):
     Test the `merge_all_results` method.
     """
     mock_merge_results = MagicMock()
-    monkeypatch.setattr("utils.file_utils.FileUtils.merge_results", mock_merge_results)
+    monkeypatch.setattr(
+        "utils.file_utils.FileUtils.merge_results", mock_merge_results
+    )
 
     # Run the method
     project_analyzer.merge_all_results()
 
     # Assertions
     mock_merge_results.assert_called_once_with(
-        input_dir=os.path.join(project_analyzer.output_path, "project_details"),
+        input_dir=os.path.join(
+            project_analyzer.output_path, "project_details"
+        ),
         output_dir=project_analyzer.output_path,
     )
 
@@ -183,8 +204,7 @@ def test_analyze_projects_parallel(
     """
     Test the `analyze_projects_parallel` method.
     """
-    mock_projects = ["project1", "project2"]
-    mock_python_files = ["file1.py"]
+
     mock_inspection_results = pd.DataFrame(
         {
             "filename": ["file1.py"],
@@ -206,7 +226,9 @@ def test_analyze_projects_parallel(
     )
 
     # Mock the inspector's inspect method
-    project_analyzer.inspector.inspect = MagicMock(return_value=mock_inspection_results)
+    project_analyzer.inspector.inspect = MagicMock(
+        return_value=mock_inspection_results
+    )
 
     # Mock save results method
     monkeypatch.setattr(
@@ -230,7 +252,8 @@ def test_analyze_projects_parallel(
                 "test/unit_testing/components/mock_base_path", max_workers=1
             )
 
-        # Ensure the inspector's inspect method was called the expected number of times
+        # Ensure the inspector's inspect method
+        # was called the expected number of times
         assert project_analyzer.inspector.inspect.call_count == 2
 
         # Check if print statements were made (optional)
@@ -243,11 +266,11 @@ def test_exception_handling_in_inspect(
     """
     Test that the `inspect` method handles exceptions gracefully.
     """
-    mock_projects = ["project1"]
-    mock_python_files = ["file1.py"]
 
     # Simulate an exception in the inspect method
-    project_analyzer.inspector.inspect = MagicMock(side_effect=FileNotFoundError)
+    project_analyzer.inspector.inspect = MagicMock(
+        side_effect=FileNotFoundError
+    )
 
     with patch("builtins.print") as mock_print:
         project_analyzer.analyze_projects_parallel(
@@ -255,7 +278,10 @@ def test_exception_handling_in_inspect(
         )
 
     # Assertions
-    assert "Total code smells found in all projects: 0\n" in mock_print.call_args[0][0]
+    assert (
+        "Total code smells found in all projects: 0\n"
+        in mock_print.call_args[0][0]
+    )
 
     mock_project_path = "test/unit_testing/components/mock_project_path"
     if os.path.exists(mock_project_path):
@@ -266,27 +292,38 @@ def test_analyze_project_with_errors(
     monkeypatch, project_analyzer, mock_file_related_methods, tmp_path
 ):
     """
-    Test `analyze_project` with error handling (FileNotFoundError, SyntaxError).
+    Test `analyze_project` with error
+    handling (FileNotFoundError, SyntaxError).
     """
     output_dir = tmp_path / "output"
+
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True)
+
     monkeypatch.setattr(
         "components.project_analyzer.ProjectAnalyzer._save_results",
-        lambda self, df, path: df.to_csv(output_dir / "overview.csv", index=False),
+        lambda self, df, path: df.to_csv(
+            output_dir / "overview.csv", index=False
+        ),
     )
 
     # Mocking a SyntaxError for a specific file
     project_analyzer.inspector.inspect = MagicMock(side_effect=SyntaxError)
 
     # Run the method (simulate failure for file1.py)
-    project_analyzer.analyze_project("test/unit_testing/components/mock_project_path")
+    project_analyzer.analyze_project(
+        "test/unit_testing/components/mock_project_path"
+    )
 
     # Check if the error is logged to the error.txt file
     error_file = output_dir / "error.txt"
     with open(error_file, "r") as f:
         error_content = f.read()
 
-    assert "Error in file file1.py: " in error_content  # Check that error is logged
+    assert (
+        "Error in file file1.py: " in error_content
+    )  # Check that error is logged
 
     mock_project_path = "test/unit_testing/components/mock_project_path"
     if os.path.exists(mock_project_path):
@@ -300,11 +337,16 @@ def test_analyze_projects_sequential_save_results(
     Test saving results in `project_details` for sequential analysis.
     """
     output_dir = tmp_path / "output"
+
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True)
 
     monkeypatch.setattr(
         "components.project_analyzer.ProjectAnalyzer._save_results",
-        lambda self, df, path: df.to_csv(output_dir / "overview.csv", index=False),
+        lambda self, df, path: df.to_csv(
+            output_dir / "overview.csv", index=False
+        ),
     )
 
     # Mock the inspector's inspect method
@@ -316,7 +358,9 @@ def test_analyze_projects_sequential_save_results(
             "line": [10],
         }
     )
-    project_analyzer.inspector.inspect = MagicMock(return_value=mock_inspection_results)
+    project_analyzer.inspector.inspect = MagicMock(
+        return_value=mock_inspection_results
+    )
 
     # Call the method
     project_analyzer.analyze_projects_sequential(
@@ -347,9 +391,7 @@ def test_analyze_projects_parallel_thread_safety(
     """
     Test thread-safety in the `analyze_projects_parallel` method.
     """
-    lock = threading.Lock()
-    mock_projects = ["project1", "project2"]
-    mock_python_files = ["file1.py"]
+
     mock_inspection_results = pd.DataFrame(
         {
             "filename": ["file1.py"],
@@ -362,7 +404,9 @@ def test_analyze_projects_parallel_thread_safety(
     )
 
     # Mock the inspector's inspect method
-    project_analyzer.inspector.inspect = MagicMock(return_value=mock_inspection_results)
+    project_analyzer.inspector.inspect = MagicMock(
+        return_value=mock_inspection_results
+    )
 
     # Mock the synchronized_append_to_log method to check for thread-safety
     mock_synchronized_append = MagicMock()
@@ -381,7 +425,8 @@ def test_analyze_projects_parallel_thread_safety(
         "test/unit_testing/components/mock_base_path", "execution_log.txt"
     )
 
-    # Ensure the synchronized_append_to_log method was called with both project1 and project2
+    # Ensure the synchronized_append_to_log
+    # method was called with both project1 and project2
     mock_synchronized_append.assert_any_call(expected_path, "project1", ANY)
     mock_synchronized_append.assert_any_call(expected_path, "project2", ANY)
 
@@ -397,14 +442,22 @@ def test_analyze_project_empty_directory(
     Test `analyze_project` when no Python files exist in the directory.
     """
     output_dir = tmp_path / "output"
+
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True)
+
     monkeypatch.setattr(
         "components.project_analyzer.ProjectAnalyzer._save_results",
-        lambda self, df, path: df.to_csv(output_dir / "overview.csv", index=False),
+        lambda self, df, path: df.to_csv(
+            output_dir / "overview.csv", index=False
+        ),
     )
 
     # Mock get_python_files to return an empty list
-    monkeypatch.setattr("utils.file_utils.FileUtils.get_python_files", lambda _: [])
+    monkeypatch.setattr(
+        "utils.file_utils.FileUtils.get_python_files", lambda _: []
+    )
 
     # Run the method
     total_smells = project_analyzer.analyze_project(

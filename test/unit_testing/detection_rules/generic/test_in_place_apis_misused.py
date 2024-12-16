@@ -60,7 +60,8 @@ def test_detect_with_inplace_false(smell_detector):
 
 def test_detect_no_smell_with_assignment(smell_detector):
     """
-    Test the detect method when the result of a method call is assigned to a variable.
+    Test the detect method when the result
+    of a method call is assigned to a variable.
     """
     code = (
         "import pandas as pd\n"
@@ -81,7 +82,8 @@ def test_detect_no_smell_with_assignment(smell_detector):
 
 def test_detect_with_no_inplace_and_no_assignment(smell_detector):
     """
-    Test the detect method when neither `inplace` is set nor the result is assigned.
+    Test the detect method when neither
+    `inplace` is set nor the result is assigned.
     """
     code = (
         "import pandas as pd\n"
@@ -100,7 +102,8 @@ def test_detect_with_no_inplace_and_no_assignment(smell_detector):
     assert len(result) == 1  # One smell should be detected
     assert result[0]["name"] == "in_place_apis_misused"
     assert (
-        "not assigned to a variable, and the `inplace` parameter is not explicitly set"
+        "not assigned to a variable, and "
+        "the `inplace` parameter is not explicitly set"
         in result[0]["additional_info"]
     )
     assert result[0]["line"] == 4  # Line where the smell occurs

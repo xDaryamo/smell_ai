@@ -2,7 +2,6 @@ import pandas as pd
 import pytest
 from unittest.mock import mock_open, patch, MagicMock
 import os
-import shutil
 from utils.file_utils import FileUtils
 
 
@@ -15,7 +14,13 @@ def mock_file_system():
     ) as mock_rmtree, patch(
         "os.unlink"
     ) as mock_unlink:
-        yield mock_exists, mock_makedirs, mock_listdir, mock_rmtree, mock_unlink
+        yield (
+            mock_exists,
+            mock_makedirs,
+            mock_listdir,
+            mock_rmtree,
+            mock_unlink,
+        )
 
 
 @pytest.fixture
@@ -26,9 +31,11 @@ def mock_walk():
 
 @pytest.fixture
 def mock_merge():
-    with patch("os.makedirs") as mock_makedirs, patch("os.walk") as mock_walk, patch(
-        "pandas.read_csv"
-    ) as mock_read_csv, patch("pandas.DataFrame.to_csv") as mock_to_csv:
+    with patch("os.makedirs") as mock_makedirs, patch(
+        "os.walk"
+    ) as mock_walk, patch("pandas.read_csv") as mock_read_csv, patch(
+        "pandas.DataFrame.to_csv"
+    ) as mock_to_csv:
         yield mock_makedirs, mock_walk, mock_read_csv, mock_to_csv
 
 
@@ -119,7 +126,8 @@ def test_merge_results(mock_merge):
     # Assert that makedirs was called for the output directory
     mock_makedirs.assert_called_once_with(output_dir, exist_ok=True)
 
-    # Assert that to_csv was called to save the merged result to the correct file
+    # Assert that to_csv was called to
+    # save the merged result to the correct file
     mock_to_csv.assert_called_once_with(
         os.path.join(output_dir, "overview.csv"), index=False
     )

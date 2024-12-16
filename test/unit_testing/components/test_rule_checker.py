@@ -41,16 +41,21 @@ def test_rule_check(mocker, mock_rule_checker, mock_ast_node, df_output):
     mock_dataframe_conversion = mocker.Mock()
     mock_chain_indexing = mocker.Mock()
 
-    # Mocking the return value of detect for DataFrameConversionAPIMisused (no smells for now)
+    # Mocking the return value of detect for
+    #  DataFrameConversionAPIMisused
+    #  (no smells for now)
     mock_dataframe_conversion.detect.return_value = []
 
-    # Mocking the return value of detect for ChainIndexingSmell (smells detected)
+    # Mocking the return value of detect
+    # for ChainIndexingSmell (smells detected)
     mock_chain_indexing.detect.return_value = [
         {
             "name": "Chained indexing detected",
             "line": 12,
-            "description": "Using chained indexing like df['a'][0] can cause performance issues and unexpected behavior.",
-            "additional_info": "Use df.loc[0, 'a'] for more efficient and explicit indexing.",
+            "description": "Using chained indexing like df['a'][0] "
+            " can cause performance issues and unexpected behavior.",
+            "additional_info": "Use df.loc[0, 'a'] for more "
+            "efficient and explicit indexing.",
         },
     ]
 
@@ -90,7 +95,9 @@ def test_rule_check(mocker, mock_rule_checker, mock_ast_node, df_output):
                 ),
             ),
             "chained_indexing_example": ast.Assign(
-                targets=[ast.Name(id="chained_indexing_example", ctx=ast.Store())],
+                targets=[
+                    ast.Name(id="chained_indexing_example", ctx=ast.Store())
+                ],
                 value=ast.Subscript(
                     value=ast.Subscript(
                         value=ast.Name(id="df", ctx=ast.Load()),
@@ -124,7 +131,9 @@ def test_rule_check(mocker, mock_rule_checker, mock_ast_node, df_output):
     print(result)
 
     # Assertions to verify if the smells were added correctly
-    assert len(result) == 1  # Expecting one smell (chained indexing) to be detected
+    assert (
+        len(result) == 1
+    )  # Expecting one smell (chained indexing) to be detected
 
 
 def test_no_smells(mocker, mock_rule_checker, mock_ast_node, df_output):

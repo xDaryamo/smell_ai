@@ -1,6 +1,8 @@
 import ast
 import pytest
-from detection_rules.api_specific.chain_indexing_smell import ChainIndexingSmell
+from detection_rules.api_specific.chain_indexing_smell import (
+    ChainIndexingSmell,
+)
 
 
 @pytest.fixture
@@ -58,7 +60,11 @@ def test_detect_without_pandas_library(smell_detector):
     """
     Test the detect method when the pandas library is not imported.
     """
-    code = "def no_pandas():\n" "    df = {'a': [1, 2, 3]}\n" "    value = df['a'][0]\n"
+    code = (
+        "def no_pandas():\n"
+        "    df = {'a': [1, 2, 3]}\n"
+        "    value = df['a'][0]\n"
+    )
     tree = ast.parse(code)
     extracted_data = {
         "libraries": {},  # No pandas alias

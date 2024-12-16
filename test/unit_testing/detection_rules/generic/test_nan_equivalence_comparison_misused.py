@@ -52,7 +52,10 @@ def test_detect_with_smell_equality(smell_detector):
     result = smell_detector.detect(tree, extracted_data)
     assert len(result) == 1  # One smell should be detected
     assert result[0]["name"] == "nan_equivalence_comparison_misused"
-    assert "Direct equivalence comparison with NaN" in result[0]["additional_info"]
+    assert (
+        "Direct equivalence comparison with NaN"
+        in result[0]["additional_info"]
+    )
     assert result[0]["line"] == 4  # Line where the smell occurs
 
 
@@ -75,7 +78,10 @@ def test_detect_with_smell_inequality(smell_detector):
     result = smell_detector.detect(tree, extracted_data)
     assert len(result) == 1  # One smell should be detected
     assert result[0]["name"] == "nan_equivalence_comparison_misused"
-    assert "Direct equivalence comparison with NaN" in result[0]["additional_info"]
+    assert (
+        "Direct equivalence comparison with NaN"
+        in result[0]["additional_info"]
+    )
     assert result[0]["line"] == 4  # Line where the smell occurs
 
 

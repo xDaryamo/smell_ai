@@ -1,6 +1,8 @@
 import ast
 import pytest
-from detection_rules.api_specific.tensor_array_not_used import TensorArrayNotUsedSmell
+from detection_rules.api_specific.tensor_array_not_used import (
+    TensorArrayNotUsedSmell,
+)
 
 
 @pytest.fixture
@@ -85,7 +87,8 @@ def test_detect_with_nested_concat(smell_detector):
         "def main():\n"
         "    x = tf.constant([1, 2, 3])\n"
         "    for i in range(3):\n"
-        "        x = tf.concat([x, tf.concat([tf.constant([i])], axis=0)], axis=0)\n"
+        "        x = tf.concat([x, tf.concat([tf.constant([i])], axis=0)]"
+        ", axis=0)\n"
     )
     tree = ast.parse(code)
     extracted_data = {

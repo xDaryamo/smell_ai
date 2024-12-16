@@ -39,7 +39,8 @@ def test_detect_no_smell(smell_detector):
 
 def test_detect_with_smell(smell_detector):
     """
-    Test the detect method when `forward()` is directly called on the model instance.
+    Test the detect method when `forward()`
+    is directly called on the model instance.
     """
     code = (
         "import torch\n"

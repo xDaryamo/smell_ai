@@ -1,5 +1,0 @@
-[run]
-omit =
-    test/*
-    */__init__.py
-    env/*

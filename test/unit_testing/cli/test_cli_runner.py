@@ -21,7 +21,9 @@ def test_execute_with_valid_arguments(mock_analyzer):
     args.max_workers = 5
 
     # Mock the methods of ProjectAnalyzer
-    mock_analyzer.analyze_project.return_value = 2  # Assume it finds 2 code smells
+    mock_analyzer.analyze_project.return_value = (
+        2  # Assume it finds 2 code smells
+    )
     mock_analyzer.clean_output_directory = MagicMock()
 
     # Initialize the CLI with mocked arguments and analyzer
@@ -33,10 +35,13 @@ def test_execute_with_valid_arguments(mock_analyzer):
 
         # Ensure the methods were called as expected
         mock_analyzer.analyze_project.assert_called_once_with("mock_input")
-        mock_print.assert_any_call("Analysis completed. Total code smells found: 2")
+        mock_print.assert_any_call(
+            "Analysis completed. Total code smells found: 2"
+        )
 
 
-# Test that the execute method raises an error for missing input or output arguments
+# Test that the execute method raises an error
+# for missing input or output arguments
 def test_execute_with_missing_arguments():
     args = MagicMock()
     args.input = None  # Missing input argument
@@ -77,7 +82,9 @@ def test_execute_with_invalid_max_workers(mock_analyzer):
     cli = CodeSmileCLI(args)
     cli.analyzer = mock_analyzer  # Inject the mock analyzer
 
-    with pytest.raises(ValueError, match="max_workers must be greater than 0."):
+    with pytest.raises(
+        ValueError, match="max_workers must be greater than 0."
+    ):
         cli.execute()
 
 
@@ -106,7 +113,9 @@ def test_execute_with_parallel_execution(mock_analyzer):
         cli.execute()
 
         # Ensure parallel execution method was called
-        mock_analyzer.analyze_projects_parallel.assert_called_once_with("mock_input", 5)
+        mock_analyzer.analyze_projects_parallel.assert_called_once_with(
+            "mock_input", 5
+        )
         mock_analyzer.merge_all_results.assert_called_once()
         mock_print.assert_any_call("Analysis results saved successfully.")
 
@@ -122,7 +131,9 @@ def test_execute_with_sequential_execution(mock_analyzer):
     args.max_workers = 5
 
     # Mock the methods of ProjectAnalyzer
-    mock_analyzer.analyze_project.return_value = 2  # Assume it finds 2 code smells
+    mock_analyzer.analyze_project.return_value = (
+        2  # Assume it finds 2 code smells
+    )
 
     # Initialize the CLI with mocked arguments and analyzer
     cli = CodeSmileCLI(args)
@@ -133,7 +144,9 @@ def test_execute_with_sequential_execution(mock_analyzer):
 
         # Ensure sequential execution method was called
         mock_analyzer.analyze_project.assert_called_once_with("mock_input")
-        mock_print.assert_any_call("Analysis completed. Total code smells found: 2")
+        mock_print.assert_any_call(
+            "Analysis completed. Total code smells found: 2"
+        )
 
 
 # Test for handling resume functionality
@@ -160,7 +173,9 @@ def test_execute_with_resume(mock_analyzer):
         # Check that clean_output_directory was not called due to resume
         mock_analyzer.clean_output_directory.assert_not_called()
         mock_analyzer.analyze_project.assert_called_once_with("mock_input")
-        mock_print.assert_any_call("Analysis completed. Total code smells found: 2")
+        mock_print.assert_any_call(
+            "Analysis completed. Total code smells found: 2"
+        )
 
 
 def test_print_configuration(mock_analyzer):
@@ -191,7 +206,9 @@ def test_print_configuration(mock_analyzer):
         mock_print.assert_any_call(f"Parallel execution: {args.parallel}")
         mock_print.assert_any_call(f"Resume execution: {args.resume}")
         mock_print.assert_any_call(f"Max Workers: {args.max_workers}")
-        mock_print.assert_any_call(f"Analyze multiple projects: {args.multiple}")
+        mock_print.assert_any_call(
+            f"Analyze multiple projects: {args.multiple}"
+        )
 
 
 def test_execute_with_resume_and_multiple_projects(mock_analyzer):
@@ -219,7 +236,8 @@ def test_execute_with_resume_and_multiple_projects(mock_analyzer):
 
         # Ensure clean_output_directory is not called due to resume
         mock_analyzer.clean_output_directory.assert_not_called()
-        # Ensure merge_all_results is called because multiple projects are being analyzed
+        # Ensure merge_all_results is
+        # called because multiple projects are being analyzed
         mock_analyzer.merge_all_results.assert_called_once()
         mock_print.assert_any_call("Analysis results saved successfully.")
 
@@ -237,5 +255,7 @@ def test_execute_with_invalid_max_workers_and_parallel(mock_analyzer):
     cli = CodeSmileCLI(args)
     cli.analyzer = mock_analyzer  # Inject the mock analyzer
 
-    with pytest.raises(ValueError, match="max_workers must be greater than 0."):
+    with pytest.raises(
+        ValueError, match="max_workers must be greater than 0."
+    ):
         cli.execute()

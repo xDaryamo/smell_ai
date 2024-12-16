@@ -27,7 +27,9 @@ def test_extract_variable_definitions(mocker, extractor):
     mock_assign_2.targets = [mock_name_2]
 
     # Mock ast.walk to return these assignments
-    mock_walk = mocker.patch("ast.walk", return_value=[mock_assign_1, mock_assign_2])
+    mock_walk = mocker.patch(
+        "ast.walk", return_value=[mock_assign_1, mock_assign_2]
+    )
 
     # Simulate the AST of a function node
     fun_node = MagicMock(spec=ast.FunctionDef)
@@ -56,7 +58,9 @@ def test_track_variable_usage(mocker, extractor):
     mock_name_2.id = "y"  # Variable 'y' is used
 
     # Mock ast.walk to return these Name nodes
-    mock_walk = mocker.patch("ast.walk", return_value=[mock_name_1, mock_name_2])
+    mock_walk = mocker.patch(
+        "ast.walk", return_value=[mock_name_1, mock_name_2]
+    )
 
     # Simulate the AST of a function node
     fun_node = MagicMock(spec=ast.FunctionDef)

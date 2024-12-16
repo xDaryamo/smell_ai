@@ -15,7 +15,8 @@ def smell_detector():
 
 def test_detect_no_smell(smell_detector):
     """
-    Test the detect method when no misuse of `use_deterministic_algorithms` is present.
+    Test the detect method when no misuse of
+    `use_deterministic_algorithms` is present.
     """
     code = (
         "import torch\n"
@@ -60,7 +61,9 @@ def test_detect_without_torch_library(smell_detector):
     """
     Test the detect method when the PyTorch library is not imported.
     """
-    code = "\n" "def main():\n" "\n" "    th.use_deterministic_algorithms(True)\n"
+    code = (
+        "\n" "def main():\n" "\n" "    th.use_deterministic_algorithms(True)\n"
+    )
     tree = ast.parse(code)
     extracted_data = {
         "libraries": {},  # No PyTorch alias

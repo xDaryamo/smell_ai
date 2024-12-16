@@ -15,14 +15,16 @@ def smell_detector():
 
 def test_detect_no_smell(smell_detector):
     """
-    Test the detect method when the merge API is correctly called with all parameters set.
+    Test the detect method when the merge API is
+    correctly called with all parameters set.
     """
     code = (
         "import pandas as pd\n"
         "def main():\n"
         "    df1 = pd.DataFrame({'key': [1, 2], 'value': ['a', 'b']})\n"
         "    df2 = pd.DataFrame({'key': [1, 2], 'value': ['x', 'y']})\n"
-        "    result = df1.merge(df2, how='inner', on='key', validate='one_to_one')\n"
+        "    result = df1.merge(df2, how='inner', on='key',"
+        " validate='one_to_one')\n"
     )
     tree = ast.parse(code)
     extracted_data = {
@@ -60,7 +62,8 @@ def test_detect_missing_parameters(smell_detector):
 
 def test_detect_incomplete_parameters(smell_detector):
     """
-    Test the detect method when the merge API is called with incomplete parameters.
+    Test the detect method when the merge API
+    is called with incomplete parameters.
     """
     code = (
         "import pandas as pd\n"
@@ -105,7 +108,8 @@ def test_detect_without_pandas_library(smell_detector):
 
 def test_detect_multiple_smells(smell_detector):
     """
-    Test the detect method when multiple merge calls have missing or incomplete parameters.
+    Test the detect method when multiple merge
+    calls have missing or incomplete parameters.
     """
     code = (
         "import pandas as pd\n"

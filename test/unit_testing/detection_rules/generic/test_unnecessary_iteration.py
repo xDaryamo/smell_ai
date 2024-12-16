@@ -1,6 +1,8 @@
 import ast
 import pytest
-from detection_rules.generic.unnecessary_iteration import UnnecessaryIterationSmell
+from detection_rules.generic.unnecessary_iteration import (
+    UnnecessaryIterationSmell,
+)
 
 
 @pytest.fixture

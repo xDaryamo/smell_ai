@@ -48,7 +48,10 @@ def test_detect_with_smell(smell_detector):
     result = smell_detector.detect(tree, extracted_data)
     assert len(result) == 1  # One smell should be detected
     assert result[0]["name"] == "memory_not_freed"
-    assert "Memory not freed after model definition" in result[0]["additional_info"]
+    assert (
+        "Memory not freed after model definition"
+        in result[0]["additional_info"]
+    )
     assert result[0]["line"] == 3  # Line where the smell occurs
 
 
@@ -76,7 +79,11 @@ def test_detect_without_tensorflow_library(smell_detector):
     """
     Test the detect method when TensorFlow library is not imported.
     """
-    code = "def main():\n" "    for i in range(10):\n" "        model = Sequential()\n"
+    code = (
+        "def main():\n"
+        "    for i in range(10):\n"
+        "        model = Sequential()\n"
+    )
     tree = ast.parse(code)
     extracted_data = {
         "libraries": {},  # TensorFlow not imported

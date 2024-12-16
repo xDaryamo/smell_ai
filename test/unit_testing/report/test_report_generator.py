@@ -1,6 +1,4 @@
 import io
-import os
-from matplotlib import pyplot as plt
 import pytest
 import pandas as pd
 from report.report_generator import ReportGenerator
@@ -27,7 +25,8 @@ def mock_data():
 @pytest.fixture
 def mock_file_paths():
     """
-    Fixture to simulate file paths that would be processed by the report generator.
+    Fixture to simulate file paths that would
+    be processed by the report generator.
     """
     return [
         "./test_project_details/smell_data_1.csv",
@@ -57,13 +56,16 @@ def test_load_data(generator, mock_data, mocker, mock_file_paths):
     assert len(df) == len(mock_data) * len(mock_file_paths)
 
 
-def test_find_project_details(generator, mocker, mock_file_paths):
+def test_find_project_details(generator, mocker):
     """
-    Test the `_find_project_details` method to verify it finds the project details folder and files.
+    Test the `_find_project_details` method to
+    verify it finds the project details folder and files.
     """
 
     mocker.patch("os.path.isdir", return_value=True)
-    mocker.patch("os.listdir", return_value=["smell_data_1.csv", "smell_data_2.csv"])
+    mocker.patch(
+        "os.listdir", return_value=["smell_data_1.csv", "smell_data_2.csv"]
+    )
 
     file_paths = generator._find_project_details()
 
@@ -71,12 +73,10 @@ def test_find_project_details(generator, mocker, mock_file_paths):
     assert file_paths[0].endswith("smell_data_1.csv")
 
 
-import os
-
-
 def test_smell_report(generator, mock_data, mocker):
     """
-    Test the `smell_report` method to ensure it generates and saves the correct report.
+    Test the `smell_report` method to ensure
+    it generates and saves the correct report.
     """
     pandas_to_csv_call = mocker.patch("pandas.DataFrame.to_csv")
 
@@ -89,10 +89,16 @@ def test_smell_report(generator, mock_data, mocker):
 
 def test_project_report(generator, mock_data, mocker):
     """
-    Test the `project_report` method to verify it generates and saves the correct project report.
+    Test the `project_report` method to verify
+    it generates and saves the correct project report.
     """
 
-    mock_data["project_name"] = ["project1", "project2", "project1", "project2"]
+    mock_data["project_name"] = [
+        "project1",
+        "project2",
+        "project1",
+        "project2",
+    ]
 
     pandas_to_csv_call = mocker.patch("pandas.DataFrame.to_csv")
 
@@ -105,9 +111,15 @@ def test_project_report(generator, mock_data, mocker):
 
 def test_summary_report(generator, mock_data, mocker):
     """
-    Test the `summary_report` method to ensure it generates and saves the correct summary Excel report.
+    Test the `summary_report` method to ensure it
+    generates and saves the correct summary Excel report.
     """
-    mock_data["project_name"] = ["project1", "project2", "project1", "project2"]
+    mock_data["project_name"] = [
+        "project1",
+        "project2",
+        "project1",
+        "project2",
+    ]
 
     mock_excel_writer = mocker.patch("pandas.ExcelWriter", autospec=True)
 
@@ -126,7 +138,8 @@ def test_summary_report(generator, mock_data, mocker):
 
 def test_visualize_smell_report(generator, mock_data, mocker):
     """
-    Test the `visualize_smell_report` method to ensure it generates and saves the correct plot.
+    Test the `visualize_smell_report` method
+    to ensure it generates and saves the correct plot.
     """
     mock_savefig = mocker.patch("matplotlib.pyplot.savefig")
     generator.visualize_smell_report(mock_data)

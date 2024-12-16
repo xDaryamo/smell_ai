@@ -35,7 +35,8 @@ def test_detect_no_smell(detector):
 
 def test_detect_with_smell(detector):
     """
-    Test the detect method when a single misuse of the `values` attribute is present.
+    Test the detect method when a single
+    misuse of the `values` attribute is present.
     """
     code = (
         "import pandas as pd\n"
@@ -62,7 +63,11 @@ def test_detect_without_pandas_library(detector):
     """
     Test the detect method when the pandas library is not imported.
     """
-    code = "def no_pandas():\n" "    df = {'a': [1, 2, 3]}\n" "    value = df['a'][0]\n"
+    code = (
+        "def no_pandas():\n"
+        "    df = {'a': [1, 2, 3]}\n"
+        "    value = df['a'][0]\n"
+    )
     tree = ast.parse(code)
     extracted_data = {
         "libraries": {},  # No pandas alias
@@ -75,7 +80,8 @@ def test_detect_without_pandas_library(detector):
 
 def test_detect_with_multiple_smells(detector):
     """
-    Test the detect method when multiple misuses of the `values` attribute are present.
+    Test the detect method when multiple
+    misuses of the `values` attribute are present.
     """
     code = (
         "import pandas as pd\n"

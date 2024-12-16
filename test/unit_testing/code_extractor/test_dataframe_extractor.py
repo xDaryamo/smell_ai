@@ -7,7 +7,10 @@ import textwrap
 
 @pytest.fixture
 def extractor():
-    """Create and return an instance of DataFrameExtractor with loaded methods."""
+    """
+    Create and return an instance of
+    DataFrameExtractor with loaded methods.
+    """
     method_csv = StringIO("method\nhead\nmerge\n")
     extractor = dataframe_extractor.DataFrameExtractor()
     extractor.load_dataframe_dict(method_csv)
@@ -74,7 +77,9 @@ def complex_subscript_access_code():
 def parse_function(code):
     """Helper method to parse code and extract the function node."""
     tree = ast.parse(code)
-    return next(node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef))
+    return next(
+        node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)
+    )
 
 
 def test_load_dataframe_dict(extractor):
@@ -85,15 +90,21 @@ def test_load_dataframe_dict(extractor):
 def test_extract_dataframe_variables(extractor, sample_code):
     """Test extraction of DataFrame variables."""
     function_node = parse_function(sample_code)
-    dataframe_vars = extractor.extract_dataframe_variables(function_node, alias="pd")
+    dataframe_vars = extractor.extract_dataframe_variables(
+        function_node, alias="pd"
+    )
     assert sorted(dataframe_vars) == ["df", "other_df", "result"]
 
 
 def test_track_dataframe_methods(extractor, sample_code):
     """Test tracking of DataFrame methods."""
     function_node = parse_function(sample_code)
-    dataframe_vars = extractor.extract_dataframe_variables(function_node, alias="pd")
-    method_usage = extractor.track_dataframe_methods(function_node, dataframe_vars)
+    dataframe_vars = extractor.extract_dataframe_variables(
+        function_node, alias="pd"
+    )
+    method_usage = extractor.track_dataframe_methods(
+        function_node, dataframe_vars
+    )
     assert method_usage == {
         "df": ["head"],
         "other_df": ["merge"],
@@ -104,52 +115,74 @@ def test_track_dataframe_methods(extractor, sample_code):
 def test_track_dataframe_accesses(extractor, sample_code):
     """Test tracking of DataFrame column accesses."""
     function_node = parse_function(sample_code)
-    dataframe_vars = extractor.extract_dataframe_variables(function_node, alias="pd")
-    accesses = extractor.track_dataframe_accesses(function_node, dataframe_vars)
+    dataframe_vars = extractor.extract_dataframe_variables(
+        function_node, alias="pd"
+    )
+    accesses = extractor.track_dataframe_accesses(
+        function_node, dataframe_vars
+    )
     assert accesses == {"df": ["a"], "other_df": [], "result": []}
 
 
 def test_empty_function(extractor, empty_function_code):
     """Test with an empty function node."""
     function_node = parse_function(empty_function_code)
-    dataframe_vars = extractor.extract_dataframe_variables(function_node, alias="pd")
+    dataframe_vars = extractor.extract_dataframe_variables(
+        function_node, alias="pd"
+    )
     assert dataframe_vars == []
 
-    method_usage = extractor.track_dataframe_methods(function_node, dataframe_vars)
+    method_usage = extractor.track_dataframe_methods(
+        function_node, dataframe_vars
+    )
     assert method_usage == {}
 
-    accesses = extractor.track_dataframe_accesses(function_node, dataframe_vars)
+    accesses = extractor.track_dataframe_accesses(
+        function_node, dataframe_vars
+    )
     assert accesses == {}
 
 
 def test_nested_dataframe_calls(extractor, nested_calls_code):
     """Test nested DataFrame calls."""
     function_node = parse_function(nested_calls_code)
-    dataframe_vars = extractor.extract_dataframe_variables(function_node, alias="pd")
+    dataframe_vars = extractor.extract_dataframe_variables(
+        function_node, alias="pd"
+    )
     assert sorted(dataframe_vars) == ["df", "result"]
 
-    method_usage = extractor.track_dataframe_methods(function_node, dataframe_vars)
+    method_usage = extractor.track_dataframe_methods(
+        function_node, dataframe_vars
+    )
     assert method_usage == {
         "df": ["merge"],
         "result": [],
     }
 
-    accesses = extractor.track_dataframe_accesses(function_node, dataframe_vars)
+    accesses = extractor.track_dataframe_accesses(
+        function_node, dataframe_vars
+    )
     assert accesses == {"df": ["a"], "result": []}
 
 
 def test_no_pandas_alias(extractor, no_pandas_alias_code):
     """Test function that uses Pandas without aliasing."""
     function_node = parse_function(no_pandas_alias_code)
-    dataframe_vars = extractor.extract_dataframe_variables(function_node, alias="pd")
+    dataframe_vars = extractor.extract_dataframe_variables(
+        function_node, alias="pd"
+    )
     assert dataframe_vars == []
 
 
 def test_complex_subscript_access(extractor, complex_subscript_access_code):
     """Test for DataFrame accesses with non-constant keys."""
     function_node = parse_function(complex_subscript_access_code)
-    dataframe_vars = extractor.extract_dataframe_variables(function_node, alias="pd")
-    accesses = extractor.track_dataframe_accesses(function_node, dataframe_vars)
+    dataframe_vars = extractor.extract_dataframe_variables(
+        function_node, alias="pd"
+    )
+    accesses = extractor.track_dataframe_accesses(
+        function_node, dataframe_vars
+    )
 
     # Non-constant keys should not be tracked
     assert accesses == {"df": []}
@@ -189,7 +222,9 @@ def test_aliasing_dataframe_name(extractor, mocker):
     """
     )
     function_node = parse_function(aliasing_code)
-    dataframe_vars = extractor.extract_dataframe_variables(function_node, alias="pd")
+    dataframe_vars = extractor.extract_dataframe_variables(
+        function_node, alias="pd"
+    )
 
     # Using mocker to mock the `df1` and `df2` assignments
     mocker.patch.object(

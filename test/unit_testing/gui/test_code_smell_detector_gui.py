@@ -1,4 +1,3 @@
-import sys
 import pytest
 import tkinter as tk
 from gui.code_smell_detector_gui import CodeSmellDetectorGUI
@@ -7,8 +6,10 @@ from gui.code_smell_detector_gui import CodeSmellDetectorGUI
 @pytest.fixture
 def gui(mocker):
     """
-    Fixture to create a tkinter root window and initialize the CodeSmellDetectorGUI.
-    Mock Tk and other tkinter dialog components to avoid errors in headless environments.
+    Fixture to create a tkinter root window
+    and initialize the CodeSmellDetectorGUI.
+    Mock Tk and other tkinter dialog
+    components to avoid errors in headless environments.
     """
 
     mocker.patch("tkinter.Tk", return_value=tk.Tk())
@@ -23,7 +24,8 @@ def gui(mocker):
 
 def test_choose_input_path(gui, mocker):
     """
-    Test the `choose_input_path` method to ensure the input path label is updated.
+    Test the `choose_input_path` method
+    to ensure the input path label is updated.
     """
 
     mocker.patch(
@@ -37,7 +39,8 @@ def test_choose_input_path(gui, mocker):
 
 def test_choose_output_path(gui, mocker):
     """
-    Test the `choose_output_path` method to ensure the output path label is updated.
+    Test the `choose_output_path` method to
+    ensure the output path label is updated.
     """
     mocker.patch(
         "tkinter.filedialog.askdirectory", return_value="/mock/output/path"

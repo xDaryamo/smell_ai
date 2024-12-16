@@ -1,6 +1,6 @@
 import ast
 import pytest
-from detection_rules.api_specific.gradients_not_cleared_before_backward_propagation import (
+from detection_rules.api_specific.gradients_not_cleared_before_backward_propagation import (  # noqa: E501
     GradientsNotClearedSmell,
 )
 
@@ -45,7 +45,9 @@ def test_detect_no_smell(smell_detector):
                         ctx=ast.Load(),
                     ),
                     args=[],
-                    keywords=[ast.keyword(arg="lr", value=ast.Constant(value=0.01))],
+                    keywords=[
+                        ast.keyword(arg="lr", value=ast.Constant(value=0.01))
+                    ],
                 ),
             ),
             "loss": ast.Assign(
@@ -58,7 +60,9 @@ def test_detect_no_smell(smell_detector):
                     ),
                     args=[ast.Constant(value=0.0)],
                     keywords=[
-                        ast.keyword(arg="requires_grad", value=ast.Constant(value=True))
+                        ast.keyword(
+                            arg="requires_grad", value=ast.Constant(value=True)
+                        )
                     ],
                 ),
             ),
@@ -106,7 +110,9 @@ def test_detect_with_smell(smell_detector):
                         ctx=ast.Load(),
                     ),
                     args=[],
-                    keywords=[ast.keyword(arg="lr", value=ast.Constant(value=0.01))],
+                    keywords=[
+                        ast.keyword(arg="lr", value=ast.Constant(value=0.01))
+                    ],
                 ),
             ),
             "loss": ast.Assign(
@@ -119,7 +125,9 @@ def test_detect_with_smell(smell_detector):
                     ),
                     args=[ast.Constant(value=0.0)],
                     keywords=[
-                        ast.keyword(arg="requires_grad", value=ast.Constant(value=True))
+                        ast.keyword(
+                            arg="requires_grad", value=ast.Constant(value=True)
+                        )
                     ],
                 ),
             ),
@@ -134,7 +142,8 @@ def test_detect_with_smell(smell_detector):
     result = smell_detector.detect(tree, extracted_data)
     assert len(result) == 1  # One smell should be detected
     assert (
-        "`zero_grad()` not called before `backward()`" in result[0]["additional_info"]
+        "`zero_grad()` not called before `backward()`"
+        in result[0]["additional_info"]
     )
     assert result[0]["line"] == 6  # Line where the smell occurs
 
@@ -196,7 +205,9 @@ def test_detect_with_multiple_smells(smell_detector):
                         ctx=ast.Load(),
                     ),
                     args=[],
-                    keywords=[ast.keyword(arg="lr", value=ast.Constant(value=0.01))],
+                    keywords=[
+                        ast.keyword(arg="lr", value=ast.Constant(value=0.01))
+                    ],
                 ),
             ),
             "loss": ast.Assign(
@@ -209,7 +220,9 @@ def test_detect_with_multiple_smells(smell_detector):
                     ),
                     args=[ast.Constant(value=0.0)],
                     keywords=[
-                        ast.keyword(arg="requires_grad", value=ast.Constant(value=True))
+                        ast.keyword(
+                            arg="requires_grad", value=ast.Constant(value=True)
+                        )
                     ],
                 ),
             ),
@@ -223,7 +236,9 @@ def test_detect_with_multiple_smells(smell_detector):
                     ),
                     args=[ast.Constant(value=0.1)],
                     keywords=[
-                        ast.keyword(arg="requires_grad", value=ast.Constant(value=True))
+                        ast.keyword(
+                            arg="requires_grad", value=ast.Constant(value=True)
+                        )
                     ],
                 ),
             ),

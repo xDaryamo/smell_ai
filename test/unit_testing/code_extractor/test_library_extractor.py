@@ -102,7 +102,10 @@ def test_get_library_of_node_function_call(mocker, extractor):
 
 
 def test_get_library_of_node_unknown(mocker, extractor):
-    """Test getting 'Unknown' for a node that does not belong to any known library."""
+    """
+    Test getting 'Unknown' for a node
+    that does not belong to any known library.
+    """
     code = "print('hello world')"
     tree = ast.parse(code)
     node = tree.body[0].value  # Get the print function call

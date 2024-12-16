@@ -60,7 +60,11 @@ def test_detect_with_smell_read_csv(smell_detector):
     """
     Test the detect method when dtype is not explicitly set in read_csv.
     """
-    code = "import pandas as pd\n" "def main():\n" "    df = pd.read_csv('file.csv')\n"
+    code = (
+        "import pandas as pd\n"
+        "def main():\n"
+        "    df = pd.read_csv('file.csv')\n"
+    )
     tree = ast.parse(code)
     extracted_data = {
         "libraries": {"pandas": "pd"},
@@ -95,7 +99,8 @@ def test_detect_without_pandas_library(smell_detector):
 
 def test_detect_with_multiple_smells(smell_detector):
     """
-    Test the detect method when multiple instances of missing dtype are present.
+    Test the detect method when multiple
+    instances of missing dtype are present.
     """
     code = (
         "import pandas as pd\n"

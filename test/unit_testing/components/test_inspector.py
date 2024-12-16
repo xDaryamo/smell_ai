@@ -8,11 +8,19 @@ from components.inspector import Inspector
 @pytest.fixture
 def mock_inspector_dependencies(mocker):
     # Use mocker.patch to mock dependencies
-    mock_open_file = mocker.patch("builtins.open", new_callable=mocker.mock_open)
+    mock_open_file = mocker.patch(
+        "builtins.open", new_callable=mocker.mock_open
+    )
     mock_ast_parse = mocker.patch("ast.parse")
-    MockLibraryExtractor = mocker.patch("components.inspector.LibraryExtractor")
-    MockVariableExtractor = mocker.patch("components.inspector.VariableExtractor")
-    MockDataFrameExtractor = mocker.patch("components.inspector.DataFrameExtractor")
+    MockLibraryExtractor = mocker.patch(
+        "components.inspector.LibraryExtractor"
+    )
+    MockVariableExtractor = mocker.patch(
+        "components.inspector.VariableExtractor"
+    )
+    MockDataFrameExtractor = mocker.patch(
+        "components.inspector.DataFrameExtractor"
+    )
     MockModelExtractor = mocker.patch("components.inspector.ModelExtractor")
     MockRuleChecker = mocker.patch("components.inspector.RuleChecker")
 
@@ -32,8 +40,12 @@ def test_inspect(mock_inspector_dependencies):
     mock_open_file = mock_inspector_dependencies["mock_open"]
     mock_ast_parse = mock_inspector_dependencies["mock_ast_parse"]
     MockLibraryExtractor = mock_inspector_dependencies["MockLibraryExtractor"]
-    MockVariableExtractor = mock_inspector_dependencies["MockVariableExtractor"]
-    MockDataFrameExtractor = mock_inspector_dependencies["MockDataFrameExtractor"]
+    MockVariableExtractor = mock_inspector_dependencies[
+        "MockVariableExtractor"
+    ]
+    MockDataFrameExtractor = mock_inspector_dependencies[
+        "MockDataFrameExtractor"
+    ]
     MockModelExtractor = mock_inspector_dependencies["MockModelExtractor"]
     MockRuleChecker = mock_inspector_dependencies["MockRuleChecker"]
 
@@ -46,7 +58,10 @@ def test_inspect(mock_inspector_dependencies):
 
     # Configure mocks with return values
     mock_library_extractor.get_library_aliases.return_value = {"pandas": "pd"}
-    mock_variable_extractor.extract_variable_definitions.return_value = ["var1", "var2"]
+    mock_variable_extractor.extract_variable_definitions.return_value = [
+        "var1",
+        "var2",
+    ]
     mock_data_frame_extractor.extract_dataframe_variables.return_value = [
         "df_var1",
         "df_var2",
@@ -55,12 +70,28 @@ def test_inspect(mock_inspector_dependencies):
     mock_model_extractor.tensor_operations_dict = {
         "operation": ["tensor_op1", "tensor_op2"]
     }
-    mock_model_extractor.load_model_methods.return_value = {"method1": "details"}
+    mock_model_extractor.load_model_methods.return_value = {
+        "method1": "details"
+    }
 
     mock_rule_checker.rule_check.return_value = pd.DataFrame(
         data=[
-            ["mock_file.py", "my_function", "smell1", 10, "description1", "info1"],
-            ["mock_file.py", "my_function", "smell2", 15, "description2", "info2"],
+            [
+                "mock_file.py",
+                "my_function",
+                "smell1",
+                10,
+                "description1",
+                "info1",
+            ],
+            [
+                "mock_file.py",
+                "my_function",
+                "smell2",
+                15,
+                "description2",
+                "info2",
+            ],
         ],
         columns=[
             "filename",

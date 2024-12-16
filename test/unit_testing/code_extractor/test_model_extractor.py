@@ -29,7 +29,9 @@ def test_load_model_dict(mocker, extractor):
 
 def test_load_model_dict_file_not_found(mocker, extractor):
     """Test that FileNotFoundError is raised when model file doesn't exist."""
-    mock_exists = mocker.patch("os.path.exists", return_value=False)
+    mock_exists = mocker.patch(  # noqa: F841
+        "os.path.exists", return_value=False
+    )
 
     with pytest.raises(FileNotFoundError):
         extractor.load_model_dict()
@@ -37,7 +39,9 @@ def test_load_model_dict_file_not_found(mocker, extractor):
 
 def test_load_model_dict_missing_columns(mocker, extractor):
     """Test that ValueError is raised if the expected columns are missing."""
-    mock_exists = mocker.patch("os.path.exists", return_value=True)
+    mock_exists = mocker.patch(  # noqa: F841
+        "os.path.exists", return_value=True
+    )
     mock_read_csv = mocker.patch("pandas.read_csv")
     mock_df = MagicMock()
     mock_df.columns = ["other_column"]
@@ -51,7 +55,9 @@ def test_load_tensor_operations_dict(mocker, extractor):
     """Test loading the tensor operations dictionary from a CSV file."""
     mock_exists = mocker.patch("os.path.exists", return_value=True)
 
-    df = pd.DataFrame({"number_of_tensors_input": [2, 1], "operation": ["op1", "op2"]})
+    df = pd.DataFrame(
+        {"number_of_tensors_input": [2, 1], "operation": ["op1", "op2"]}
+    )
     mock_read_csv = mocker.patch("pandas.read_csv", return_value=df)
 
     tensor_dict = extractor.load_tensor_operations_dict()
@@ -63,16 +69,25 @@ def test_load_tensor_operations_dict(mocker, extractor):
 
 
 def test_load_tensor_operations_dict_file_not_found(mocker, extractor):
-    """Test that FileNotFoundError is raised when tensor operations file doesn't exist."""
-    mock_exists = mocker.patch("os.path.exists", return_value=False)
-
+    """
+    Test that FileNotFoundError is raised
+    when tensor operations file doesn't exist.
+    """
+    mock_exists = mocker.patch(  # noqa: F841
+        "os.path.exists", return_value=False
+    )
     with pytest.raises(FileNotFoundError):
         extractor.load_tensor_operations_dict()
 
 
 def test_load_tensor_operations_dict_missing_columns(mocker, extractor):
-    """Test that ValueError is raised if the expected columns are missing in tensor operations CSV."""
-    mock_exists = mocker.patch("os.path.exists", return_value=True)
+    """
+    Test that ValueError is raised if the
+    expected columns are missing in tensor operations CSV.
+    """
+    mock_exists = mocker.patch(  # noqa: F841
+        "os.path.exists", return_value=True
+    )
     mock_read_csv = mocker.patch("pandas.read_csv")
     mock_df = MagicMock()
     mock_df.columns = ["other_column"]
@@ -113,7 +128,10 @@ def test_check_model_method(mocker, extractor):
 
 
 def test_check_model_method_not_in_library(mocker, extractor):
-    """Test that check_model_method returns False if model is not in the specified library."""
+    """
+    Test that check_model_method returns
+    False if model is not in the specified library.
+    """
     extractor.model_dict = {
         "method": ["method1", "method2"],
         "library": ["lib1", "lib2"],
