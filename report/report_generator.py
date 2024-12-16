@@ -11,7 +11,8 @@ class ReportGenerator:
         Initializes the ReportGenerator with input and output paths.
 
         Parameters:
-        - input_path (str): The path to the directory or CSV file containing the input data.
+        - input_path (str): The path to the
+          directory or CSV file containing the input data.
         - output_path (str): The directory where the reports will be saved.
         """
         self.input_path = input_path
@@ -19,20 +20,24 @@ class ReportGenerator:
 
     def _find_project_details(self):
         """
-        Checks if the input path is the 'project_details' folder or contains it.
+        Checks if the input path is the 'project_details'
+        folder or contains it.
         If found, gathers all CSV files for processing.
 
         Returns:
-        - list: A list of CSV file paths within the 'project_details' directory.
+        - list: A list of CSV file paths within the
+         'project_details' directory.
         """
         # Check if the input path is directly the `project_details` folder
-        if os.path.basename(self.input_path) == "project_details" and os.path.isdir(
+        if os.path.basename(
             self.input_path
-        ):
+        ) == "project_details" and os.path.isdir(self.input_path):
             project_details_path = self.input_path
         else:
             # Search for a `project_details` folder inside the input path
-            project_details_path = os.path.join(self.input_path, "project_details")
+            project_details_path = os.path.join(
+                self.input_path, "project_details"
+            )
             if not os.path.isdir(project_details_path):
                 raise FileNotFoundError(
                     f"'project_details' folder not found in {self.input_path}."
@@ -45,7 +50,9 @@ class ReportGenerator:
             if f.endswith(".csv")
         ]
         if not csv_files:
-            raise FileNotFoundError(f"No CSV files found in {project_details_path}.")
+            raise FileNotFoundError(
+                f"No CSV files found in {project_details_path}."
+            )
         return csv_files
 
     def _load_data(self, file_paths):
@@ -78,7 +85,10 @@ class ReportGenerator:
         print("General smell report saved to 'general_overview.csv'.")
 
     def project_report(self, df):
-        """Generates a project-specific report treating files as part of separate projects."""
+        """
+        Generates a project-specific report
+        treating files as part of separate projects.
+        """
         # Extract project names from file paths
         df["project_name"] = df["filename"].apply(
             lambda x: os.path.basename(os.path.dirname(x)) or "root"
@@ -117,8 +127,12 @@ class ReportGenerator:
         )
         output_file = os.path.join(self.output_path, "summary_report.xlsx")
         with pd.ExcelWriter(output_file, engine="openpyxl") as writer:
-            general_report.to_excel(writer, sheet_name="General Overview", index=False)
-            project_summary.to_excel(writer, sheet_name="Project Overview", index=False)
+            general_report.to_excel(
+                writer, sheet_name="General Overview", index=False
+            )
+            project_summary.to_excel(
+                writer, sheet_name="Project Overview", index=False
+            )
             for project_name, project_df in df.groupby("project_name"):
                 details = (
                     project_df.groupby("smell_name")["filename"]
@@ -129,7 +143,9 @@ class ReportGenerator:
                 sanitized_name = project_name[
                     :30
                 ]  # Excel sheet names must be <= 31 chars
-                details.to_excel(writer, sheet_name=sanitized_name, index=False)
+                details.to_excel(
+                    writer, sheet_name=sanitized_name, index=False
+                )
         print(f"Summary report saved to '{output_file}'.")
 
     def visualize_smell_report(self, df):
@@ -193,10 +209,16 @@ def main():
         description="Generate reports for code smell analysis."
     )
     parser.add_argument(
-        "--input", type=str, required=True, help="Path to the input directory or file."
+        "--input",
+        type=str,
+        required=True,
+        help="Path to the input directory or file.",
     )
     parser.add_argument(
-        "--output", type=str, required=True, help="Directory to save the reports."
+        "--output",
+        type=str,
+        required=True,
+        help="Directory to save the reports.",
     )
 
     args = parser.parse_args()
