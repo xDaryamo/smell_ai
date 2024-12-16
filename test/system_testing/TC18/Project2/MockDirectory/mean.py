@@ -1,8 +1,9 @@
 def calcola_media(numeri):
-    
+
     if not numeri:
         return None
     return sum(numeri) / len(numeri)
+
 
 if __name__ == "__main__":
     lista_numeri = [10, 20, 30, 40, 50]

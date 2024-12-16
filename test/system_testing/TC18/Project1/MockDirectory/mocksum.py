@@ -1,7 +1,7 @@
 def sum_numbers(numbers):
     if not numbers:
         return 0
-    
+
     total = 0
     for number in numbers:
         total += number
