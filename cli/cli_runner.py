@@ -27,9 +27,9 @@ class CodeSmileCLI:
             print("Error: Please specify both input and output folders.")
             exit(1)
 
-        # Validate max_workers for parallel execution
-        if self.args.parallel and self.args.max_workers <= 0:
-            raise ValueError("max_workers must be greater than 0.")
+        # Validate max_walkers for parallel execution
+        if self.args.parallel and self.args.max_walkers <= 0:
+            raise ValueError("max_walkers must be greater than 0.")
 
     def execute(self):
         """
@@ -43,7 +43,7 @@ class CodeSmileCLI:
         print(f"Output folder: {self.args.output}")
         print(f"Parallel execution: {self.args.parallel}")
         print(f"Resume execution: {self.args.resume}")
-        print(f"Max Workers: {self.args.max_workers}")
+        print(f"Max Walkers: {self.args.max_walkers}")
         print(f"Analyze multiple projects: {self.args.multiple}")
 
         if not self.args.resume:
@@ -52,7 +52,7 @@ class CodeSmileCLI:
         if self.args.multiple:
             if self.args.parallel:
                 self.analyzer.analyze_projects_parallel(
-                    self.args.input, self.args.max_workers
+                    self.args.input, self.args.max_walkers
                 )
             else:
                 self.analyzer.analyze_projects_sequential(
@@ -82,7 +82,7 @@ def main():
         "--output", type=str, help="Path to the output folder", required=True
     )
     parser.add_argument(
-        "--max_workers",
+        "--max_walkers",
         type=int,
         default=5,
         help="Number of workers for parallel execution (default: 5)",
