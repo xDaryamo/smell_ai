@@ -1,6 +1,8 @@
 /input/projects/
 /env/
-
+.env
+/datasets/raw/**/.git/
+/datasets/raw/**/.github/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
