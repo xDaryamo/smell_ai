@@ -4,7 +4,6 @@
 
 CodeSmile is a static analysis tool designed to detect **machine learning-specific code smells** in Python projects. It identifies suboptimal implementation patterns that impact the quality, maintainability, and performance of ML code. The tool uses **Abstract Syntax Tree (AST)** parsing for rule-based detection and is designed to aid developers and researchers in improving code quality.
 
----
 
 ## Features
 
@@ -12,7 +11,6 @@ CodeSmile is a static analysis tool designed to detect **machine learning-specif
 - **Execution Modes**: Run via **CLI** for batch processing or through an **interactive GUI**.
 - **Code Quality Insights**: Provides detailed reports on identified code smells, including location and remediation hints.
 
----
 
 ## Code Smells Detected
 
@@ -39,7 +37,7 @@ CodeSmile is a static analysis tool designed to detect **machine learning-specif
 | PyTorch Call Method Misused            | Direct use of `self.net.forward()` instead of calling `self.net()` in PyTorch.               |
 | TensorArray Not Used                   | Using `tf.constant()` inefficiently in loops instead of `tf.TensorArray()`.                  |
 
----
+
 
 ## Installation
 
@@ -51,7 +49,7 @@ cd codesmile
 pip install -r requirements.txt
 ```
 
----
+
 
 ## Usage
 
@@ -78,7 +76,7 @@ Run parallel analysis with 4 workers:
 python -m cli.cli_runner --input /projects/ml_code --output /analysis_results --parallel --max_walkers 4
 ```
 
----
+
 
 ### 2. Graphical User Interface (GUI)
 
@@ -92,7 +90,7 @@ python -m gui.gui_runner
 2. Choose options like parallel execution and number of workers.
 3. Click **Run** to start the analysis.
 
----
+
 
 ## Output
 
@@ -107,7 +105,7 @@ The analysis results are saved in **CSV format** in the specified output folder.
 
 For multiple projects, a summary file named **overview.csv** consolidates all results.
 
----
+
 
 ## Acknowledgments
 
@@ -117,6 +115,8 @@ This project is a **contribution** to the work presented in the paper:
 - [Read the full paper here](https://arxiv.org/abs/2403.08311)
 
 The improvements implemented in this project were carried out by **[Dario Mazza](https://github.com/xDaryamo)** and **[Nicolò Delogu](https://github.com/XJustUnluckyX)**. This work was completed as part of the *Software Engineering: Management and Evolution* course within the Master's Degree program in Computer Science.
+
+
 ---
 
 
