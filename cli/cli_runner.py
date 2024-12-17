@@ -43,7 +43,7 @@ class CodeSmileCLI:
         print(f"Output folder: {self.args.output}")
         print(f"Parallel execution: {self.args.parallel}")
         print(f"Resume execution: {self.args.resume}")
-        print(f"Max Workers: {self.args.max_walkers}")
+        print(f"Max Walkers: {self.args.max_walkers}")
         print(f"Analyze multiple projects: {self.args.multiple}")
 
         if not self.args.resume:

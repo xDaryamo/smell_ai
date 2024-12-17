@@ -45,7 +45,7 @@ def test_full_integration_with_cli(mock_rule_check, integration_setup):
     args = Mock(
         input=input_path,
         output=output_path,
-        max_workers=1,
+        max_walkers=1,
         parallel=False,
         resume=False,
         multiple=False,
