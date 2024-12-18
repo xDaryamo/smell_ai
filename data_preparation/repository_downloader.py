@@ -221,5 +221,5 @@ if __name__ == "__main__":
         stars=stars,
         pushed=pushed,
         language=language,
-        download=False,
+        download=True,
     )
