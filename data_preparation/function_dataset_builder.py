@@ -38,7 +38,7 @@ class FunctionDatasetBuilder:
         logging.info(f"Found {len(python_files)} Python files.")
         return python_files
 
-    def is_ml_related(self, file_path):
+    def _is_file_ml_related(self, file_path):
         """
         Check if a Python file is related to
         machine learning by analyzing imports.
@@ -51,12 +51,46 @@ class FunctionDatasetBuilder:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read().lower()
                 is_related = any(lib in content for lib in self.libraries)
-                if is_related:
-                    logging.info(f"File {file_path} is ML-related.")
+                if not is_related:
+                    logging.debug(
+                        f"File skipped (not ML-related): {file_path}"
+                        )
                 return is_related
         except Exception as e:
             logging.warning(f"Could not read file {file_path}: {e}")
-            return False
+        return False
+
+    def _contains_ml_keywords(self, function_code):
+        keywords = [
+            "fit", "predict", "transform", "train", "evaluate", "model",
+            "loss", "optimizer", "dataset", "dataloader", "backpropagation",
+            "gradient", "epoch", "Sequential", "nn.Module", "optim", "sklearn",
+            "metrics", "layers", "cross_val_score"
+        ]
+        normalized_code = function_code.lower()
+        matched_keywords = [keyword for keyword in keywords
+                            if keyword in normalized_code]
+
+        return bool(matched_keywords)
+
+    def _is_function_ml_related(self, function_code, aliases):
+        """
+        Determine if a function is ML-related based on
+        library aliases.
+
+        :param function_code: The code of the function as a string.
+        :param aliases: A dictionary of library aliases.
+        :return: True if the function is ML-related, False otherwise.
+        """
+        libraries_and_aliases = self.libraries + list(aliases.values())
+        library_hits = any(
+            lib in function_code.lower() for lib in libraries_and_aliases
+        )
+        if not library_hits:
+            logging.debug(
+                f"Function skipped (not ML-related): {function_code[:50]}..."
+                )
+        return library_hits
 
     def extract_functions(self, file_path):
         """
@@ -76,23 +110,38 @@ class FunctionDatasetBuilder:
             logging.warning(f"Failed to read file {file_path}: {e}")
             return []
 
+        aliases = ({})
         try:
             tree = ast.parse(content)
             for node in ast.walk(tree):
+                # Extract library aliases
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        aliases[alias.asname or alias.name] = alias.name
+                elif isinstance(node, ast.ImportFrom):
+                    for alias in node.names:
+                        aliases[alias.asname or alias.name] = node.module
+
+                # Extract functions
                 if isinstance(node, ast.FunctionDef):
-                    functions.append(
-                        {
-                            "function_name": node.name,
-                            "start_line": node.lineno,
-                            "end_line": getattr(node, "end_lineno", None),
-                            "code": ast.get_source_segment(content, node),
-                            "file_path": file_path,
-                        }
-                    )
+                    function_code = ast.get_source_segment(content, node)
+                    if self._is_function_ml_related(function_code, aliases):
+                        if self._contains_ml_keywords(function_code):
+                            functions.append(
+                                {
+                                    "function_name": node.name,
+                                    "start_line": node.lineno,
+                                    "end_line": getattr(
+                                        node, "end_lineno", None
+                                        ),
+                                    "code": function_code,
+                                    "file_path": file_path,
+                                }
+                            )
             if functions:
                 logging.info(
                     f"Extracted {len(functions)} functions from {file_path}."
-                )
+                    )
         except SyntaxError as e:
             logging.warning(f"Syntax error in file {file_path}: {e}")
         except Exception as e:
@@ -113,11 +162,13 @@ class FunctionDatasetBuilder:
         logging.info("Filtering ML-related Python files...")
         with ThreadPoolExecutor(max_workers=5) as executor:
             ml_files_flags = list(
-                executor.map(self.is_ml_related, python_files)
-            )
-        ml_files = [
-            file for file, is_ml in zip(python_files, ml_files_flags) if is_ml
-        ]
+                executor.map(
+                    self._is_file_ml_related,
+                    python_files)
+                    )
+        ml_files = [file for file, is_ml in zip(
+            python_files, ml_files_flags
+            ) if is_ml]
         logging.info(f"Identified {len(ml_files)} ML-related Python files.")
 
         # Extract functions in parallel
@@ -144,7 +195,6 @@ class FunctionDatasetBuilder:
         logging.info(f"Dataset saved successfully to {output_path}.")
 
 
-# Esempio di utilizzo
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
