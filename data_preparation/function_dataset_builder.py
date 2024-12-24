@@ -50,7 +50,14 @@ class FunctionDatasetBuilder:
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read().lower()
-                is_related = any(lib in content for lib in self.libraries)
+                is_related = any(
+                    lib in content for lib in self.libraries
+                ) or any(
+                    pattern in content for pattern in [
+                        "tf.function", "torch.nn.module",
+                        "keras.layers", "sklearn.metrics"
+                    ]
+                )
                 if not is_related:
                     logging.debug(
                         f"File skipped (not ML-related): {file_path}"
@@ -58,7 +65,7 @@ class FunctionDatasetBuilder:
                 return is_related
         except Exception as e:
             logging.warning(f"Could not read file {file_path}: {e}")
-        return False
+            return False
 
     def _contains_ml_keywords(self, function_code):
         keywords = [
