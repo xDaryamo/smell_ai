@@ -40,45 +40,113 @@ class FunctionDatasetBuilder:
 
     def _is_file_ml_related(self, file_path):
         """
-        Check if a Python file is related to
-        machine learning by analyzing imports.
+        Check if a Python file is related to machine learning
+        by analyzing imports and function calls using AST.
 
         :param file_path: Path to the Python file.
-        :return: True if the file contains
-        ML-related libraries, False otherwise.
+        :return: True if the file contains ML-related libraries,
+        False otherwise.
         """
         try:
             with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read().lower()
-                is_related = any(
-                    lib in content for lib in self.libraries
-                ) or any(
-                    pattern in content for pattern in [
-                        "tf.function", "torch.nn.module",
-                        "keras.layers", "sklearn.metrics"
-                    ]
-                )
-                if not is_related:
-                    logging.debug(
-                        f"File skipped (not ML-related): {file_path}"
-                        )
-                return is_related
+                content = f.read()
+
+            # Skip files with template placeholders (e.g., {{...}})
+            if "{{" in content or "}}" in content:
+                logging.warning(f"Skipped template file: {file_path}")
+                return False
+
+            # If content is empty or invalid, skip it
+            if not content.strip():
+                logging.debug(f"File skipped (empty or invalid): {file_path}")
+                return False
+
+            try:
+                tree = ast.parse(content)
+            except SyntaxError as e:
+                logging.warning(f"Syntax error in file {file_path}: {e}")
+                return False
+
+            ml_related_patterns = [
+                "tf.function", "torch.nn.module",
+                "keras.layers", "sklearn.metrics"
+            ]
+            ml_imports = set(self.libraries)
+            imported_libraries = set()
+
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    for alias in node.names:
+                        imported_libraries.add(alias.name)
+                elif isinstance(node, ast.ImportFrom):
+                    if node.module:
+                        imported_libraries.add(node.module)
+
+            # Check if any ML-related libraries are imported
+            for ml_library in ml_imports:
+                if any(ml_library in lib for lib in imported_libraries):
+                    return True
+
+            # Look for specific ML-related patterns in the AST
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Call):
+                    if (
+                        isinstance(node.func, ast.Attribute) and
+                        isinstance(node.func.value, ast.Name)
+                    ):
+                        pattern = f"{node.func.value.id}.{node.func.attr}"
+                        if pattern in ml_related_patterns:
+                            return True
+
+            logging.debug(f"File skipped (not ML-related): {file_path}")
+            return False
+
         except Exception as e:
-            logging.warning(f"Could not read file {file_path}: {e}")
+            logging.warning(
+                f"Could not analyze file {file_path} with AST: {e}"
+                )
             return False
 
     def _contains_ml_keywords(self, function_code):
+        """
+        Determine if a function contains ML-related
+        keywords using AST analysis.
+
+        :param function_code: The code of the function as a string.
+        :return: True if ML-related keywords are found, False otherwise.
+        """
         keywords = [
             "fit", "predict", "transform", "train", "evaluate", "model",
-            "loss", "optimizer", "dataset", "dataloader", "backpropagation",
-            "gradient", "epoch", "Sequential", "nn.Module", "optim", "sklearn",
+            "loss", "optimizer", "dataset",
+            "dataloader", "backpropagation",
+            "gradient", "epoch", "Sequential", "nn.Module",
+            "optim", "sklearn",
             "metrics", "layers", "cross_val_score"
         ]
-        normalized_code = function_code.lower()
-        matched_keywords = [keyword for keyword in keywords
-                            if keyword in normalized_code]
-
-        return bool(matched_keywords)
+        try:
+            tree = ast.parse(function_code)
+            for node in ast.walk(tree):
+                # Check for keywords in function calls
+                if isinstance(node, ast.Call):
+                    if isinstance(node.func, ast.Name):
+                        # Direct function call
+                        if node.func.id in keywords:
+                            return True
+                    elif isinstance(node.func, ast.Attribute):
+                        if node.func.attr in keywords:  # Method call
+                            return True
+                # Check for keywords in assignments or other identifiers
+                elif isinstance(node, ast.Name) and node.id in keywords:
+                    return True
+                elif isinstance(node, ast.Attribute):
+                    if node.attr in keywords:
+                        return True
+            return False
+        except Exception as e:
+            logging.warning(
+                f"Error analyzing function for keywords with AST: {e}"
+                )
+            return False
 
     def _is_function_ml_related(self, function_code, aliases):
         """
