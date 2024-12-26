@@ -151,21 +151,48 @@ class FunctionDatasetBuilder:
     def _is_function_ml_related(self, function_code, aliases):
         """
         Determine if a function is ML-related based on
-        library aliases.
+        library aliases using AST.
 
         :param function_code: The code of the function as a string.
         :param aliases: A dictionary of library aliases.
         :return: True if the function is ML-related, False otherwise.
         """
-        libraries_and_aliases = self.libraries + list(aliases.values())
-        library_hits = any(
-            lib in function_code.lower() for lib in libraries_and_aliases
-        )
-        if not library_hits:
-            logging.debug(
-                f"Function skipped (not ML-related): {function_code[:50]}..."
+        try:
+            tree = ast.parse(function_code)
+
+            libraries_and_aliases = set(
+                self.libraries + list(aliases.values())
                 )
-        return library_hits
+
+            for node in ast.walk(tree):
+                # Check for function calls or attribute accesses
+                if isinstance(node, ast.Call):
+                    if isinstance(node.func, ast.Attribute):
+                        # Example:
+                        # torch.nn.Module -> torch (value) + nn.Module (attr)
+                        if isinstance(node.func.value, ast.Name):
+                            if node.func.value.id in libraries_and_aliases:
+                                return True
+                    elif isinstance(node.func, ast.Name):
+                        # Example: direct function calls like sklearn.metrics
+                        if node.func.id in libraries_and_aliases:
+                            return True
+
+                # Check for attribute usage
+                # (e.g., sklearn.metrics.accuracy_score)
+                elif isinstance(node, ast.Attribute):
+                    if isinstance(node.value, ast.Name):
+                        if node.value.id in libraries_and_aliases:
+                            return True
+
+            # If no hits were found, return False
+            return False
+
+        except Exception as e:
+            logging.warning(
+                f"Error analyzing function for ML relevance with AST: {e}"
+                )
+            return False
 
     def extract_functions(self, file_path):
         """
