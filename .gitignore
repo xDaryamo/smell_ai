@@ -1,5 +1,6 @@
 /input/projects/
-/datasets/
+/datasets/output_analysis/
+/datasets/raw/
 /env/
 .env
 

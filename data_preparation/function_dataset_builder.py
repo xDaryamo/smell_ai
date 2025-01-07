@@ -51,11 +51,6 @@ class FunctionDatasetBuilder:
             with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            # Skip files with template placeholders (e.g., {{...}})
-            if "{{" in content or "}}" in content:
-                logging.warning(f"Skipped template file: {file_path}")
-                return False
-
             # If content is empty or invalid, skip it
             if not content.strip():
                 logging.debug(f"File skipped (empty or invalid): {file_path}")
@@ -68,8 +63,10 @@ class FunctionDatasetBuilder:
                 return False
 
             ml_related_patterns = [
-                "tf.function", "torch.nn.module",
-                "keras.layers", "sklearn.metrics"
+                "tf.function",
+                "torch.nn.module",
+                "keras.layers",
+                "sklearn.metrics",
             ]
             ml_imports = set(self.libraries)
             imported_libraries = set()
@@ -90,9 +87,8 @@ class FunctionDatasetBuilder:
             # Look for specific ML-related patterns in the AST
             for node in ast.walk(tree):
                 if isinstance(node, ast.Call):
-                    if (
-                        isinstance(node.func, ast.Attribute) and
-                        isinstance(node.func.value, ast.Name)
+                    if isinstance(node.func, ast.Attribute) and isinstance(
+                        node.func.value, ast.Name
                     ):
                         pattern = f"{node.func.value.id}.{node.func.attr}"
                         if pattern in ml_related_patterns:
@@ -104,7 +100,7 @@ class FunctionDatasetBuilder:
         except Exception as e:
             logging.warning(
                 f"Could not analyze file {file_path} with AST: {e}"
-                )
+            )
             return False
 
     def _contains_ml_keywords(self, function_code):
@@ -116,12 +112,26 @@ class FunctionDatasetBuilder:
         :return: True if ML-related keywords are found, False otherwise.
         """
         keywords = [
-            "fit", "predict", "transform", "train", "evaluate", "model",
-            "loss", "optimizer", "dataset",
-            "dataloader", "backpropagation",
-            "gradient", "epoch", "Sequential", "nn.Module",
-            "optim", "sklearn",
-            "metrics", "layers", "cross_val_score"
+            "fit",
+            "predict",
+            "transform",
+            "train",
+            "evaluate",
+            "model",
+            "loss",
+            "optimizer",
+            "dataset",
+            "dataloader",
+            "backpropagation",
+            "gradient",
+            "epoch",
+            "Sequential",
+            "nn.Module",
+            "optim",
+            "sklearn",
+            "metrics",
+            "layers",
+            "cross_val_score",
         ]
         try:
             tree = ast.parse(function_code)
@@ -145,7 +155,7 @@ class FunctionDatasetBuilder:
         except Exception as e:
             logging.warning(
                 f"Error analyzing function for keywords with AST: {e}"
-                )
+            )
             return False
 
     def _is_function_ml_related(self, function_code, aliases):
@@ -162,7 +172,7 @@ class FunctionDatasetBuilder:
 
             libraries_and_aliases = set(
                 self.libraries + list(aliases.values())
-                )
+            )
 
             for node in ast.walk(tree):
                 # Check for function calls or attribute accesses
@@ -191,7 +201,7 @@ class FunctionDatasetBuilder:
         except Exception as e:
             logging.warning(
                 f"Error analyzing function for ML relevance with AST: {e}"
-                )
+            )
             return False
 
     def extract_functions(self, file_path):
@@ -212,7 +222,7 @@ class FunctionDatasetBuilder:
             logging.warning(f"Failed to read file {file_path}: {e}")
             return []
 
-        aliases = ({})
+        aliases = {}
         try:
             tree = ast.parse(content)
             for node in ast.walk(tree):
@@ -235,7 +245,7 @@ class FunctionDatasetBuilder:
                                     "start_line": node.lineno,
                                     "end_line": getattr(
                                         node, "end_lineno", None
-                                        ),
+                                    ),
                                     "code": function_code,
                                     "file_path": file_path,
                                 }
@@ -243,7 +253,7 @@ class FunctionDatasetBuilder:
             if functions:
                 logging.info(
                     f"Extracted {len(functions)} functions from {file_path}."
-                    )
+                )
         except SyntaxError as e:
             logging.warning(f"Syntax error in file {file_path}: {e}")
         except Exception as e:
@@ -264,13 +274,11 @@ class FunctionDatasetBuilder:
         logging.info("Filtering ML-related Python files...")
         with ThreadPoolExecutor(max_workers=5) as executor:
             ml_files_flags = list(
-                executor.map(
-                    self._is_file_ml_related,
-                    python_files)
-                    )
-        ml_files = [file for file, is_ml in zip(
-            python_files, ml_files_flags
-            ) if is_ml]
+                executor.map(self._is_file_ml_related, python_files)
+            )
+        ml_files = [
+            file for file, is_ml in zip(python_files, ml_files_flags) if is_ml
+        ]
         logging.info(f"Identified {len(ml_files)} ML-related Python files.")
 
         # Extract functions in parallel

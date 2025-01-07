@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from components.inspector import Inspector
 
@@ -11,7 +12,9 @@ class CodeSmellAnalyzer:
     individual functions.
     """
 
-    def __init__(self, dataset_path, output_dir, max_workers=4):
+    def __init__(
+        self, dataset_path, output_dir, max_workers=4, log_interval=100
+    ):
         """
         Initialize the analyzer with the dataset path and output directory.
 
@@ -19,15 +22,29 @@ class CodeSmellAnalyzer:
             dataset_path (str): Path to the dataset JSON file.
             output_dir (str): Directory to save results.
             max_workers (int): Maximum number of threads for parallelization.
+            log_interval (int): Number of functions to process before logging progress.
         """
         self.dataset_path = dataset_path
         self.output_dir = output_dir
         self.max_workers = max_workers
+        self.log_interval = log_interval
+
         os.makedirs(output_dir, exist_ok=True)
         self.inspector = Inspector(output_path=output_dir)
         self.clean_functions = []
         self.smelly_functions = []
         self.file_cache = {}  # Cache to store inspection results for files
+
+        # Setup logging
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            handlers=[
+                logging.StreamHandler(),
+                logging.FileHandler(os.path.join(output_dir, "analysis.log")),
+            ],
+        )
+        self.logger = logging.getLogger(__name__)
 
     def load_dataset(self):
         """Load the dataset from the JSON file."""
@@ -52,7 +69,7 @@ class CodeSmellAnalyzer:
             try:
                 self.file_cache[file_path] = self.inspector.inspect(file_path)
             except Exception as e:
-                print(f"Error analyzing file {file_path}: {e}")
+                self.logger.error(f"Error analyzing file {file_path}: {e}")
                 return {
                     "function_data": function_data,
                     "smelly": False,
@@ -110,14 +127,17 @@ class CodeSmellAnalyzer:
                     else:
                         clean_functions.append(function_data)
                 except Exception as e:
-                    print(
+                    self.logger.error(
                         f"Error analyzing function "
                         f"{function_data['function_name']} "
                         f"in file {function_data['file_path']}: {e}"
                     )
 
-                # Log progress
-                print(f"Processed {i}/{len(self.dataset)} functions...")
+                # Log progress every `log_interval` functions
+                if i % self.log_interval == 0 or i == len(self.dataset):
+                    self.logger.info(
+                        f"Processed {i}/{len(self.dataset)} functions..."
+                    )
 
         return clean_functions, smelly_functions
 
@@ -132,14 +152,14 @@ class CodeSmellAnalyzer:
         with open(smelly_path, "w") as f:
             json.dump(smelly_functions, f, indent=4)
 
-        print(f"Results saved: {clean_path}, {smelly_path}")
+        self.logger.info(f"Results saved: {clean_path}, {smelly_path}")
 
     def run(self):
         """Run the analysis process."""
-        print("Starting dataset analysis...")
+        self.logger.info("Starting dataset analysis...")
         clean_functions, smelly_functions = self.analyze_dataset_parallel()
         self.save_results(clean_functions, smelly_functions)
-        print(
+        self.logger.info(
             f"Analysis completed. Clean functions: {len(clean_functions)}, "
             f"Smelly functions: {len(smelly_functions)}"
         )
@@ -151,5 +171,5 @@ if __name__ == "__main__":
     output_dir = "datasets/output_analysis"
 
     # Initialize and run the analyzer
-    analyzer = CodeSmellAnalyzer(dataset_path, output_dir, max_workers=8)
+    analyzer = CodeSmellAnalyzer(dataset_path, output_dir, max_workers=16)
     analyzer.run()

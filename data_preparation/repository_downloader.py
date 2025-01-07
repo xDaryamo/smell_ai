@@ -258,7 +258,7 @@ if __name__ == "__main__":
     ]
     downloader.search_and_process_topics(
         topics=topics,
-        max_repos_per_topic=5,
+        max_repos_per_topic=20,
         stars=">=100",
         pushed=">2023-06-01",
         language="Python",
