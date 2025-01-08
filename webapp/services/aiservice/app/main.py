@@ -1,8 +1,8 @@
 from fastapi import FastAPI
-from webapp.services.aiservice.app.routers.detect_smell import (
+from app.routers.detect_smell import (
     router as detect_smell_router,
 )
-from webapp.gateway.main import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI(title="AI Analysis Service")

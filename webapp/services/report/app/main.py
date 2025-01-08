@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from webapp.services.report.app.routers.report import router as report_router
-from webapp.gateway.main import CORSMiddleware
+from app.routers.report import router as report_router
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Report Service")
 

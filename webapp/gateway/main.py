@@ -14,9 +14,9 @@ app.add_middleware(
 )
 
 # Service URLs
-AI_ANALYSIS_SERVICE = "http://localhost:8001"
-STATIC_ANALYSIS_SERVICE = "http://localhost:8002"
-REPORT_SERVICE = "http://localhost:8003"
+AI_ANALYSIS_SERVICE = "http://ai_analysis_service:8001"
+STATIC_ANALYSIS_SERVICE = "http://static_analysis_service:8002"
+REPORT_SERVICE = "http://report_service:8003"
 
 
 @app.get("/")

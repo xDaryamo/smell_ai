@@ -1,4 +1,5 @@
 import ast
+from typing import Optional
 from detection_rules.smell import Smell
 
 
@@ -131,7 +132,7 @@ class UnnecessaryIterationSmell(Smell):
         loop_node: ast.AST,
         dataframe_variables: set[str],
         inefficient_methods: set[str],
-    ) -> ast.Call | None:
+    ) -> Optional[ast.Call]:
         """
         Checks if the loop body contains
         inefficient operations on DataFrame objects

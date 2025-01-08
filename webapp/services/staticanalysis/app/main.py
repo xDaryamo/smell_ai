@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from webapp.services.staticanalysis.app.routers.detect_smell import router
-from webapp.gateway.main import CORSMiddleware
+from app.routers.detect_smell import router
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Static Analysis Service")
 

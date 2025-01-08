@@ -2,10 +2,9 @@ import ast
 import asyncio
 import logging
 from fastapi import APIRouter, HTTPException
-from slowapi import Limiter
-from webapp.services.aiservice.app.schemas.requests import DetectSmellRequest
-from webapp.services.aiservice.app.schemas.responses import DetectSmellResponse
-from webapp.services.aiservice.app.utils.model import Model
+from app.schemas.requests import DetectSmellRequest
+from app.schemas.responses import DetectSmellResponse
+from app.utils.model import Model
 
 
 router = APIRouter()
@@ -28,7 +27,6 @@ async def async_detect_code_smell(code_snippet: str) -> dict:
     )
 
 
-@Limiter.limit("5/minute")
 @router.post("/detect_smell_ai", response_model=DetectSmellResponse)
 async def detect_smell_ai(payload: DetectSmellRequest):
     """

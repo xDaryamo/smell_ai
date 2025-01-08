@@ -1,11 +1,11 @@
 from fastapi import APIRouter, HTTPException
-from webapp.services.staticanalysis.app.schemas.requests import (
+from app.schemas.requests import (
     DetectSmellRequest,
 )
-from webapp.services.staticanalysis.app.schemas.responses import (
+from app.schemas.responses import (
     DetectSmellStaticResponse,
 )
-from webapp.services.staticanalysis.app.utils.static_analysis import (
+from app.utils.static_analysis import (
     detect_static,
 )
 

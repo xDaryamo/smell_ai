@@ -1,7 +1,7 @@
 import tempfile
 import os
 import pandas as pd
-from webapp.services.staticanalysis.app.schemas.responses import Smell
+from app.schemas.responses import Smell
 from components.inspector import Inspector
 
 OUTPUT_DIR = "output"
