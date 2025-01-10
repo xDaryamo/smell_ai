@@ -90,6 +90,7 @@ function FileUploadSection({
       </label>
       <input
         id="file-upload"
+        role="file-uploader"
         type="file"
         accept=".py"
         onChange={handleFileChange}
@@ -257,6 +258,7 @@ export default function UploadPythonPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
+              data-testid="progress"
             >
               {message}
             </motion.p>

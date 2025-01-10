@@ -22,14 +22,14 @@ export type ProjectType = {
   isLoading: boolean;
 };
 
-type ProjectContextType = {
+export type ProjectContextType = {
   projects: ProjectType[];
   addProject: () => void;
   updateProject: (index: number, project: Partial<ProjectType>) => void;
   removeProject: (index: number) => void;
 };
 
-const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
+export const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const useProjectContext = () => {
   const context = useContext(ProjectContext);

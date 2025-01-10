@@ -15,4 +15,3 @@ uvicorn
 fastapi
 pydantic
 transformers
-slowapi

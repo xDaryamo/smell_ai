@@ -171,6 +171,7 @@ export default function UploadProjectPage() {
             disabled={projects.some((project) => project.isLoading) || projects.length === 0}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            data-testid="submitAll"
           >
             {projects.some((project) => project.isLoading) ? "Analyzing Projects..." : "Upload and Analyze All Projects"}
           </motion.button>

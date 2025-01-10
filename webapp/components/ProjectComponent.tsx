@@ -40,7 +40,7 @@ const Project: React.FC<ProjectProps> = ({ index }) => {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
-      <h2 className="text-2xl font-semibold text-blue-700 mb-4">{project.name || `Project ${index + 1}`}</h2>
+      <h2 className="text-2xl font-semibold text-blue-700 mb-4">{project?.name || `Project ${index + 1}`}</h2>
 
       {/* File Input */}
       <input
@@ -49,6 +49,7 @@ const Project: React.FC<ProjectProps> = ({ index }) => {
         onChange={handleFolderChange}
         className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-lg mb-4 cursor-pointer hover:bg-gray-100 transition-all duration-300"
         multiple
+        data-testid="file-input" 
       />
 
       {/* Display Files */}
