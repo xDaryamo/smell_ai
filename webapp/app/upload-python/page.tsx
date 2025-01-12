@@ -97,7 +97,7 @@ function FileUploadSection({
         className="w-full p-6 bg-gray-100 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-200 transition-all"
       />
       {fileName && (
-        <p className="mt-2 text-lg text-gray-700">
+        <p className="mt-2 text-lg text-gray-700" id="file-name">
           <strong>Selected File:</strong> {fileName}
         </p>
       )}
@@ -259,6 +259,7 @@ export default function UploadPythonPage() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
               data-testid="progress"
+              id="progress"
             >
               {message}
             </motion.p>

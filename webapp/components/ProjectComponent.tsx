@@ -69,7 +69,7 @@ const Project: React.FC<ProjectProps> = ({ index }) => {
       )}
 
       {/* Remove Project Button */}
-      <motion.button
+      <motion.button id="removeButton"
         onClick={() => removeProject(index)}
         className="w-full bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg font-semibold hover:bg-red-700 transition-all mt-4"
         whileHover={{ scale: 1.05 }}
@@ -80,7 +80,7 @@ const Project: React.FC<ProjectProps> = ({ index }) => {
 
       {/* Display Message */}
       {project.data?.message && (
-        <p
+        <p id="message"
           className={`mt-4 text-center font-medium text-lg ${project.data.message.includes("Error") ? "text-red-500" : "text-green-600"}`}
         >
           {project.data.message}

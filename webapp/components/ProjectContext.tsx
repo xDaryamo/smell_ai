@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 type ContextSmell = {
   function_name: string;
@@ -65,6 +65,15 @@ export const ProjectProvider: React.FC<{ children: ReactNode }> = ({ children })
   const removeProject = (index: number) => {
     setProjects((prevProjects) => prevProjects.filter((_, i) => i !== index));
   };
+
+  // Expose the context to window for e2e testing purposes
+  // Comment useEffect in production mode
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.__REACT_CONTEXT__ = { projects, addProject, updateProject, removeProject };
+    }
+  }, [projects, addProject, updateProject, removeProject]);
+  
 
   return (
     <ProjectContext.Provider value={{ projects, addProject, updateProject, removeProject }}>

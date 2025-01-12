@@ -71,6 +71,7 @@ export default function UploadProjectPage() {
           },
           isLoading: false,
         });
+        console.log(results)
       } else {
         updateProject(index, {
           files: null,
