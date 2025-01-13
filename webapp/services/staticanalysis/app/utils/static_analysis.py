@@ -1,6 +1,9 @@
 import tempfile
 import os
 import pandas as pd
+# when running locally/testing
+# from webapp.services.staticanalysis.app.schemas.responses import Smell
+# when deploying in docker
 from app.schemas.responses import Smell
 from components.inspector import Inspector
 

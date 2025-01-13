@@ -9,9 +9,6 @@ def generate_report_data(projects: list) -> dict:
     Returns:
         dict: Aggregated report data for charting.
     """
-    if not projects:
-        raise ValueError("No project data provided.")
-
     combined_smells = []
 
     for project in projects:

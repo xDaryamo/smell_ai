@@ -13,7 +13,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Service URLs
+# Service URLs for testing/local deployment
+# AI_ANALYSIS_SERVICE = "http://localhost:8001"
+# STATIC_ANALYSIS_SERVICE = "http://localhost:8002"
+# REPORT_SERVICE = "http://localhost:8003"
+
+# Service URLs for docker deployement
 AI_ANALYSIS_SERVICE = "http://ai_analysis_service:8001"
 STATIC_ANALYSIS_SERVICE = "http://static_analysis_service:8002"
 REPORT_SERVICE = "http://report_service:8003"

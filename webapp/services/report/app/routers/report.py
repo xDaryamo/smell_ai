@@ -1,4 +1,14 @@
 from fastapi import APIRouter, HTTPException
+# when running locally/testing
+# from webapp.services.report.app.schemas.requests import GenerateReportRequest
+# from webapp.services.report.app.schemas.responses import (
+#   GenerateReportResponse
+# )
+# from webapp.services.report.app.utils.report_generator import (
+#    generate_report_data,
+# )
+
+# when running in docker
 from app.schemas.requests import GenerateReportRequest
 from app.schemas.responses import GenerateReportResponse
 from app.utils.report_generator import (
