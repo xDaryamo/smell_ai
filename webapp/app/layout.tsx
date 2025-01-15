@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
-import { ProjectProvider } from "../components/ProjectContext";
+import { ProjectProvider } from "../context/ProjectContext";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -31,6 +34,7 @@ export default function RootLayout({
         {/* Wrap children with ProjectProvider */}
         <ProjectProvider>
           {children}
+          <ToastContainer />
         </ProjectProvider>
       </body>
     </html>

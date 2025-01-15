@@ -2,9 +2,9 @@ import tempfile
 import os
 import pandas as pd
 # when running locally/testing
-# from webapp.services.staticanalysis.app.schemas.responses import Smell
+from webapp.services.staticanalysis.app.schemas.responses import Smell
 # when deploying in docker
-from app.schemas.responses import Smell
+""" from app.schemas.responses import Smell """
 from components.inspector import Inspector
 
 OUTPUT_DIR = "output"
@@ -20,7 +20,6 @@ def detect_static(code_snippet: str) -> dict:
             temp_file.write(code_snippet)
             temp_file_path = temp_file.name
 
-        # Perform static analysis using the inspector
         smells_df: pd.DataFrame = inspector.inspect(temp_file_path)
 
         # Handle cases with no results
@@ -28,7 +27,6 @@ def detect_static(code_snippet: str) -> dict:
             return {"success": True,
                     "response": "Static analysis returned no data"}
 
-        # Transform DataFrame rows into Smell objects
         smells = [
             Smell(
                 function_name=row["function_name"],

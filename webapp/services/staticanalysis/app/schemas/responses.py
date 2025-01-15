@@ -18,12 +18,13 @@ class DetectSmellStaticResponse(BaseModel):
     """
     Schema for the static analysis code smell detection response.
     """
-
+    success: bool
     smells: Optional[Union[List[Smell], str]] = []
 
     class Config:
         schema_extra = {
             "example": {
+                "success": {"true"},
                 "smells": [
                     {
                         "function_name": "example_function",

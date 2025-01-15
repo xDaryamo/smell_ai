@@ -1,68 +1,104 @@
 "use client";
-
 import { useState } from "react";
 import Header from "../../components/HeaderComponent";
 import Footer from "../../components/FooterComponent";
 import Project from "../../components/ProjectComponent";
-import { useProjectContext } from "../../components/ProjectContext";
+import { useProjectContext } from "../../context/ProjectContext";
 import { detectAi, detectStatic } from "../../utils/api";
 import { motion } from "framer-motion";
+import AnalysisModeToggle from "../../components/AnalysisModeToggle";
+import Button from "../../components/Button"; 
+import { toast } from "react-toastify";
 
-export default function UploadProjectPage() {
+const UploadProjectPage = () => {
   const { projects, addProject, updateProject } = useProjectContext();
   const [analysisMode, setAnalysisMode] = useState<"AI" | "Static">("AI");
 
-  
+  // Handle the submission of all projects for analysis
   const handleSubmitAll = async () => {
-  // Set loading state for all projects
-  projects.forEach((_, index) => {
-    updateProject(index, {
-      files: null,
-      isLoading: true,
-      data: { files: null, message: "Uploading and analyzing the project...", result: null, smells: null },
+    setProjectsLoadingState(true);
+
+    try {
+      const resolvedSnippets = await prepareCodeSnippets();
+      const results = await analyzeCodeSnippets(resolvedSnippets);
+
+      updateProjectsWithAnalysisResults(results);
+    } catch (error) {
+      toast.error("Error during project analysis");
+      resetProjectsOnError();
+    }
+  };
+
+  const setProjectsLoadingState = (isLoading: boolean) => {
+    projects.forEach((_, index) => {
+      updateProject(index, {
+        files: null,
+        isLoading,
+        data: { files: null,
+          message: isLoading ? "Uploading and analyzing the project..." : "Error analyzing project.",
+          result: null,
+          smells: null },
+      });
     });
-  });
+  };
 
-  try {
-    const codeSnippets = projects.flatMap((project) =>
-      project.files
-        ? project.files.map(async (file) => {
-            const content = await file.text();
-            return { file, content };
-          })
-        : []
-    );
-
-    const resolvedSnippets = await Promise.all(codeSnippets);
-
-    const results = await Promise.all(
-      resolvedSnippets.map((snippet) =>
-        analysisMode === "AI" ? detectAi(snippet.content) : detectStatic(snippet.content)
+  const prepareCodeSnippets = async () => {
+    return await Promise.all(
+      projects.flatMap((project) =>
+        project.files ? project.files.map(async (file) => {
+          const content = await file.text();
+          return { file, content };
+        }) : []
       )
     );
+  };
 
+ const analyzeCodeSnippets = async (resolvedSnippets: any[]) => {
+    return await Promise.all(
+      resolvedSnippets.map(async (snippet) => {
+        try {
+          const result =
+            analysisMode === "AI"
+              ? await detectAi(snippet.content)
+              : await detectStatic(snippet.content);
+
+          if (result?.success === false) {
+            toast.error(
+              `Analysis failed for snippet: ${snippet.file.name}`
+            );
+          }
+          return result;
+        } catch (error: any) {
+          if (error?.data?.success === false) {
+            toast.error(
+              `Error analyzing snippet: ${snippet.file.name} - ${error.data.message || "Unknown error"}`
+            );
+          } else {
+            // Generic error fallback
+            toast.error(`Unexpected error analyzing snippet: ${snippet.file.name}`);
+          }
+
+          return {
+            smells: [],
+          };
+        }
+      })
+    );
+  };
+
+  const updateProjectsWithAnalysisResults = (results: any[]) => {
     let resultIndex = 0;
+
     projects.forEach((project, index) => {
       if (project.files) {
         const projectFiles = Array.from(project.files).filter((file) => file.name.endsWith(".py"));
         const projectResults = results.slice(resultIndex, resultIndex + projectFiles.length);
         resultIndex += projectFiles.length;
 
-       const resultString = projectResults
-        .map((res, fileIndex) => {
-          const fileName = projectFiles[fileIndex].name;
-          const smells = Array.isArray(res.smells) ? res.smells : [];
-          return `File: ${fileName}\n` + smells
-            .map((smell) =>
-              `Function: ${smell.function_name ?? 'N/A'}\n` + 
-              `Line: ${smell.line}\nSmell: ${smell.smell_name}\nDescription: ${smell.description}\nAdditional Info: ${smell.additional_info}`
-            )
-            .join("\n\n");
-        })
-        .join("\n\n");
+        const resultString = generateResultString(projectResults, projectFiles);
 
         updateProject(index, {
-          files: projectFiles.map((file) => file), 
+          files: projectFiles.map((file) => file),
           data: {
             files: projectFiles.map((file) => file.name),
             message: "Projects successfully analyzed!",
@@ -71,13 +107,12 @@ export default function UploadProjectPage() {
           },
           isLoading: false,
         });
-        console.log(results)
       } else {
         updateProject(index, {
           files: null,
           data: {
             files: null,
-            message: "No valid files to analyze.",
+            message: "Error, no valid files to analyze.",
             result: null,
             smells: [],
           },
@@ -85,14 +120,30 @@ export default function UploadProjectPage() {
         });
       }
     });
-  } catch (error) {
-    console.error("Error during project analysis:", error);
-    // Update the state of all projects in case of error
+  };
+
+  const generateResultString = (projectResults: any[], projectFiles: any[]) => {
+    return projectResults
+      .map((res, fileIndex) => {
+        const fileName = projectFiles[fileIndex].name;
+        const smells = Array.isArray(res.smells) ? res.smells : [];
+        return `File: ${fileName}\n` + smells
+          .map((smell: { function_name: any; line: any; smell_name: any; description: any; additional_info: any; }) =>
+            `Function: ${smell.function_name ?? 'N/A'}\n` +
+            `Line: ${smell.line}\nSmell: ${smell.smell_name}\nDescription: ${smell.description}\n` +
+            `Additional Info: ${smell.additional_info}`
+          )
+          .join("\n\n");
+      })
+      .join("\n\n");
+  };
+
+  const resetProjectsOnError = () => {
     projects.forEach((_, index) => {
       updateProject(index, {
-        files: null, 
+        files: null,
         data: {
-          files: null,  
+          files: null,
           message: "Error analyzing project.",
           result: null,
           smells: [],
@@ -100,10 +151,7 @@ export default function UploadProjectPage() {
         isLoading: false,
       });
     });
-  }
-};
-
-
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-100 to-gray-200">
@@ -121,42 +169,16 @@ export default function UploadProjectPage() {
           </motion.h1>
 
           {/* Analysis Mode Toggle */}
-          <motion.div
-            className="mb-8 text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <label className="block mb-4 font-semibold text-xl text-gray-700">Select Analysis Mode:</label>
-            <div className="flex justify-center space-x-6">
-              <motion.button
-                onClick={() => setAnalysisMode("AI")}
-                className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${analysisMode === "AI" ? "bg-red-600 text-white shadow-xl" : "bg-gray-200 text-gray-700 hover:bg-gray-300"} hover:scale-105`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                AI-Based
-              </motion.button>
-              <motion.button
-                onClick={() => setAnalysisMode("Static")}
-                className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${analysisMode === "Static" ? "bg-blue-600 text-white shadow-xl" : "bg-gray-200 text-gray-700 hover:bg-gray-300"} hover:scale-105`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Static Tool
-              </motion.button>
-            </div>
-          </motion.div>
+          <AnalysisModeToggle analysisMode={analysisMode} setAnalysisMode={setAnalysisMode} />
 
           {/* Add Project Button */}
-          <motion.button
+          <Button
             onClick={addProject}
-            className="w-full bg-green-600 text-white px-6 py-3 rounded-xl shadow-xl font-semibold hover:bg-green-700 transition-all duration-300 mb-6 transform hover:scale-105"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            className="w-full bg-green-600 text-white px-6 py-3 rounded-xl shadow-xl font-semibold hover:bg-green-700 transition-all duration-300 mb-6"
+            disabled={false}
           >
             Add Project
-          </motion.button>
+          </Button>
 
           {/* Project List */}
           <div className="space-y-6">
@@ -166,20 +188,22 @@ export default function UploadProjectPage() {
           </div>
 
           {/* Submit All Projects Button */}
-          <motion.button
+          <Button
             onClick={handleSubmitAll}
-            className={`w-full px-6 py-3 rounded-xl shadow-lg font-semibold text-white transition-all duration-300 ${projects.some((project) => project.isLoading) || projects.length === 0 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"} transform hover:scale-105`}
+            className="w-full px-6 py-3 rounded-xl shadow-lg bg-blue-600 text-white hover:bg-blue-700 transition-all duration-300 mb-6"
             disabled={projects.some((project) => project.isLoading) || projects.length === 0}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            data-testid="submitAll"
+            
           >
-            {projects.some((project) => project.isLoading) ? "Analyzing Projects..." : "Upload and Analyze All Projects"}
-          </motion.button>
+          {projects.some((project) => project.isLoading)
+            ? "Analyzing Projects..."
+            : "Upload and Analyze All Projects"}
+        </Button>
         </div>
       </main>
 
       <Footer />
     </div>
   );
-}
+};
+
+export default UploadProjectPage;

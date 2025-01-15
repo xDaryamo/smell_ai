@@ -1,33 +1,7 @@
 "use client";
 
+import { ProjectType, ProjectContextType } from "@/types/types";
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
-
-type ContextSmell = {
-  function_name: string;
-  line: number;
-  smell_name: string;
-  description: string;
-  additional_info: string;
-};
-
-export type ProjectType = {
-  name: string;
-  files: File[] | null;
-  data: {
-    files: string[] | null;
-    message: string;
-    result: string | null;
-    smells: ContextSmell[] | null;
-  };
-  isLoading: boolean;
-};
-
-export type ProjectContextType = {
-  projects: ProjectType[];
-  addProject: () => void;
-  updateProject: (index: number, project: Partial<ProjectType>) => void;
-  removeProject: (index: number) => void;
-};
 
 export const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 

@@ -1,31 +1,53 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import ReportGeneratorPage from "../../app/reports/page";
-import { useProjectContext } from "../../components/ProjectContext";
+import { useProjectContext } from "../../context/ProjectContext";
 import { generateReport } from "../../utils/api";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import { toast } from "react-toastify";
 
-// Define a mock for `useProjectContext` hook
-jest.mock("../../components/ProjectContext", () => ({
-  useProjectContext: jest.fn(),
+// Mock the createObjectURL method for PDF download functionality
+global.URL.createObjectURL = jest.fn().mockImplementation(() => "mocked-url");
+
+// Mock toast notifications
+jest.mock("react-toastify", () => ({
+  toast: {
+    error: jest.fn(),
+    success: jest.fn(),
+    info: jest.fn(),
+  },
 }));
 
-jest.mock("jspdf-autotable", () => jest.fn().mockImplementation(() => ({
-  lastAutoTable: { finalY: 100 }  // Mock `finalY` here
-})));
+// Mock `useProjectContext` to return mockProjects
+jest.mock("../../context/ProjectContext", () => ({
+  useProjectContext: jest.fn(),
+}));
 
 // Mock `generateReport` function
 jest.mock("../../utils/api", () => ({
   generateReport: jest.fn(),
 }));
 
-// Mock `jsPDF` and `autoTable` (no-op implementations)
+// Mock `jsPDF` and `jspdf-autotable` for PDF-related functionality
+jest.mock("jspdf-autotable", () => jest.fn().mockImplementation(() => ({
+  lastAutoTable: { finalY: 100 },
+})));
+
 jest.mock("jspdf", () => ({
   jsPDF: jest.fn().mockImplementation(() => ({
     setFontSize: jest.fn(),
     text: jest.fn(),
     save: jest.fn(),
   })),
+}));
+
+// Mock `react-plotly.js` (the Plot component)
+jest.mock("react-plotly.js", () => ({
+  __esModule: true,
+  default: jest.fn(() => <div>Mocked Plot</div>),
+}));
+
+// Mock `react-intersection-observer` to always return `inView: true`
+jest.mock("react-intersection-observer", () => ({
+  useInView: jest.fn().mockReturnValue({ ref: jest.fn(), inView: true }),
 }));
 
 describe("ReportGeneratorPage", () => {
@@ -76,9 +98,10 @@ describe("ReportGeneratorPage", () => {
     fireEvent.click(screen.getByText(/Generate Report/));
 
     await waitFor(() => {
-      expect(screen.getByText(/Generating Reports.../)).toBeInTheDocument();
+      expect(screen.getByTestId("clip-loader")).toBeInTheDocument();
     });
   });
+
 
   it("handles report generation correctly", async () => {
     render(<ReportGeneratorPage />);
@@ -106,7 +129,7 @@ describe("ReportGeneratorPage", () => {
           },
         },
       ]);
-      expect(screen.getByText(/Combined Smell Occurrences/)).toBeInTheDocument();
+      expect(screen.getByTestId("chart")).toBeInTheDocument();
     });
   });
 
@@ -124,7 +147,7 @@ describe("ReportGeneratorPage", () => {
     // Wait for the error handling logic to trigger
     await waitFor(() => {
       // Check that an error alert was shown
-      expect(window.alert).toHaveBeenCalledWith("No projects available. Please add projects before generating reports.");
+      expect(toast.error).toHaveBeenCalledWith("No projects available. Please add projects before generating reports.");
     });
   });
 
@@ -142,7 +165,7 @@ describe("ReportGeneratorPage", () => {
     // Wait for the error handling logic to trigger
     await waitFor(() => {
       // Check that an error alert was shown
-      expect(window.alert).toHaveBeenCalledWith("An error occurred while generating reports. Please try again.");
+      expect(toast.error).toHaveBeenCalledWith("An error occurred while generating reports. Please try again.");
     });
   });
 });

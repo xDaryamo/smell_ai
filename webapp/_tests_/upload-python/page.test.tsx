@@ -1,134 +1,144 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import UploadPythonPage from "../../app/upload-python/page";
 import { detectAi, detectStatic } from "../../utils/api";
+import { toast } from "react-toastify";
+import { act } from "react";
 
-// Mock API functions
+// Mock the API functions
 jest.mock("../../utils/api", () => ({
-  detectAi: jest.fn() as jest.Mock<Promise<any>>,  
-  detectStatic: jest.fn() as jest.Mock<Promise<any>>, 
+  detectAi: jest.fn(),
+  detectStatic: jest.fn(),
 }));
 
-describe("UploadPythonPage", () => {
-  test("displays the correct file name after file is selected", async () => {
-    render(<UploadPythonPage />);
+// Mock toast notifications
+jest.mock("react-toastify", () => ({
+  toast: {
+    error: jest.fn(),
+    success: jest.fn(),
+    info: jest.fn(),
+  },
+}));
 
-    // Simulate selecting a file
-    const file = new File(["test content"], "test_file.py", { type: "text/plain" });
-    const fileInput = screen.getByLabelText(/select a python file/i);
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    // Wait for the file name to appear
-    await waitFor(() => {
-      expect(screen.getByRole("file-uploader").textContent?.includes("test_file.py"));
-    });
+describe("UploadPythonPage Component", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
-  test("toggles analysis mode between AI and Static", () => {
+  it("renders all components correctly", () => {
+    render(<UploadPythonPage />);
+
+    expect(screen.getByText(/Upload and Analyze Python Code/i)).toBeInTheDocument();
+    expect(screen.getByText(/Select Analysis Mode/i)).toBeInTheDocument();
+    expect(screen.getByText(/Select a Python File/i)).toBeInTheDocument();
+  });
+
+  it("defaults to AI mode and toggles to Static mode", () => {
     render(<UploadPythonPage />);
 
     const aiButton = screen.getByText(/AI-Based/i);
     const staticButton = screen.getByText(/Static Tool/i);
 
-    // Initial mode should be "AI"
     expect(aiButton).toHaveClass("bg-red-500");
+    expect(staticButton).toHaveClass("bg-gray-200");
 
-    // Switch to "Static" mode
     fireEvent.click(staticButton);
     expect(staticButton).toHaveClass("bg-blue-500");
     expect(aiButton).toHaveClass("bg-gray-200");
   });
-
-test("shows loading state and progress bar when submitting", async () => {
+  
+  it("handles file upload correctly", async () => {
     render(<UploadPythonPage />);
 
-    // Mock the API response
-    (detectAi as jest.Mock).mockResolvedValue({
-        smells: [
-            {
-                function_name: "main",
-                line: 1,
-                smell_name: "Code Smell",
-                description: "Unoptimized code",
-                additional_info: "",
-            },
-        ],
+    const fileInput = screen.getByLabelText(/Select a Python File/i);
+    const file = new File(["print('hello world')"], "test.py", { type: "text/x-python" });
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
     });
 
-    // Mock the FileReader to simulate file.text() behavior
-    const mockText = jest.fn().mockResolvedValue("test content");
-    global.File.prototype.text = mockText;
+    expect(screen.getByTestId("filename")).toHaveTextContent("test.py");
+  });
 
-    // Simulate file selection and submission
-    const file = new File(["test content"], "test_file.py", { type: "text/plain" });
-    const fileInput = screen.getByLabelText(/select a python file/i);
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    const submitButton = screen.getByText(/Upload Code/i);
-
-    await waitFor(() => {
-        expect(screen.getByText('Upload and Analyze Python Code')).toBeVisible();
-    });
-
-    fireEvent.click(submitButton);
-
-    // Check that the loading state text appears
-    await waitFor(() => {
-        expect(screen.getByTestId("progress").textContent?.includes("Uploading and analyzing code..."));
-    });
-
-    // Wait for the result to update
-    await waitFor(() => {
-        expect(
-            screen.getByText(/Code uploaded and analyzed successfully!/i)
-        ).toBeInTheDocument();
-    });
-
-    // Ensure that file.text() was called
-    expect(mockText).toHaveBeenCalledTimes(1);
-});
-
-
-
-  test("displays results after analysis", async () => {
+  it("shows an error when submitting without a file", async () => {
     render(<UploadPythonPage />);
-
-    // Mock the API response
-    (detectAi as jest.Mock).mockResolvedValue({
-      smells: [{ function_name: "main", line: 1, smell_name: "Code Smell", description: "Unoptimized code", additional_info: "" }],
-    });
-
-    // Simulate file selection and submission
-    const file = new File(["test content"], "test_file.py", { type: "text/plain" });
-    const fileInput = screen.getByLabelText(/select a python file/i);
-    fireEvent.change(fileInput, { target: { files: [file] } });
 
     const submitButton = screen.getByText(/Upload Code/i);
     fireEvent.click(submitButton);
 
-    // Wait for the analysis to complete and results to show
     await waitFor(() => {
-      expect(screen.getByText(/Smell #1/i)).toBeInTheDocument();
-      expect(screen.getByText(/Description:/i).textContent?.includes("Unoptimized code"));
+      expect(toast.error).toHaveBeenCalledWith("No file available. Please add a file before submitting.");
     });
   });
 
-  test("handles API failure gracefully", async () => {
+
+  it("analyzes code using AI mode", async () => {
+    (detectAi as jest.Mock).mockResolvedValueOnce({
+      success: true,
+      smells: [
+        {
+          description: "Example smell",
+          function_name: "exampleFunction",
+          line: 10,
+          additional_info: "This is a test smell",
+        },
+      ],
+    });
+
     render(<UploadPythonPage />);
 
-    // Mock the API failure
-    (detectAi as jest.Mock).mockRejectedValue(new Error("API failed"));
+    const fileInput = screen.getByLabelText(/Select a Python File/i);
+    const file = new File(["mock file content"], "test.py", { type: "text/x-python" });
 
-    // Simulate file selection and submission
-    const file = new File(["test content"], "test_file.py", { type: "text/plain" });
-    const fileInput = screen.getByLabelText(/select a python file/i);
+    Object.defineProperty(file, "text", {
+      value: jest.fn().mockResolvedValueOnce("mock file content"),
+    });
+
     fireEvent.change(fileInput, { target: { files: [file] } });
 
     const submitButton = screen.getByText(/Upload Code/i);
-    fireEvent.click(submitButton);
 
-    // Wait for error message to appear
+    await act(async () => {
+      fireEvent.click(submitButton);
+    });
+
     await waitFor(() => {
-      expect(screen.getByText(/Error uploading and analyzing code/i)).toBeInTheDocument();
+      expect(detectAi).toHaveBeenCalledWith("mock file content");
+      expect(toast.success).toHaveBeenCalledWith("Code uploaded and analyzed successfully!");
+    });
+
+    expect(screen.getByText(/Smell #1/i)).toBeInTheDocument();
+    expect(screen.getByText(/Example smell/i)).toBeInTheDocument();
+  });
+
+
+  it("hides the progress bar after loading", async () => {
+    (detectAi as jest.Mock).mockResolvedValueOnce({
+      success: true,
+      smells: [],
+    });
+
+    render(<UploadPythonPage />);
+
+    const fileInput = screen.getByLabelText(/Select a Python File/i);
+    const file = new File(["mock file content"], "test.py", { type: "text/x-python" });
+
+    Object.defineProperty(file, "text", {
+      value: jest.fn().mockResolvedValueOnce("mock file content"),
+    });
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+
+    const submitButton = screen.getByText(/Upload Code/i);
+
+    await act(async () => {
+      fireEvent.click(submitButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("progress")).not.toBeInTheDocument();
     });
   });
+
 });

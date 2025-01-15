@@ -1,5 +1,6 @@
+import { ProjectType } from '@/types/types';
 import 'cypress-file-upload';
-import { ProjectType } from '../../components/ProjectContext';
+
 
 Cypress.config('defaultCommandTimeout', 10000);
 
@@ -16,7 +17,7 @@ declare global {
     }
 }
 
-describe('Report Generator Page', () => {
+describe('Report Generator Page (E2E)', () => {
 
     it('should display header, footer, and essential components', () => {
         cy.visit('http://localhost:3000/reports');
@@ -31,8 +32,6 @@ describe('Report Generator Page', () => {
 
     it('should display an alert when no projects are available', () => {
         cy.visit('http://localhost:3000/reports');
-
-        cy.intercept('GET', '**/projects', { body: [] }).as('getProjects');
 
         cy.get('button').contains('Generate Report').click();
 
@@ -86,17 +85,21 @@ describe('Report Generator Page', () => {
                 context.addProject();
 
                 context.updateProject(0, {
-                    name: "Mock Project",
+                    name: "model_training_and_evaluaiton",
                     files: [file1, file2],
                     data: {
                         files: ["model.py", "dataset_preparation.py"],
-                        message: "Mock data",
+                        message: "Projects successfully analyzed!",
                         result: null,
-                        smells: [],
+                        smells: [{
+                            "function_name": "function",
+                            "line": 5,
+                            "smell_name": "Unnecessary DataFrame Operation",
+                            "description": "Avoid unnecessary operations on DataFrames.",
+                            "additional_info": "Consider simplifying the operation.",
+                        }],
                     },
                 });
-
-                console.log("Updated Projects: ", context.projects);
             }
         });
 
@@ -110,4 +113,76 @@ describe('Report Generator Page', () => {
 
         cy.contains('Download Report as PDF').click()
     });
+
+    it('should handle API error gracefully', () => {
+
+        const file1 = new File(
+            ['file content here'],
+            'model.py',
+            { type: 'text/x-python', lastModified: Date.now() }
+        );
+
+        const file2 = new File(
+            ['file content here'],
+            'dataset_preparation.py',
+            { type: 'text/x-python', lastModified: Date.now() }
+        );
+
+        cy.visit('http://localhost:3000/reports');
+        cy.window().should('have.property', '__REACT_CONTEXT__').and('not.be.undefined');
+        cy.window().then((win: Cypress.CustomWindow) => {
+            const context = win.__REACT_CONTEXT__;
+            if (context) {
+                context.addProject();
+                context.updateProject(0, {
+                    name: "model_training_and_evaluaiton",
+                    files: [file1, file2],
+                    data: {
+                        files: ["model.py", "dataset_preparation.py"],
+                        message: "Projects successfully analyzed!",
+                        result: null,
+                        smells: [{
+                            "function_name": "function",
+                            "line": 5,
+                            "smell_name": "Unnecessary DataFrame Operation",
+                            "description": "Avoid unnecessary operations on DataFrames.",
+                            "additional_info": "Consider simplifying the operation.",
+                        }],
+                    },
+                });
+            }
+        });
+
+        cy.intercept('POST', '/api/generate_report', { statusCode: 500, body: { error: 'Internal Server Error' } }).as('apiFailure')
+        cy.contains('Generate Report').click();
+        cy.wait('@apiFailure');
+        cy.get('#chart-div').should('not.exist');
+        cy.contains('An error occurred while generating reports. Please try again.').should('exist');
+    });
+
+    it('should handle empty smell data gracefully', () => {
+        cy.visit('http://localhost:3000/reports');
+        cy.window().should('have.property', '__REACT_CONTEXT__').and('not.be.undefined');
+        cy.window().then((win: Cypress.CustomWindow) => {
+            const context = win.__REACT_CONTEXT__;
+            if (context) {
+                context.addProject();
+                context.updateProject(0, {
+                    name: "Project with no smell Data",
+                    files: [],
+                    data: {
+                        files: [],
+                        message: "empty project",
+                        result: null,
+                        smells: null, 
+                    },
+                });
+            }
+        });
+
+        cy.contains('Generate Report').click();
+        cy.get('#chart-div').should('not.exist');
+        cy.contains('No smell data to display.').should('exist');
+    });
+
 });

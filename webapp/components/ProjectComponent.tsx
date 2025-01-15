@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect } from "react";
-import { useProjectContext } from "./ProjectContext";
+import { useProjectContext } from "../context/ProjectContext";
 import { motion } from "framer-motion";
 
 type ProjectProps = {

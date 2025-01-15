@@ -26,27 +26,6 @@ describe('Upload Python Code Page (E2E)', () => {
     cy.contains('Static Tool').should('have.class', 'bg-blue-500'); 
   });
 
-  /*it('should upload a file and analyze it in AI-Based mode', () => {
-    const filePath = 'sample_files/sample.py';
-    cy.fixture(filePath, 'utf8').then((fileContent) => {
-      cy.get('[role="file-uploader"]').attachFile({
-        fileContent,
-        fileName: "sample.py",
-        mimeType: 'text/x-python',
-      });
-    });
-    
-    cy.contains('AI-Based').click(); 
-    cy.get('button').contains('Upload Code (AI Mode)').click();  
-
-    cy.get('[data-testid="progress"]').should('exist'); 
-    cy.wait(5000);  
-
-    cy.contains('Smell #1').should('be.visible');  
-    cy.contains('Long function').should('be.visible');
-    cy.contains('Line: 12').should('be.visible');
-  });*/
-
   it('should display progress and results in Static Tool mode', () => {
     const filePath = 'model_training_and_evaluation/dataset_preparation.py';
     cy.fixture(filePath, 'utf8').then((fileContent) => {
@@ -77,7 +56,40 @@ describe('Upload Python Code Page (E2E)', () => {
       });
     });
     cy.contains('Upload Code').click();
-    cy.get("#progress").should('contain','Code uploaded and analyzed successfully!')
+    cy.get("#progress-bar").should('be.visible')
     cy.contains('No code smells detected! Your code is clean!').should('be.visible');
+  });
+
+  it('should show an error when uploading an empty Python file', () => {
+    cy.contains('Static Tool').click();
+
+    const emptyFile = new File([], 'empty_file.py', { type: 'text/x-python' });
+
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(emptyFile);
+
+    cy.get('[role="file-uploader"]').attachFile({
+      fileContent: emptyFile,  
+      fileName: 'empty_file.py',
+      mimeType: 'text/x-python',
+    }, { allowEmpty: true });
+    cy.contains('Upload Code').click();
+    cy.contains('Code Snippet cannot be empty').should('be.visible');
+  });
+
+  it('should show an error when the API returns an error', () => {
+    cy.contains('Static Tool').click();
+    const filePath = 'model_training_and_evaluation/model.py';
+    cy.fixture(filePath, 'utf8').then((fileContent) => {
+      cy.get('[role="file-uploader"]').attachFile({
+        fileContent,
+        fileName: "model.py",
+        mimeType: 'text/x-python',
+      });
+    });
+    cy.intercept('POST', '/api/detect_smell_static', { statusCode: 500, body: { error: 'Internal Server Error' } }).as('apiFailure');
+    cy.contains('Upload Code').click();
+    cy.wait('@apiFailure');
+    cy.contains('Error: Failed to analyze code.', { timeout: 10000 }).should('be.visible');
   });
 });

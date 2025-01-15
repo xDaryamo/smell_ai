@@ -1,4 +1,4 @@
-import { ProjectType } from '../webapp/components/ProjectContext';
+import { ProjectType } from './types/types'
 
 // window.d.ts, support for e2e cypress testing
 export {}; 

@@ -61,12 +61,6 @@ describe('Upload Project Page', () => {
     cy.contains('View Analysis Result').click();
   });
 
-  it('should show an error if no valid files are uploaded', () => {
-    cy.contains('Add Project').click();
-    cy.contains('Upload and Analyze All Projects').click();
-    cy.get('#message').should('contain', 'No valid files to analyze.');
-  });
-
   it('should handle file names with special characters or long names correctly', () => {
     cy.contains('Add Project').click();
     const fileWithLongName = {
@@ -78,6 +72,34 @@ describe('Upload Project Page', () => {
     cy.contains('Upload and Analyze All Projects').click();
     cy.get('#message').should('contain', 'Projects successfully analyzed');
     cy.contains('this-is-a-very-long-file-name-that-might-break-the-ui.py');
-   });
+  });
 
+  it('should show an error if no valid files are uploaded', () => {
+    cy.contains('Add Project').click();
+    cy.contains('Upload and Analyze All Projects').click();
+    cy.get('#message').should('contain', 'Error, no valid files to analyze.');
+  });
+
+  it('should handle API failure gracefully', () => {
+
+    cy.contains('Static Tool').click();
+    // Stub the API call to simulate a failure
+    cy.intercept('POST', '/api/detect_smell_static', {
+      statusCode: 500,
+      body: { error: 'Internal Server Error' },
+    }).as('apiFailure');;
+
+    cy.contains('Add Project').click();
+
+    const validFile = {
+      fileName: 'valid.py',
+      fileContent: new Blob(['print("hello world")'], { type: 'text/x-python' }),
+      mimeType: 'text/x-python',
+    };
+
+    cy.get('[data-testid="file-input"]').attachFile(validFile);
+    cy.contains('Upload and Analyze All Projects').click();
+    cy.wait('@apiFailure');
+    cy.contains('Analysis failed for snippet:', { timeout: 10000 }).should('be.visible');
+  });
 });

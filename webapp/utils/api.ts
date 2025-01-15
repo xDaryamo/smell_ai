@@ -1,24 +1,7 @@
+import { GenerateReportResponse, DetectResponse } from '@/types/types';
 import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
-
-interface Smell {
-    smell_name: string;
-    function_name: string;  
-    line: number;  
-    description: string;  
-    additional_info: string;  
-}
-
-interface DetectResponse {
-    smells: Smell[];
-    message?: string;
-    result?: string;
-}
-
-interface GenerateReportResponse {
-    report_data: Record<string, any>;
-}
 
 // Helper function for consistent error handling
 function handleErrorResponse(error: any, fallbackData: any = {}) {
@@ -34,15 +17,14 @@ export async function detectAi(codeSnippet: string): Promise<DetectResponse> {
         });
 
         return {
+                success: response.data.success ? response.data.success : false,
                 smells: Array.isArray(response.data.smells) ? response.data.smells : [],
-                message: response.data.message || "No message available",
-                result: response.data.result || "No results available",
             };
     } catch (error) {
         return handleErrorResponse(error, {
-            smells: [],
+            success: false,
+            smells: null,
             message: "Error detecting AI-based code smells.",
-            result: null,
         });
     }
 }
@@ -55,13 +37,13 @@ export async function detectStatic(codeSnippet: string): Promise<DetectResponse>
         });
 
         return {
+                success: response.data.success ? response.data.success : false,
                 smells: Array.isArray(response.data.smells) ? response.data.smells : [],
-                message: response.data.message || "No message available",
-                result: response.data.result || "No results available",
             };
             
     } catch (error) {
-        return handleErrorResponse(error, { smells: [] });
+        return handleErrorResponse(error, 
+            {  success: false, smells: null, message: "Error detecting code smells."});
     }
 }
 
@@ -72,6 +54,6 @@ export async function generateReport(projects: any[]): Promise<GenerateReportRes
         const response = await axios.post(`${API_URL}/generate_report`, { projects });
         return response.data;
     } catch (error) {
-        return handleErrorResponse(error, { report_data: {} });
+        return handleErrorResponse(error, { report_data: null, message: "Error generating reports." });
     }
 }

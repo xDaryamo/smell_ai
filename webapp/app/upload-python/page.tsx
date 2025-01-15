@@ -1,32 +1,22 @@
 "use client";
-
+import { toast } from "react-toastify";
 import { useState } from "react";
 import Header from "../../components/HeaderComponent";
 import Footer from "../../components/FooterComponent";
 import { detectAi, detectStatic } from "../../utils/api";
 import { motion } from "framer-motion";
-
-// Types
-type Smell = {
-  description: string;
-  function_name: string;
-  line: number;
-  additional_info: string;
-};
-
-type DetectResult = {
-  smells: Smell[];
-};
+import { ContextSmell, DetectResponse } from "@/types/types";
 
 function ProgressBar({ progress }: { progress: number }) {
   return (
     <motion.div
+      
       className="mt-6 w-full bg-gray-200 rounded-full"
       initial={{ width: 0 }}
       animate={{ width: `${progress}%` }}
-      transition={{ duration: 1, ease: "easeInOut" }}
+      transition={{ duration: 3, ease: "easeInOut" }}
     >
-      <div className="h-2 bg-blue-500 rounded-full"></div>
+      <div className="h-2 bg-blue-500 rounded-full" data-testid="progress" id="progress-bar"></div>
     </motion.div>
   );
 }
@@ -97,7 +87,7 @@ function FileUploadSection({
         className="w-full p-6 bg-gray-100 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-200 transition-all"
       />
       {fileName && (
-        <p className="mt-2 text-lg text-gray-700" id="file-name">
+        <p className="mt-2 text-lg text-gray-700" data-testid="filename" id="file-name">
           <strong>Selected File:</strong> {fileName}
         </p>
       )}
@@ -105,7 +95,7 @@ function FileUploadSection({
   );
 }
 
-function Results({ result, fileName }: { result: Smell[] | null; fileName: string }) {
+function Results({ result, fileName }: { result: ContextSmell[] | null; fileName: string }) {
   if (!result) return null;
 
   if (result.length === 0) {
@@ -158,9 +148,8 @@ function Results({ result, fileName }: { result: Smell[] | null; fileName: strin
 export default function UploadPythonPage() {
   const [file, setFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState<string>("");
-  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [result, setResult] = useState<Smell[] | null>(null);
+  const [result, setResult] = useState<ContextSmell[] | null>(null);
   const [analysisMode, setAnalysisMode] = useState<"AI" | "Static">("AI");
   const [progress, setProgress] = useState<number>(0);
 
@@ -171,31 +160,48 @@ export default function UploadPythonPage() {
   };
 
   const handleSubmit = async () => {
-    if (!file) return;
+    if (!file) {
+      setIsLoading(false);
+      setProgress(100)
+      toast.error("No file available. Please add a file before submitting.")
+      return;
+    }
 
     const fileContent = await file.text();
 
-    try {
-      setIsLoading(true);
-      setMessage("Uploading and analyzing code...");
-      setProgress(30);
+    if(!fileContent) {
+      setIsLoading(false);
+      setProgress(100)
+      toast.error("Code Snippet cannot be empty.");
+      return
+    }
 
-      const data: DetectResult =
-        analysisMode === "AI"
-          ? await detectAi(fileContent)
-          : await detectStatic(fileContent);
+    setIsLoading(true);
+    toast.info("Uploading and analyzing code...");
+    setProgress(30);
 
-      setProgress(70);
+    const data: DetectResponse =
+      analysisMode === "AI"
+        ? await detectAi(fileContent)
+        : await detectStatic(fileContent);
 
-      if (data.smells) {
-        setResult(data.smells);
-        setMessage("Code uploaded and analyzed successfully!");
-      } else {
-        setMessage("Unexpected API response format");
-      }
-    } catch {
-      setMessage("Error uploading and analyzing code");
-    } finally {
+    setProgress(70);
+
+    if(!data.success) {
+      toast.error(`Error: Failed to analyze code.`);
+      setIsLoading(false);
+      setProgress(100);
+      return;
+    }
+
+    if (data.smells) {
+      setResult(data.smells);
+      toast.success("Code uploaded and analyzed successfully!");
+      setIsLoading(false);
+      setProgress(100);    
+      
+    } else {
+      toast.error("Unexpected API response format");
       setIsLoading(false);
       setProgress(100);
     }
@@ -248,22 +254,6 @@ export default function UploadPythonPage() {
 
           {/* Progress Bar */}
           {isLoading && <ProgressBar progress={progress} />}
-
-          {/* Messages */}
-          {message && (
-            <motion.p
-              className={`mt-8 text-xl text-center ${
-                message.includes("Error") ? "text-red-600" : "text-green-600"
-              }`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              data-testid="progress"
-              id="progress"
-            >
-              {message}
-            </motion.p>
-          )}
 
           {/* Results */}
           <Results result={result} fileName={fileName} />

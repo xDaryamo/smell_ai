@@ -1,6 +1,6 @@
 import React from "react";
 import { renderHook, act } from "@testing-library/react";
-import { ProjectProvider, useProjectContext } from "../../components/ProjectContext";
+import { ProjectProvider, useProjectContext } from "../../context/ProjectContext";
 
 describe("ProjectContext", () => {
   it("should initialize with an empty projects array", () => {

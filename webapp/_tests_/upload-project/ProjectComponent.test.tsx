@@ -1,12 +1,12 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { useProjectContext } from "../../components/ProjectContext";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { useProjectContext } from "../../context/ProjectContext";
 import Project from "../../components/ProjectComponent";
 import "@testing-library/jest-dom";
 
 // Mocking the context hook
-jest.mock("../../components/ProjectContext", () => ({
-  ...jest.requireActual("../../components/ProjectContext"),
+jest.mock("../../context/ProjectContext", () => ({
+  ...jest.requireActual("../../context/ProjectContext"),
   useProjectContext: jest.fn(),
 }));
 
