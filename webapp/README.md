@@ -46,21 +46,21 @@ uvicorn main:app --host 0.0.0.0 --port 8000
 ``` 
 
 ```bash
-cd webapp/services/aiservice
+cd smell_ai
 pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8001
+uvicorn webapp.services.aiservice.app.main:app --host 0.0.0.0 --port 8001
 ``` 
 
 ```bash
-cd webapp/services/staticanalysis
+cd smell_ai
 pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8002
+uvicorn webapp.services.staticanalysis.app.main:app --host 0.0.0.0 --port 8002
 ``` 
 
 ```bash
-cd webapp/services/report
+cd smell_ai
 pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8003
+uvicorn webapp.services.report.app.main:app --host 0.0.0.0 --port 8003
 ``` 
 
 ### **UI set up**
@@ -70,6 +70,25 @@ npm install
 npm run build
 npm run start
 ``` 
+
+## **Testing**
+
+### **UI Components Testing**
+The UI components have been tested using Jest, a JavaScript testing framework. Jest ensures that all components render correctly and function as expected in isolation. To run tests, execute the following bash:
+
+```bash
+cd webapp
+npm test
+``` 
+
+### **E2E Testing**
+End-to-end tests have been implemented using Cypress, a robust framework for testing web applications. Cypress tests cover the user journey, ensuring that all workflows function correctly. To run tests, execute the following bash:
+
+```bash
+cd webapp
+npx cypress open
+``` 
+Select E2E testing in your browser of choice and run the single test suites(specs).
 
 ## **Services Overview**
 
