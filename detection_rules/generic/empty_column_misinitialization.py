@@ -63,12 +63,13 @@ class EmptyColumnMisinitializationSmell(Smell):
                                     self.format_smell(
                                         line=node.lineno,
                                         additional_info=(
-                                            f"Column '{column_name}' "
+                                            "Column "
+                                            f"'{node.targets[0].slice.value}' "
                                             "in DataFrame "
-                                            f"'{node.targets[0].value.id}'"
-                                            " is initialized with "
-                                            " a zero or an empty string. "
-                                            " Consider using NaN instead."
+                                            f"'{node.targets[0].value.id}' "
+                                            "is initialized with a zero or "
+                                            "an empty string. "
+                                            "Consider using NaN instead."
                                         ),
                                     )
                                 )

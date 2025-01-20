@@ -52,7 +52,11 @@ def test_detect_with_zero_initialization(smell_detector):
     result = smell_detector.detect(tree, extracted_data)
     assert len(result) == 1  # One smell should be detected
     assert result[0]["name"] == "empty_column_misinitialization"
-    assert "initialized with a zero" in result[0]["additional_info"]
+    assert (
+        "initialized with a zero or an empty string"
+        in result[0]["additional_info"]
+    )
+    assert "Consider using NaN instead" in result[0]["additional_info"]
     assert result[0]["line"] == 4  # Line where the smell occurs
 
 
@@ -76,9 +80,10 @@ def test_detect_with_empty_string_initialization(smell_detector):
     assert len(result) == 1  # One smell should be detected
     assert result[0]["name"] == "empty_column_misinitialization"
     assert (
-        "initialized with a zero or empty string"
+        "initialized with a zero or an empty string"
         in result[0]["additional_info"]
     )
+    assert "Consider using NaN instead" in result[0]["additional_info"]
     assert result[0]["line"] == 4  # Line where the smell occurs
 
 
