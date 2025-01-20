@@ -27,10 +27,8 @@ class EmptyColumnMisinitializationSmell(Smell):
             ),
         )
 
-    def detect(
-        self, ast_node: ast.AST, extracted_data: dict[str, any]
-    ) -> list[dict[str, any]]:
-
+    def detect(self, ast_node: ast.AST, extracted_data: dict[str, any]
+               ) -> list[dict[str, any]]:
         smells = []
 
         # Ensure Pandas library is used
@@ -38,37 +36,41 @@ class EmptyColumnMisinitializationSmell(Smell):
         if not pandas_alias:
             return smells
 
+        # Ensure dataframe_variables is always a list
         dataframe_variables = extracted_data.get("dataframe_variables", [])
+        if dataframe_variables is None:
+            dataframe_variables = []
 
-        # Traverse AST to find DataFrame column assignments
+        # Traversing AST nodes to detect smells
         for node in ast.walk(ast_node):
             if (
                 isinstance(node, ast.Assign)  # An assignment statement
                 and len(node.targets) == 1  # Single assignment target
-                and isinstance(
-                    node.targets[0], ast.Subscript
-                )  # Accessing a DataFrame column (e.g., df["col"])
-                and isinstance(
-                    node.targets[0].value, ast.Name
-                )  # Base variable (e.g., df)
-                and node.targets[0].value.id
-                in dataframe_variables  # Variable is a known DataFrame
+                and isinstance(node.targets[0], ast.Subscript)
+                and isinstance(node.targets[0].value, ast.Name)
+                and node.targets[0].value.id in dataframe_variables
             ):
                 # Check the assigned value
                 assigned_value = node.value
-                if isinstance(
-                    assigned_value, ast.Constant
-                ) and assigned_value.value in {0, "", ""}:
-                    smells.append(
-                        self.format_smell(
-                            line=node.lineno,
-                            additional_info=(
-                                f"Column '{node.targets[0].slice.value}' "
-                                f"in DataFrame '{node.targets[0].value.id}' "
-                                "is initialized with a zero or empty string. "
-                                "Consider using NaN instead."
-                            ),
-                        )
-                    )
+                if isinstance(assigned_value, ast.Constant):
+                    if assigned_value.value in {0, ""}:
+                        # Safely access the column name (slice value)
+                        column_name = None
+                        if isinstance(node.targets[0].slice, ast.Constant):
+                            column_name = node.targets[0].slice.value
+                            if column_name:
+                                smells.append(
+                                    self.format_smell(
+                                        line=node.lineno,
+                                        additional_info=(
+                                            f"Column '{column_name}' "
+                                            "in DataFrame "
+                                            f"'{node.targets[0].value.id}'"
+                                            " is initialized with "
+                                            " a zero or an empty string. "
+                                            " Consider using NaN instead."
+                                        ),
+                                    )
+                                )
 
         return smells
