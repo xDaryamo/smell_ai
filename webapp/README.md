@@ -71,6 +71,20 @@ npm run build
 npm run start
 ``` 
 
+## **Ollama set up**
+
+To successfully run the model using **Ollama**, follow these steps:
+
+### 1. Install Ollama
+First, ensure that **Ollama** is installed on your system. You can download and install it by following the official instructions available at: [https://ollama.ai](https://ollama.ai).
+
+### 2. Create the Model
+Once Ollama is installed, open the **Command Prompt** (Windows) or **Terminal** (macOS/Linux) and use the following command to create the model:
+
+```bash
+ollama create path_to_modelfile
+```
+
 ## **Testing**
 
 ### **UI Components Testing**

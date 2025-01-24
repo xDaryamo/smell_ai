@@ -128,11 +128,15 @@ const UploadProjectPage = () => {
         const fileName = projectFiles[fileIndex].name;
         const smells = Array.isArray(res.smells) ? res.smells : [];
         return `File: ${fileName}\n` + smells
-          .map((smell: { function_name: any; line: any; smell_name: any; description: any; additional_info: any; }) =>
-            `Function: ${smell.function_name ?? 'N/A'}\n` +
-            `Line: ${smell.line}\nSmell: ${smell.smell_name}\nDescription: ${smell.description}\n` +
-            `Additional Info: ${smell.additional_info}`
-          )
+          .map((smell: { function_name: any; line: any; smell_name: any; description: any; additional_info: any; }) => {
+            let result = "";
+            if (smell.function_name) result += `Function: ${smell.function_name}\n`;
+            if (smell.line) result += `Line: ${smell.line}\n`;
+            if (smell.smell_name) result += `Smell: ${smell.smell_name}\n`;
+            if (smell.description) result += `Description: ${smell.description}\n`;
+            if (smell.additional_info) result += `Additional Info: ${smell.additional_info}\n`;
+            return result.trim();
+          })
           .join("\n\n");
       })
       .join("\n\n");

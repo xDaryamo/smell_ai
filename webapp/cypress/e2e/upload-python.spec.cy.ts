@@ -1,4 +1,5 @@
 import 'cypress-file-upload';
+Cypress.config('defaultCommandTimeout', 50000);
 
 describe('Upload Python Code Page (E2E)', () => {
   beforeEach(() => {
@@ -43,6 +44,24 @@ describe('Upload Python Code Page (E2E)', () => {
 
     cy.contains('Smell #1').should('be.visible');  
     cy.contains('Smell #2').should('be.visible');
+  });
+
+  it('should display progress and results in AI mode', () => {
+    const filePath = 'model_training_and_evaluation/dataset_preparation.py';
+    cy.fixture(filePath, 'utf8').then((fileContent) => {
+      cy.get('[role="file-uploader"]').attachFile({
+        fileContent,
+        fileName: "dataset_preparation.py",
+        mimeType: 'text/x-python',
+      });
+    });
+
+    cy.contains('AI-Based').click();  
+    cy.get('button').contains('Upload Code (AI Mode)').click(); 
+
+    cy.get('[data-testid="progress"]').should('exist');    
+
+    cy.contains('Smell #1').should('be.visible');  
   });
 
   it('should display no smells message for clean code', () => {

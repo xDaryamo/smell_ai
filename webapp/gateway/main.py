@@ -32,11 +32,22 @@ def read_root():
 # Proxy requests to AI Analysis Service
 @app.post("/api/detect_smell_ai")
 async def detect_smell_ai(request: dict):
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{AI_ANALYSIS_SERVICE}/detect_smell_ai", json=request
-        )
-    return response.json()
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{AI_ANALYSIS_SERVICE}/detect_smell_ai",
+                json=request,
+                timeout=500.0,  # Set a timeout (in seconds)
+            )
+        return response.json()
+    except httpx.RequestError as exc:
+        return {
+            "success": False,
+            "error": f"Request to AI Analysis Service failed: {str(exc)}",
+        }
+    except httpx.TimeoutException:
+        return {"success": False,
+                "error": "Request to AI Analysis Service timed out"}
 
 
 # Proxy requests to Static Analysis Service

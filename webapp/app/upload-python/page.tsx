@@ -123,22 +123,39 @@ function Results({ result, fileName }: { result: ContextSmell[] | null; fileName
           key={index}
           className="bg-gray-100 p-6 rounded-lg shadow-lg border border-gray-300"
         >
-          <h3 className="font-semibold text-2xl text-blue-600 mb-2">Smell #{index + 1}</h3>
-          <p className="text-lg font-medium text-gray-800">
-            <strong>Description:</strong> {smell.description}
-          </p>
-          <p className="text-lg text-gray-700">
-            <strong>File Name:</strong> {fileName}
-          </p>
-          <p className="text-lg text-gray-700">
-            <strong>Function Name:</strong> {smell.function_name}
-          </p>
-          <p className="text-lg text-gray-700">
-            <strong>Line:</strong> {smell.line}
-          </p>
-          <p className="text-lg text-gray-700">
-            <strong>Additional Info:</strong> {smell.additional_info}
-          </p>
+          <h3 className="font-semibold text-2xl text-blue-600 mb-2">
+            Smell #{index + 1}
+          </h3>
+          {smell.description && (
+            <p className="text-lg font-medium text-gray-800">
+              <strong>Description:</strong> {smell.description}
+            </p>
+          )}
+          {fileName && (
+            <p className="text-lg text-gray-700">
+              <strong>File Name:</strong> {fileName}
+            </p>
+          )}
+          {smell.smell_name && (
+            <p className="text-lg text-gray-700">
+              <strong>Smell:</strong> {smell.smell_name}
+            </p>
+          )}
+          {smell.function_name && (
+            <p className="text-lg text-gray-700">
+              <strong>Function Name:</strong> {smell.function_name}
+            </p>
+          )}
+          {smell.line && (
+            <p className="text-lg text-gray-700">
+              <strong>Line:</strong> {smell.line}
+            </p>
+          )}
+          {smell.additional_info && (
+            <p className="text-lg text-gray-700">
+              <strong>Additional Info:</strong> {smell.additional_info}
+            </p>
+          )}
         </div>
       ))}
     </motion.div>

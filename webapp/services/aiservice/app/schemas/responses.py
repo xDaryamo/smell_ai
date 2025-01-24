@@ -1,4 +1,12 @@
 from pydantic import BaseModel
+from typing import List, Optional, Union
+
+
+class Smell(BaseModel):
+    """
+    Represents a detected code smell.
+    """
+    smell_name: str
 
 
 class DetectSmellResponse(BaseModel):
@@ -7,16 +15,19 @@ class DetectSmellResponse(BaseModel):
     """
 
     code_snippet: str
-    analysis: str
-    label: str
+    success: bool
+    smells: Optional[Union[List[Smell], str]] = []
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
-                "code_snippet":
-                "def example_function():\n    print('Hello, world!')",
-                "analysis":
-                "The code is overly simple and lacks exception handling.",
-                "label": "Code Simplicity",
+                "success": {"true"},
+                "code_snippet": "def example_function():\n"
+                                "print('Hello, world!')",
+                "smells": [
+                    {
+                        "smell_name": "Unnecessary DataFrame Operation",
+                    }
+                ],
             }
         }

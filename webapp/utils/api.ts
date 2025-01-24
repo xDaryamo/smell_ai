@@ -2,6 +2,13 @@ import { GenerateReportResponse, DetectResponse } from '@/types/types';
 import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+const REQUEST_TIMEOUT = 500000;
+
+const axiosInstance = axios.create({
+    baseURL: API_URL,
+    timeout: REQUEST_TIMEOUT,
+});
+
 
 // Helper function for consistent error handling
 function handleErrorResponse(error: any, fallbackData: any = {}) {
@@ -12,7 +19,7 @@ function handleErrorResponse(error: any, fallbackData: any = {}) {
 // AI-based code smell detection
 export async function detectAi(codeSnippet: string): Promise<DetectResponse> {
     try {
-        const response = await axios.post(`${API_URL}/detect_smell_ai`, {
+        const response = await axiosInstance.post(`${API_URL}/detect_smell_ai`, {
             code_snippet: codeSnippet,
         });
 
@@ -32,7 +39,7 @@ export async function detectAi(codeSnippet: string): Promise<DetectResponse> {
 // Static analysis-based code smell detection
 export async function detectStatic(codeSnippet: string): Promise<DetectResponse> {
     try {
-        const response = await axios.post(`${API_URL}/detect_smell_static`, {
+        const response = await axiosInstance.post(`${API_URL}/detect_smell_static`, {
             code_snippet: codeSnippet,
         });
 
@@ -51,7 +58,7 @@ export async function detectStatic(codeSnippet: string): Promise<DetectResponse>
 // Generate project report
 export async function generateReport(projects: any[]): Promise<GenerateReportResponse> {
     try {
-        const response = await axios.post(`${API_URL}/generate_report`, { projects });
+        const response = await axiosInstance.post(`${API_URL}/generate_report`, { projects });
         return response.data;
     } catch (error) {
         return handleErrorResponse(error, { report_data: null, message: "Error generating reports." });
