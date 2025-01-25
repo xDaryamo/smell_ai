@@ -7,6 +7,19 @@ from charset_normalizer import detect
 
 
 class FunctionDatasetBuilder:
+    """
+    A class for building datasets of functions from Python files.
+    The class is particularly useful for analyzing repositories or directories
+    of Python projects and extracting functions that
+    are related to machine learning (ML).
+
+    Attributes:
+        repo_path (str): Path to the repository
+            or root directory of repositories.
+        libraries (list): List of ML-related
+            libraries to filter files by relevance.
+    """
+
     def __init__(
         self,
         repo_path,
@@ -15,10 +28,11 @@ class FunctionDatasetBuilder:
         """
         Initialize the FunctionDatasetBuilder.
 
-        :param repo_path: Path to the repository
-        or root directory of repositories.
-        :param libraries: List of ML-related libraries
-        to filter files by relevance.
+        Args:
+            repo_path (str): Path to the repository
+                or root directory of repositories.
+            libraries (list): List of ML-related libraries
+                to filter files by relevance.
         """
         self.repo_path = repo_path
         self.libraries = libraries
@@ -27,7 +41,8 @@ class FunctionDatasetBuilder:
         """
         Recursively find all Python files in the repository.
 
-        :return: List of Python file paths.
+        Returns:
+            list: List of Python file paths.
         """
         logging.info("Scanning repository for Python files...")
         python_files = []
@@ -43,9 +58,12 @@ class FunctionDatasetBuilder:
         Check if a Python file is related to machine learning
         by analyzing imports and function calls using AST.
 
-        :param file_path: Path to the Python file.
-        :return: True if the file contains ML-related libraries,
-        False otherwise.
+        Args:
+            file_path (str): Path to the Python file.
+
+        Returns:
+            bool: True if the file contains ML-related
+                libraries, False otherwise.
         """
         try:
             with open(file_path, "r", encoding="utf-8") as f:
@@ -108,8 +126,11 @@ class FunctionDatasetBuilder:
         Determine if a function contains ML-related
         keywords using AST analysis.
 
-        :param function_code: The code of the function as a string.
-        :return: True if ML-related keywords are found, False otherwise.
+        Args:
+            function_code (str): The code of the function as a string.
+
+        Returns:
+            bool: True if ML-related keywords are found, False otherwise.
         """
         keywords = [
             "fit",
@@ -163,9 +184,12 @@ class FunctionDatasetBuilder:
         Determine if a function is ML-related based on
         library aliases using AST.
 
-        :param function_code: The code of the function as a string.
-        :param aliases: A dictionary of library aliases.
-        :return: True if the function is ML-related, False otherwise.
+        Args:
+            function_code (str): The code of the function as a string.
+            aliases (dict): A dictionary of library aliases.
+
+        Returns:
+            bool: True if the function is ML-related, False otherwise.
         """
         try:
             tree = ast.parse(function_code)
@@ -208,8 +232,11 @@ class FunctionDatasetBuilder:
         """
         Extract all functions from a Python file.
 
-        :param file_path: Path to the Python file.
-        :return: List of dictionaries representing functions.
+        Args:
+            file_path (str): Path to the Python file.
+
+        Returns:
+            list: List of dictionaries representing functions.
         """
         functions = []
         try:
@@ -242,10 +269,6 @@ class FunctionDatasetBuilder:
                             functions.append(
                                 {
                                     "function_name": node.name,
-                                    "start_line": node.lineno,
-                                    "end_line": getattr(
-                                        node, "end_lineno", None
-                                    ),
                                     "code": function_code,
                                     "file_path": file_path,
                                 }
@@ -264,7 +287,8 @@ class FunctionDatasetBuilder:
         """
         Build a dataset of functions from ML-related Python files.
 
-        :return: List of dictionaries representing the dataset.
+        Returns:
+            list: List of dictionaries representing the dataset.
         """
         logging.info("Starting dataset build process...")
         dataset = []
@@ -292,14 +316,23 @@ class FunctionDatasetBuilder:
         logging.info(f"Extracted {len(dataset)} functions in total.")
         return dataset
 
-    def save_dataset(self, dataset, output_path="partial_dataset.json"):
+    def save_dataset(self, dataset, output_path):
         """
         Save the dataset to a JSON file.
 
-        :param dataset: Dataset to save.
-        :param output_path: Path to the JSON file.
+        Args:
+            dataset (list): Dataset to save.
+            output_path (str): Path to the JSON file.
         """
         logging.info(f"Saving dataset to {output_path}...")
+        dataset = [
+            {
+                "function_name": item["function_name"],
+                "code": item["code"],
+                "file_path": item["file_path"],
+            }
+            for item in dataset
+        ]
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(dataset, f, indent=4)
         logging.info(f"Dataset saved successfully to {output_path}.")
@@ -312,5 +345,5 @@ if __name__ == "__main__":
 
     builder = FunctionDatasetBuilder(repo_path="datasets/raw")
     dataset = builder.build_dataset()
-    builder.save_dataset(dataset, "datasets/partial_dataset.json")
-    print("Dataset created and saved as partial_dataset.json.")
+    builder.save_dataset(dataset, "datasets/function_extracted.json")
+    print("Dataset created and saved as function_extracted.json.")
