@@ -9,7 +9,19 @@ class CodeSmellAnalyzer:
     """
     Class to analyze code smells in functions extracted from a dataset.
     This class uses the Inspector class to detect code smells in
-    individual functions.
+    individual functions and categorizes functions as clean or smelly.
+
+    Attributes:
+        dataset_path (str): Path to the dataset JSON file.
+        output_dir (str): Directory to save results.
+        max_workers (int): Maximum number of threads for parallelization.
+        log_interval (int): Number of functions to
+            process before logging progress.
+        inspector (Inspector): An instance of the
+            Inspector class for analyzing code.
+        clean_functions (list): List of functions without code smells.
+        smelly_functions (list): List of functions with detected code smells.
+        file_cache (dict): Cache to store inspection results for files.
     """
 
     def __init__(
@@ -22,7 +34,8 @@ class CodeSmellAnalyzer:
             dataset_path (str): Path to the dataset JSON file.
             output_dir (str): Directory to save results.
             max_workers (int): Maximum number of threads for parallelization.
-            log_interval (int): Number of functions to process before logging progress.
+            log_interval (int): Number of functions to
+                process before logging progress.
         """
         self.dataset_path = dataset_path
         self.output_dir = output_dir
@@ -35,19 +48,21 @@ class CodeSmellAnalyzer:
         self.smelly_functions = []
         self.file_cache = {}  # Cache to store inspection results for files
 
-        # Setup logging
+        # Setup logging for console only
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s - %(levelname)s - %(message)s",
-            handlers=[
-                logging.StreamHandler(),
-                logging.FileHandler(os.path.join(output_dir, "analysis.log")),
-            ],
+            handlers=[logging.StreamHandler()],
         )
         self.logger = logging.getLogger(__name__)
 
     def load_dataset(self):
-        """Load the dataset from the JSON file."""
+        """
+        Load the dataset from the JSON file.
+
+        This method reads the dataset from the specified JSON file and
+        stores it as an instance attribute for further processing.
+        """
         with open(self.dataset_path, "r") as f:
             self.dataset = json.load(f)
 
@@ -55,9 +70,12 @@ class CodeSmellAnalyzer:
         """
         Analyze a function by analyzing the entire file and filtering results.
 
+        This method inspects a specific function within its file, checks if it
+        contains code smells, and returns the results.
+
         Args:
-            function_data (dict): Function data containing file_path,
-            start_line, end_line, etc.
+            function_data (dict): Function data containing
+                file_path, function_name, and code.
 
         Returns:
             dict: Result indicating if the function is smelly and its smells.
@@ -70,35 +88,36 @@ class CodeSmellAnalyzer:
                 self.file_cache[file_path] = self.inspector.inspect(file_path)
             except Exception as e:
                 self.logger.error(f"Error analyzing file {file_path}: {e}")
-                return {
-                    "function_data": function_data,
-                    "smelly": False,
-                    "smells": [],
-                }
+                return None  # Skip this function
 
         results = self.file_cache[file_path]
         function_smells = results[
             (results["function_name"] == function_data["function_name"])
-            & (results["line"] >= function_data["start_line"])
-            & (results["line"] <= function_data["end_line"])
         ]
 
         if not function_smells.empty:
+            unique_labels = list(
+                set(
+                    item["label"]
+                    for item in function_smells.to_dict(orient="records")
+                )
+            )
             return {
-                "function_data": function_data,
-                "smelly": True,
-                "smells": function_smells.to_dict(orient="records"),
+                "code": function_data["code"],
+                "labels": unique_labels,
             }
         else:
             return {
-                "function_data": function_data,
-                "smelly": False,
-                "smells": [],
+                "code": function_data["code"],
+                "labels": ["No Smell"],
             }
 
     def analyze_dataset_parallel(self):
         """
         Analyze the entire dataset of functions in parallel.
+
+        This method uses multi-threading to analyze functions from the dataset
+        concurrently, categorizing them as clean or smelly.
 
         Returns:
             tuple: Lists of clean and smelly functions.
@@ -122,10 +141,11 @@ class CodeSmellAnalyzer:
                 function_data = future_to_function[future]
                 try:
                     result = future.result()
-                    if result["smelly"]:
-                        smelly_functions.append(result)
-                    else:
-                        clean_functions.append(function_data)
+                    if result is not None:  # Only process non-None results
+                        if "No Smells" in result["labels"]:
+                            clean_functions.append(result)
+                        else:
+                            smelly_functions.append(result)
                 except Exception as e:
                     self.logger.error(
                         f"Error analyzing function "
@@ -142,7 +162,16 @@ class CodeSmellAnalyzer:
         return clean_functions, smelly_functions
 
     def save_results(self, clean_functions, smelly_functions):
-        """Save clean and smelly functions to JSON files."""
+        """
+        Save clean and smelly functions to JSON files.
+
+        This method saves the analyzed functions to separate JSON files
+        for clean and smelly functions.
+
+        Args:
+            clean_functions (list): List of clean functions.
+            smelly_functions (list): List of smelly functions.
+        """
         clean_path = os.path.join(self.output_dir, "clean_functions.json")
         smelly_path = os.path.join(self.output_dir, "smelly_functions.json")
 
@@ -155,7 +184,12 @@ class CodeSmellAnalyzer:
         self.logger.info(f"Results saved: {clean_path}, {smelly_path}")
 
     def run(self):
-        """Run the analysis process."""
+        """
+        Run the analysis process.
+
+        This method orchestrates the entire process: loading the dataset,
+        analyzing the functions, and saving the results.
+        """
         self.logger.info("Starting dataset analysis...")
         clean_functions, smelly_functions = self.analyze_dataset_parallel()
         self.save_results(clean_functions, smelly_functions)
@@ -167,7 +201,7 @@ class CodeSmellAnalyzer:
 
 if __name__ == "__main__":
     # Define paths for the dataset and output
-    dataset_path = "datasets/partial_dataset.json"
+    dataset_path = "datasets/function_extracted.json"
     output_dir = "datasets/output_analysis"
 
     # Initialize and run the analyzer
