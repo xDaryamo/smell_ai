@@ -9,6 +9,23 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 class RepositoryDownloader:
+    """
+    A class to search and download GitHub repositories
+    based on specific topics, programming languages,
+    and other criteria. This tool is designed to help collect
+    repositories that use specific libraries or meet given search filters.
+
+    Attributes:
+        github (Github): An instance of the GitHub API client.
+        output_folder (str): Directory where repositories are downloaded.
+        libraries (list): List of target libraries to check in
+            the repositories' dependency files.
+        processed_repos (set): A set of already processed
+            repository names to avoid duplication.
+        processed_repos_path (str): Path to the JSON
+            file that stores processed repository names.
+    """
+
     def __init__(
         self,
         token,
@@ -16,12 +33,13 @@ class RepositoryDownloader:
         libraries=["pandas", "numpy", "torch", "tensorflow", "sklearn"],
     ):
         """
-        Initialize the downloader.
+        Initialize the RepositoryDownloader class.
 
-        :param token: GitHub token for authentication.
-        :param output_folder: Folder to store the downloaded repositories.
-        :param libraries: Optional list of target
-        libraries to search for in dependency files.
+        Args:
+            token (str): GitHub token for authentication.
+            output_folder (str): Folder to store downloaded repositories.
+            libraries (list): Optional list of target libraries
+            to search for in dependency files.
         """
         self.github = Github(token)
         self.output_folder = output_folder
@@ -35,14 +53,11 @@ class RepositoryDownloader:
         )
         self.load_processed_repos()
 
-        # Configure logging
+        # Configure logging for console only
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s [%(levelname)s] %(message)s",
-            handlers=[
-                logging.FileHandler("downloader.log"),
-                logging.StreamHandler(),
-            ],
+            handlers=[logging.StreamHandler()],
         )
 
     def save_processed_repos(self):
@@ -66,17 +81,21 @@ class RepositoryDownloader:
         download=False,
     ):
         """
-        Search for repositories across multiple
-        topics and either print or download them.
+        Search for repositories across multiple topics and
+        either print or download them.
 
-        :param topics: List of topics to search for.
-        :param max_repos_per_topic: Maximum number of repositories per topic.
-        :param stars: Filter repositories based on star count (e.g., '>=50').
-        :param pushed: Filter repositories based on last update date
-        (e.g., '>2023-01-01').
-        :param language: Programming language to filter by (default: Python).
-        :param download: If True, download repositories.
-        If False, print repository information.
+        Args:
+            topics (list): List of topics to search for.
+            max_repos_per_topic (int): Maximum number of
+                repositories per topic.
+            stars (str): Filter repositories based on star count
+                (e.g., '>=50').
+            pushed (str): Filter repositories based on the
+                last update date (e.g., '>2023-01-01').
+            language (str): Programming language
+                to filter by (default: Python).
+            download (bool): If True, download repositories;
+                otherwise, print repository information.
         """
         logging.info("Starting repository search for multiple topics...")
         for topic in topics:
@@ -92,7 +111,7 @@ class RepositoryDownloader:
         action = "downloaded" if download else "printed"
         logging.info(
             f"Repository processing completed! {len(self.processed_repos)} "
-            f" unique repositories {action}."
+            f"unique repositories {action}."
         )
         self.save_processed_repos()
 
@@ -100,10 +119,11 @@ class RepositoryDownloader:
         """
         Process a GitHub query and either print or download repositories.
 
-        :param query: GitHub search query.
-        :param max_repos: Maximum number of repositories to process.
-        :param download: If True, download repositories.
-        If False, print information.
+        Args:
+            query (str): GitHub search query.
+            max_repos (int): Maximum number of repositories to process.
+            download (bool): If True, download repositories;
+                otherwise, print information.
         """
         repos = self.github.search_repositories(query=query)
         with ThreadPoolExecutor(max_workers=5) as executor:
@@ -119,9 +139,10 @@ class RepositoryDownloader:
         """
         Process a single repository.
 
-        :param repo: GitHub repository object.
-        :param download: If True, download the repository.
-        If False, print information.
+        Args:
+            repo (Repository): GitHub repository object.
+            download (bool): If True, download the repository;
+                otherwise, print information.
         """
         if repo.full_name in self.processed_repos:
             return
@@ -137,16 +158,19 @@ class RepositoryDownloader:
         """
         Download a repository if it contains relevant libraries.
 
-        :param repo: GitHub repository object.
-        :return: True if the repository was downloaded, False otherwise.
+        Args:
+            repo (Repository): GitHub repository object.
+
+        Returns:
+            bool: True if the repository was downloaded; False otherwise.
         """
         repo_name = repo.full_name.replace("/", "_")
         repo_path = os.path.join(self.output_folder, repo_name)
 
         if os.path.exists(repo_path):
             logging.warning(
-                f"Repository path {repo_path} already exists. "
-                "Skipping download."
+                f"Repository path {repo_path} "
+                "already exists. Skipping download."
             )
             return False
 
@@ -172,8 +196,11 @@ class RepositoryDownloader:
         """
         Print repository information if it contains relevant libraries.
 
-        :param repo: GitHub repository object.
-        :return: True if the repository is printed, False otherwise.
+        Args:
+            repo (Repository): GitHub repository object.
+
+        Returns:
+            bool: True if the repository was printed; False otherwise.
         """
         if self._contains_relevant_libraries_online(repo):
             logging.info(f"Repository: {repo.full_name}")
@@ -189,9 +216,12 @@ class RepositoryDownloader:
         Check if a repository contains relevant
         libraries in dependency files online.
 
-        :param repo: GitHub repository object.
-        :return: True if at least one relevant\
-         library is found, otherwise False.
+        Args:
+            repo (Repository): GitHub repository object.
+
+        Returns:
+            bool: True if at least one relevant library is found;
+                otherwise, False.
         """
         files_to_check = ["requirements.txt", "setup.py", "pyproject.toml"]
         for file in files_to_check:
@@ -211,9 +241,12 @@ class RepositoryDownloader:
         """
         Check for relevant libraries in local dependency files.
 
-        :param repo_path: Local path of the repository.
-        :return: True if at least one
-        relevant library is found, otherwise False.
+        Args:
+            repo_path (str): Local path of the repository.
+
+        Returns:
+            bool: True if at least one relevant library is found;
+                otherwise, False.
         """
         files_to_check = ["requirements.txt", "setup.py", "pyproject.toml"]
         for root, _, files in os.walk(repo_path):
