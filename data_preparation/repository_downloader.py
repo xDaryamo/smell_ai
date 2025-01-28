@@ -49,8 +49,10 @@ class RepositoryDownloader:
             set()
         )  # Tracks processed repositories to avoid duplicates
         self.processed_repos_path = os.path.join(
-            os.path.dirname(__file__), "processed_repos.json"
+            os.path.dirname(os.path.dirname(__file__)),
+            "datasets/raw/processed_repos.json",
         )
+
         self.load_processed_repos()
 
         # Configure logging for console only
