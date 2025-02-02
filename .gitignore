@@ -1,9 +1,10 @@
 /input/projects/
+
 /datasets/output_analysis/
 /datasets/raw/
 /env/
 .env
-
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -35,6 +36,7 @@ pip-delete-this-directory.txt
 .tox/
 .coverage
 .cache
+.pytest_cache
 nosetests.xml
 coverage.xml
 
@@ -55,4 +57,3 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
-
