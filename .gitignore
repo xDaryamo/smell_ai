@@ -5,6 +5,7 @@
 /env/
 .env
 .vscode
+.next
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
