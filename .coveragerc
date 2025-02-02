@@ -3,3 +3,6 @@ omit =
     test/*
     */__init__.py
     env/*
+    data_preparation/*
+    datasets/*
+    finetuning/*
