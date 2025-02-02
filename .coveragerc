@@ -4,3 +4,7 @@ omit =
     */__init__.py
     env/*
     webapp/*
+    data_preparation/*
+    datasets/*
+    finetuning/*
+
