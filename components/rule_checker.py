@@ -52,7 +52,7 @@ class RuleChecker:
         Parameters:
         - ast_node (ast.AST): The AST node to analyze.
         - extracted_data (dict): Pre-extracted data
-          (e.g., libraries, variables, etc.).
+        (e.g., libraries, variables, etc.).
         - filename (str): The name of the file being analyzed.
         - function_name (str): The name of the function node being analyzed.
         - df_output (pd.DataFrame): The DataFrame to store detected smells.
@@ -60,18 +60,24 @@ class RuleChecker:
         Returns:
         - pd.DataFrame: The updated DataFrame containing detected smells.
         """
-
         for smell in self.smells:
-            detected_smells = smell.detect(ast_node, extracted_data)
-            for detected_smell in detected_smells:
-                df_output.loc[len(df_output)] = {
-                    "filename": filename,
-                    "function_name": function_name,
-                    "smell_name": detected_smell["name"],
-                    "line": detected_smell["line"],
-                    "description": detected_smell["description"],
-                    "additional_info": detected_smell["additional_info"],
-                }
+            try:
+                detected_smells = smell.detect(ast_node, extracted_data)
+                for detected_smell in detected_smells:
+                    df_output.loc[len(df_output)] = {
+                        "filename": filename,
+                        "function_name": function_name,
+                        "smell_name": detected_smell["name"],
+                        "line": detected_smell["line"],
+                        "description": detected_smell["description"],
+                        "additional_info": detected_smell["additional_info"],
+                    }
+            except Exception as e:
+                print(
+                    f"Error in rule checker '{type(smell).__name__}' "
+                    f"for function '{function_name}' "
+                    f"in file '{filename}': {e}"
+                )
 
         return df_output
 

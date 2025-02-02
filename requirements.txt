@@ -1,8 +1,8 @@
 pandas~=2.0.0
 numpy~=1.24.2
 PyGithub
-tensorflow~=2.12.0
-torch~=2.0.0
+tensorflow~=2.12.1
+typing-extensions~=4.5.0
 matplotlib>=3.7.0
 openpyxl
 flake8
@@ -11,5 +11,10 @@ pytest
 pytest-cov
 pytest-mock
 pytest-xvfb
-
+python-dotenv
+transformers
+gitpython
+bitsandbytes
+accelerate>=0.26.0
+ollama
 
