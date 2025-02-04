@@ -45,8 +45,9 @@ jobs:
       # Run tests with pytest and collect coverage
       - name: Run tests and collect coverage
         run: |
-
-          pytest --cov=. --cov-report xml --cov-report term --cov-config=.coveragerc --cov-branch --ignore=datasets --ignore=webapp/integration_tests
+          coverage run --branch -m pytest --ignore=datasets --ignore=webapp/integration_tests --ignore=finetuning
+          coverage report -m
+          coverage xml
 
 
       # Upload coverage report to Codecov
