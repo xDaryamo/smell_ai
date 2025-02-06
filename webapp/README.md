@@ -69,7 +69,11 @@ cd webapp
 npm install
 npm run build
 npm run start
-``` 
+```
+
+### ⚠️ Important: Switching Between Docker and Local Execution
+If you want to switch from Docker-based execution to local execution (or vice versa), ensure that the import statements in the service files match the chosen execution mode.
+Check the paths and configurations in the Python services files to avoid import-related errors.
 
 ## **Ollama set up**
 
