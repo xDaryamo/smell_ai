@@ -34,6 +34,47 @@ class CodeSmellAnalyzer:
         self.clean_results = []
         self.file_cache = {}
 
+        # Mapping for normalizing smell labels
+        self.label_mapping = {
+            "hyperparameters_not_explicitly_set": (
+                "Hyperparameter Not Explicitly Set"
+            ),
+            "pytorch_call_method_misused": ("PyTorch Call Method Misused"),
+            "gradients_not_cleared_before_backward_propagation": (
+                "Gradients Not Cleared Before Backward Propagation"
+            ),
+            "matrix_multiplication_api_misused": (
+                "Matrix Multiplication API Misused"
+            ),
+            "dataframe_conversion_api_misused": (
+                "Dataframe Conversion API Misused"
+            ),
+            "columns_and_datatype_not_explicitly_set": (
+                "Columns and DataType Not Explicitly Set"
+            ),
+            "in_place_apis_misused": ("In-Place APIs Misused"),
+            "unnecessary_iteration": ("Unnecessary Iteration"),
+            "empty_column_misinitialization": (
+                "Empty Column Misinitialization"
+            ),
+            "chain_indexing": ("Chain Indexing"),
+            "nan_equivalence_comparison_misused": (
+                "NaN Equivalence Comparison Misused"
+            ),
+            "deterministic_algorithm_option_not_used": (
+                "Deterministic Algorithm Option Not Used"
+            ),
+            "randomness_uncontrolled": ("Randomness Uncontrolled"),
+            "merge_api_parameter_not_explicitly_set": (
+                "Merge API Parameter Not Explicitly Set"
+            ),
+            "memory_not_freed": ("Memory Not Freed"),
+            "tensorarray_not_used": ("TensorArray Not Used"),
+            "broadcasting_feature_not_used": ("Broadcasting Feature Not Used"),
+            "Chain_Indexing": ("Chain Indexing"),
+            "Pytorch Call Method Misused": ("PyTorch Call Method Misused"),
+        }
+
         # Setup logging
         logging.basicConfig(
             level=logging.INFO,
@@ -77,15 +118,24 @@ class CodeSmellAnalyzer:
 
         if not function_smells.empty:
             # Consolidate all smells for the function
-            unique_labels = list(
+            raw_labels = list(
                 set(
                     item["smell_name"]
                     for item in function_smells.to_dict(orient="records")
                 )
             )
+            # Apply the mapping to normalize labels
+            normalized_labels = [
+                (
+                    self.label_mapping[label]
+                    if label in self.label_mapping
+                    else label
+                )
+                for label in raw_labels
+            ]
             return {
                 "code": function_data["code"],
-                "labels": unique_labels,
+                "labels": normalized_labels,
             }
         else:
             return {

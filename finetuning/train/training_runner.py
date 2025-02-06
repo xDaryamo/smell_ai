@@ -138,9 +138,7 @@ def train_on_synthetic_data():
     )
 
     print("Starting training on synthetic data...")
-    training_config.train_and_save(
-        resume_from_checkpoint="finetuning/checkpoints/checkpoint-3125"
-    )
+    training_config.train_and_save()
 
 
 def main():

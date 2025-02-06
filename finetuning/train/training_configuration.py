@@ -143,8 +143,6 @@ class TrainingConfiguration:
         print(resume_from_checkpoint)
 
         if resume_from_checkpoint is not None:
-            print("ciao")
-
             training_stats = self.trainer.train(
                 resume_from_checkpoint=resume_from_checkpoint
             )
