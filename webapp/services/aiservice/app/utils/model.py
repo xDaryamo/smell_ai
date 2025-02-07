@@ -17,7 +17,7 @@ class Model:
     def __init__(
         self,
         api_url: str = "http://localhost:11434/api/generate",
-        model_name: str = "aidetector:latest",
+        model_name: str = "codesmile:latest",
     ):
         """
         Initialize the Model instance.
