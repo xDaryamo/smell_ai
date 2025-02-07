@@ -86,7 +86,7 @@ First, ensure that **Ollama** is installed on your system. You can download and 
 Once Ollama is installed, open the **Command Prompt** (Windows) or **Terminal** (macOS/Linux) and use the following command to create the model:
 
 ```bash
-ollama create path_to_modelfile
+ollama create codesmile -f <Modelfile_location>
 ```
 
 ## **Testing**
