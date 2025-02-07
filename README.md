@@ -137,7 +137,7 @@ tokenizer.batch_decode(outputs, skip_special_tokens=True)
 2. Open `Modelfile` and update the first line with the **absolute path** of the `.gguf` model.
 3. Run:
    ```bash
-   ollama create your_model_name -f <Modelfile_location>
+   ollama create codesmile -f <Modelfile_location>
    ```
 4. The model will now be available in Ollama for inference.
 
