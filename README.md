@@ -69,6 +69,15 @@ python -m cli.cli_runner --input <input_directory> --output <output_directory> [
 python -m gui.gui_runner
 ```
 
+### Testing
+The project includes a comprehensive suite of tests to ensure code quality and reliability. Specifically, the following types of tests have been implemented:
+
+- **Unit Tests:** Verify the functionality of individual functions and components.
+- **Integration Tests:** Check the interactions between various modules.
+- **System Tests:** Validate the overall behavior of the application.
+
+All tests are located in the test directory. 
+
 ---
 
 ## 2. AI-Based Detection Tool
