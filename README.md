@@ -10,7 +10,17 @@ CodeSmile is a suite of tools designed to detect **machine learning-specific cod
 
 This tool is designed to aid developers and researchers in improving the quality of ML codebases.
 
+
+
+## Prerequisites
+- Python 3.11 is required.
+- Install the required packages by running:
+```bash
+pip install -r requirements.txt
+```
+
 ---
+
 
 ## 1. Static Analysis Tool
 
@@ -51,6 +61,7 @@ The static analysis tool detects **ML-specific code smells** through rule-based 
 
 
 ### Usage
+
 #### CLI
 ```bash
 python -m cli.cli_runner --input <input_directory> --output <output_directory> [OPTIONS]
