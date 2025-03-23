@@ -1,4 +1,4 @@
-![CodeSmile](docs/code_smilelogo.png)
+![CodeSmile](./code_smile_logo.png)
 
 # CodeSmile: Machine Learning-Specific Code Smell Detection Tool
 
