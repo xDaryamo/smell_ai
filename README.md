@@ -1,3 +1,5 @@
+![CodeSmile](docs/code_smilelogo.png)
+
 # CodeSmile: Machine Learning-Specific Code Smell Detection Tool
 
 CodeSmile is a static analysis tool designed to identify and detect machine learning-specific code smells in your codebase. By utilizing Abstract Syntax Tree (AST) parsing techniques, CodeSmile can pinpoint potential issues and provide insights for improving the quality, maintainability, and performance of your machine learning projects.
