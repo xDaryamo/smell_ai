@@ -1,4 +1,4 @@
-![CodeSmile](./code_smile_logo.png)
+<img src="./code_smile_logo.png" alt="CodeSmile" width="200"/>
 
 # CodeSmile: Machine Learning-Specific Code Smell Detection Tool
 
