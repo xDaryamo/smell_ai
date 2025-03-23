@@ -1,4 +1,6 @@
-<img src="./code_smile_logo.png" alt="CodeSmile" width="200"/>
+<p align="center">
+  <img src="./code_smile_logo.png" alt="CodeSmile" width="200"/>
+</p>
 
 # CodeSmile: Machine Learning-Specific Code Smell Detection Tool
 
