@@ -57,10 +57,13 @@ class ProjectAnalyzer:
         Returns:
         - int: Total number of code smells found in the project.
         """
-        project_name = os.path.basename(project_path)
+        project_name = os.path.basename(os.path.normpath(project_path))
+
         print(f"Starting analysis for project: {project_name}")
 
         filenames = FileUtils.get_python_files(project_path)
+        if not filenames:
+            raise ValueError(f"The project '{project_path}' contains no Python files.")
         col = [
             "filename",
             "function_name",
