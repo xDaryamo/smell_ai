@@ -1,6 +1,9 @@
+<p align="center">
+  <img src="./code_smile_logo.png" alt="CodeSmile" width="200"/>
+</p>
+
 # CodeSmile: Machine Learning-Specific Code Smell Detection Tool
 
-[![codecov](https://codecov.io/gh/xDaryamo/smell_ai/graph/badge.svg?token=KM7EH5L3XC)](https://codecov.io/gh/xDaryamo/smell_ai)
 
 CodeSmile is a suite of tools designed to detect **machine learning-specific code smells** in Python projects. It identifies suboptimal implementation patterns that impact the quality, maintainability, and performance of ML code. The suite includes:
 
@@ -8,7 +11,14 @@ CodeSmile is a suite of tools designed to detect **machine learning-specific cod
 2. **AI-Based Tool**: Leverages **LLMs** to detect code smells using a trained model.
 3. **Web Application**: Provides an interactive web-based interface to run both tools.
 
+- Detects 12 machine learning-specific code smells, aiding in the identification of potential problems and areas for improvement.
+
+
 This tool is designed to aid developers and researchers in improving the quality of ML codebases.
+
+
+
+To install CodeSmile, clone the repository and execute the analyzer.py in controller folder.
 
 
 
